@@ -33,7 +33,8 @@
 		<poi.version>3.17</poi.version>
 		<velocity.version>1.7</velocity.version>
 		<!--Activiti 启动器版本-->
-		<activiti.starter.version>6.0.0</activiti.starter.version>
+<!--		<activiti.starter.version>6.0.0</activiti.starter.version>-->
+		<flowable.starter.version>6.5.0</flowable.starter.version>
 	</properties>
 
     <!-- 依赖声明 -->
