@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.process.modules.flow.mapper.FlowTypeMapper">
+
+    <resultMap type="FlowType" id="FlowTypeResult">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="virtualNode" column="virtual_node"/>
+        <result property="pid" column="pid"/>
+        <result property="pName" column="p_name"/>
+        <result property="shortNo" column="short_no"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="findById" parameterType="Long" resultType="FlowType">
+        SELECT * FROM FLOW_TYPE WHERE ID = #{id};
+    </select>
+
+    <select id="findAllOrderByShortNoAsc" resultType="FlowType">
+        SELECT * FROM FLOW_TYPE WHERE ID = #{id};
+    </select>
+
+    <insert id="save" parameterType="FlowType">
+    </insert>
+
+    <update id="update" parameterType="FlowType">
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM FLOW_TYPE WHERE ID = #{id}
+    </delete>
+
+    <select id="count" parameterType="hashMap">
+        SELECT COUNT(1) FROM FLOW_TYPE
+        <where>
+            <if test="pid != null and pid != ''">
+                pid = #{pid}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>
+

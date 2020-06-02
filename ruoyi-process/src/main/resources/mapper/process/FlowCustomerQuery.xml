@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.process.modules.flow.mapper.FlowCustomerQueryMapper">
+    <select id="getFlowSubmitInfo" parameterType="String" resultType="HashMap">
+        SELECT NAME_ AS name, TEXT_ AS val
+        FROM ACT_RU_VARIABLE
+        WHERE PROC_INST_ID_ = (
+            SELECT PROC_INST_ID_
+            FROM act_ru_task
+            WHERE ID_ = #{taskId}
+        )
+          AND TASK_ID_ IS NULL
+          AND NAME_ LIKE 'FLOW_%'
+    </select>
+
+    <select id="listUserTaskNodeAllReviewerUser" parameterType="List" resultType="HashMap">
+        SELECT SU.user_name, SU.user_id, SD.dept_name
+        FROM sys_user SU
+        LEFT JOIN sys_dept SD ON SU.dept_id = SD.dept_id
+        WHERE SU.user_id IN
+        <foreach collection="userIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+</mapper>

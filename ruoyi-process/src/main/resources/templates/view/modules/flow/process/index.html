@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('流程管理')"/>
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 select-table table-striped">
+            <table id="bootstrap-table"></table>
+        </div>
+    </div>
+</div>
+<th:block th:include="include :: footer"/>
+<script th:inline="javascript">
+    var prefix = ctx + "flow/process";
+
+    $(function () {
+        var options = {
+            url: prefix + "/listPage",
+            removeUrl: prefix + "/remove",
+            sortName: "createTime",
+            sortOrder: "desc",
+            modalName: "参数",
+            columns: [{
+                checkbox: true
+            },
+                {
+                    field: 'categoryName',
+                    title: '流程分类'
+                }, {
+                    field: 'id',
+                    title: '流程Id'
+                }, {
+                    field: 'name',
+                    title: '流程名称'
+                },
+                {
+                    field: 'key',
+                    title: '流程KEY'
+                },
+                {
+                    field: 'version',
+                    title: '流程版本'
+                },
+                {
+                    field: 'deploymentTime',
+                    title: '部署时间'
+                },
+                {
+                    field: 'resourceName',
+                    title: '流程XML',
+                    align: "center",
+                    formatter: function (value, row, index) {
+                        return '<a target="_blank" href="' + prefix + '/flow/process/resource/read?procDefId=' + row.id + '&resType=xml" title="查看流程XML">' + row.resourceName + '</a>';
+                    }
+                },
+                {
+                    field: 'diagramResourceName',
+                    title: '流程图片',
+                    align: 'center',
+                    formatter: function (value, row, index) {
+                        return '';
+                    }
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function (value, row, index) {
+                        var actions = [];
+                        if (row.suspensionState == 1) {
+                            actions.push('<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="suspendFlow(\'' + row.id + '\')"><i class="fa fa-edit"></i>挂起</a> ');
+                        } else {
+                            actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="activeFlow(\'' + row.id + '\')"><i class="fa fa-remove"></i>激活</a>');
+                        }
+                        actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="deleteDeployment(\'' + row.deploymentId + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+        };
+        $.table.init(options);
+    });
+
+    function suspendFlow(procDefId) {
+        $.operate.post("/flow/process/update/suspend", {procDefId: procDefId}, function (result) {
+            console.info(result);
+        });
+    }
+
+    function activeFlow(procDefId) {
+        $.operate.post("/flow/process/update/active", {procDefId: procDefId}, function (result) {
+            console.info(result);
+        });
+    }
+
+    function deleteDeployment(deploymentId) {
+        $.operate.post("/flow/process/deleteDeployment", {deploymentId: deploymentId}, function (result) {
+            console.info(result);
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.ruoyi.common.core.domain;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import com.ruoyi.common.utils.StringUtils;
 
@@ -178,5 +179,10 @@ public class AjaxResult extends HashMap<String, Object>
     public static AjaxResult error(String msg, Object data)
     {
         return new AjaxResult(Type.ERROR, msg, data);
+    }
+
+    public static AjaxResult errorf(String msg, Object... object) {
+        AjaxResult result = new AjaxResult(Type.ERROR, MessageFormat.format(msg, object));
+        return result;
     }
 }

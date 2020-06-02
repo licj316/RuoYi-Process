@@ -41,4 +41,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  	        #{userId}
             </foreach> 
 	</delete>
+
+	<select id="selectUserListByRoleCodeList" resultType="SysUser">
+	    SELECT SU.*
+		FROM sys_user SU
+		LEFT JOIN sys_user_role SUR ON SU.user_id = SUR.user_id
+		LEFT JOIN sys_role SR ON SUR.role_id = SR.role_id
+		WHERE SR.role_key IN ('admin', 'common')
+		group by login_name;
+	</select>
 </mapper> 

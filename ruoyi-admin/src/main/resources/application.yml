@@ -28,12 +28,20 @@ server:
     max-threads: 800
     # Tomcat启动初始化的线程数，默认值25
     min-spare-threads: 30
+#    accesslog:
+#      enabled: true
 
 # 日志配置
 logging:
+  pattern:
+    console:
   level:
     com.ruoyi: debug
-    org.springframework: warn
+#    org.springframework: info
+#    org.springframework.web: debug
+#    org.flowable: info
+#    org.apache.tomcat: debug
+#    org.apache.catalina: debug
 
 # 用户配置
 user:
