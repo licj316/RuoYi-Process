@@ -2,74 +2,85 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
 <head>
     <th:block th:include="include :: header(${title})"/>
-    <script th:src="'/plugins/jsignature/jSignature.min.js?_=' + ${productVersion}"></script>
-    <script th:src="'/plugins/jsignature/jSignature.min.noconflict.js?_=' + ${productVersion}"></script>
+    <th:block th:include="include :: datetimepicker-css"/>
+    <th:block th:include="include :: select2-css"/>
 </head>
 <body class="gray-bg">
-<input type="hidden" name="flow_taskId" th:value="${flow.taskId}" />
-<input type="hidden" name="flow_taskName" th:value="${flow.taskName}" />
-<input type="hidden" name="flow_taskDefKey" th:value="${flow.taskDefKey}" />
-<input type="hidden" name="flow_procInsId" th:value="${flow.procInsId}" />
-<input type="hidden" name="flow_procDefId" th:value="${flow.procDefId}" />
-<input type="hidden" name="flow_procDefKey" th:value="${flow.procDefKey}" />
-<input type="hidden" name="flow_businessId" th:value="${flow.businessId}" />
-<input type="hidden" name="flow_comment" th:value="${flow.comment}" />
+<input type="hidden" id="flow_taskId" th:value="${flow.taskId}"/>
+<input type="hidden" id="flow_taskName" th:value="${flow.taskName}"/>
+<input type="hidden" id="flow_taskDefKey" th:value="${flow.taskDefKey}"/>
+<input type="hidden" id="flow_procInsId" th:value="${flow.procInsId}"/>
+<input type="hidden" id="flow_procDefId" th:value="${flow.procDefId}"/>
+<input type="hidden" id="flow_procDefKey" th:value="${flow.procDefKey}"/>
+<input type="hidden" id="flow_businessId" th:value="${flow.businessId}"/>
+<input type="hidden" id="flow_comment" th:value="${flow.comment}"/>
 
-<input type="hidden" name="flow_edit_status" th:value="${status}" />
+<input type="hidden" id="flow_edit_status" th:value="${status}"/>
 
 <div class="container-div">
     <!-- 流程页面按钮区域 -->
     <div id="container">
-            <div class="row comment-box" id="replyOpinion" th:if="${status} eq 'AUDIT'">
-                <label class="control-label col-sm-12" id="replyOpinionName">审批意见</label>
-                <div class="col-sm-12">
-                    <textarea class="form-control required" name="flowComment" rows="3" style="resize: none"></textarea>
-                </div>
+        <!-- 审批意见 -->
+        <div class="row comment-box" id="replyOpinion" th:if="${#strings.equals(status, 'AUDIT')}">
+            <label class="control-label col-sm-12" id="replyOpinionName">审批意见</label>
+            <div class="col-sm-12">
+                <textarea class="form-control required" name="flowComment" rows="3" style="resize: none"></textarea>
             </div>
-            <div class="footer-btns">
-                <button class="btn btn-primary " type="button" onclick="handleSave(true)" th:if="${status} eq 'EDIT'"><i class="fa fa-check"></i>&nbsp;提交下一步</button>
-                <button th:if="${status} eq 'AUDIT'" class="btn btn-primary " type="button" onclick="handleSave(true)"><i class="fa fa-check"></i>&nbsp;<span id="flowAgreeButtonName">同意</span></button>
-                <button th:if="${status} eq 'AUDIT'" class="btn btn-danger " type="button" onclick="handleSave(false)"><i class="fa fa-times"></i>&nbsp;<span id="flowRefuseButtonName">拒绝</span></button>
-                <button th:if="${status} eq 'AUDIT'" class="btn btn-warning " type="button" onclick="handleBackToStep()" style="display: none">
-                    <i class="fa fa-undo"></i>&nbsp;
-                    <span id="callBackTypeText">驳回</span><!-- 自由回退 -->
-                </button>
-                <!-- v-if="extensionProperty.multiInstanceNode && extensionProperty.addMultiInstance" -->
-                <div th:if="${status} eq 'AUDIT'" onclick="handleAddMultiInstance()" class="btn btn-sm btn-warning">
-                    <i class="fa fa-exchange"></i>&nbsp;加签
-                </div>
-                <!-- th:if="${extensionProperty.connectionCallBack}" -->
-                <button th:if="${status} eq 'AUDIT'" class="btn btn-warning " type="button" onclick="handleConnectionCallBackSave(false)">
-                    <i class="fa fa-exchange"></i>&nbsp;驳回
-                </button>
-                <!-- th:if="${extensionProperty.handwritingSignature}" -->
-                <!-- th:if="${flow.handWritingSignatureData==''}" -->
-                <!-- <span>查看签字</span>-->
-                <button th:if="${status} eq 'AUDIT'" onclick="handleWritingSignature()" class="btn btn-sm btn-warning" type="button">
-                    <i class="fa fa-edit"></i>
-                    <span id="writingSignatureBtnText">手写签字</span>
-                </button>
-                <button onclick="handleClose()" class="btn btn-sm btn-default" type="button">
-                    <i class="fa fa-close"></i>关闭页面
-                </button>
+        </div>
+        <!-- 按钮区域 -->
+        <div class="footer-btns">
+            <button th:if="${#strings.equals(status, 'EDIT')}" class="btn btn-primary " type="button"
+                    onclick="handleSave(true)"><i class="fa fa-check"></i>&nbsp;发起任务
+            </button>
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary " type="button"
+                    onclick="handleSave(true)"><i class="fa fa-check"></i>&nbsp;<span id="flowAgreeButtonName">同意</span>
+            </button>
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-danger " type="button"
+                    onclick="handleSave(false)"><i class="fa fa-times"></i>&nbsp;<span
+                    id="flowRefuseButtonName">拒绝</span></button>
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning " type="button"
+                    onclick="handleBackToStep()" style="display: none">
+                <i class="fa fa-undo"></i>&nbsp;
+                <span id="callBackTypeText">驳回</span><!-- 自由回退 -->
+            </button>
+            <!-- v-if="extensionProperty.multiInstanceNode && extensionProperty.addMultiInstance" -->
+            <div th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleAddMultiInstance()"
+                 class="btn btn-sm btn-warning">
+                <i class="fa fa-exchange"></i>&nbsp;加签
             </div>
+            <!-- th:if="${extensionProperty.connectionCallBack}" -->
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning " type="button"
+                    onclick="handleConnectionCallBackSave(false)">
+                <i class="fa fa-exchange"></i>&nbsp;驳回
+            </button>
+            <!-- th:if="${extensionProperty.handwritingSignature}" -->
+            <!-- th:if="${flow.handWritingSignatureData==''}" -->
+            <!-- <span>查看签字</span>-->
+            <button th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleWritingSignature()"
+                    class="btn btn-sm btn-warning" type="button">
+                <i class="fa fa-edit"></i>
+                <span id="writingSignatureBtnText">手写签字</span>
+            </button>
+            <button onclick="handleClose()" class="btn btn-sm btn-default" type="button">
+                <i class="fa fa-close"></i>关闭页面
+            </button>
+        </div>
         <ul class="nav nav-tabs" role="tablist" style="margin-top: 5px">
-            <li class="active" role="presentation"><a data-toggle="tab" href="#formTab" role="tab"
-                                                      th:text="${title}"></a></li>
-            <li role="presentation" th:if="${flow.businessId} eq null"><a data-toggle="tab" href="#informationTab" role="tab">流转信息</a></li>
-            <li role="presentation"><a data-toggle="tab" href="#diagramTab" role="tab">流程图</a></li>
+            <li class="active" role="presentation"><a data-toggle="tab" href="#flowMainContainer" role="tab" th:text="${title}"></a></li>
+            <li role="presentation" th:if="${flow.businessId} ne null"><a data-toggle="tab" href="#informationContainer" role="tab">流转信息</a></li>
+            <li role="presentation"><a data-toggle="tab" href="#diagramContainer" role="tab">流程图</a></li>
         </ul>
         <div class="tab-content">
-            <div class="tab-pane active" id="formTab" role="tabpanel">
-                <div id="formBoxMain" th:insert="${formPage}"></div>
+            <div class="tab-pane active" id="flowMainContainer" role="tabpanel">
+                <div th:replace="${formPage} :: form"></div>
             </div>
-            <div class="tab-pane" id="informationTab" role="tabpanel" th:if="${flow.businessId} eq null">
+            <div class="tab-pane" id="informationContainer" role="tabpanel" th:if="${flow.businessId} ne null">
                 <iframe allowtransparency-y="yes" border="0" frameborder="no" height="400px" id="histoicFlowList"
                         marginheight="0" marginwidth="0"
                         scrolling-x="no" scrolling-y="auto" width="100%"></iframe>
             </div>
-            <div class="tab-pane" id="diagramTab" role="tabpanel" style="overflow: auto">
-                <img src="/flow/process/resource/read?procDefId=${flow.procDefId}&resType=image"
+            <div class="tab-pane" id="diagramContainer" role="tabpanel" style="overflow: auto">
+                <img th:src="'/flow/process/resource/read?procDefId=' + ${flow.procDefId} + '&resType=image'"
                      style="margin: 0 auto;display: block;">
             </div>
         </div>
@@ -78,9 +89,9 @@
             <div id="callBackNodes" style="display: none;padding: 8px">
                 <!-- TODO 选择退回节点 -->
                 <select class="form-control" id="backToTaskDefKey">
-<!--                    <option value="">请选择</option>-->
-<!--                    <option :value="item" v-for="(item,i) in extensionProperty.callBackNodes.split(',')"-->
-<!--                            v-text="extensionProperty.callBackNodesDesc.split(',')[i]"></option>-->
+                    <!--                    <option value="">请选择</option>-->
+                    <!--                    <option :value="item" v-for="(item,i) in extensionProperty.callBackNodes.split(',')"-->
+                    <!--                            v-text="extensionProperty.callBackNodesDesc.split(',')[i]"></option>-->
                 </select>
             </div>
         </div>
@@ -96,19 +107,32 @@
     </div>
 </div>
 <th:block th:include="include :: footer"/>
+<th:block th:include="include :: datetimepicker-js"/>
+<th:block th:include="include :: select2-js"/>
+<script th:src="'/plugins/jsignature/jSignature.min.js?_=' + ${productVersion}"></script>
+<script th:src="'/plugins/jsignature/jSignature.min.noconflict.js?_=' + ${productVersion}"></script>
+<script th:replace="${formPage} :: script"/>
 <script th:inline="javascript">
-    var prefix = ctx + "flow/process";
+    var prefix = ctx;
 
     var intViewportHeight = window.innerHeight - 175;
 
     var flow = {
+        taskId: '',
+        taskName: '',
+        taskDefKey: '',
+        procInsId: '',
+        procDefId: '',
+        procDefKey: '',
+        businessId: '',
+        comment: '',
+        delegateStatus: '',
         backToTaskDefKey: '',
         addMultiInstanceAssignee: '',
         flowNextReviewerAssignee: '',
         handWritingSignatureData: '',
         pass: true,
-        turnDown: false,
-        comment: ""
+        turnDown: false
     };
 
     var extensionProperty = {
@@ -130,19 +154,32 @@
 
     var formDataSubmit = false;
     var boxMainHeight = intViewportHeight;
-    var flowEditStatus = $("input[name='flow_edit_status']").val();
+    var flowEditStatus;
+
     var signatureInit = false;
 
     var flowData;
+
     function handleInit() {
-        if (businessId != undefined && businessId.length > 0) {
-            $.operate.post("/general/flow/process/loadFormData", {flow: this.flow}, function (result) {
+        flow.taskId = $("#flow_taskId").val();
+        flow.taskName = $("#flow_taskName").val();
+        flow.taskDefKey = $("#flow_taskDefKey").val();
+        flow.procInsId = $("#flow_procInsId").val();
+        flow.procDefId = $("#flow_procDefId").val();
+        flow.procDefKey = $("#flow_procDefKey").val();
+        flow.businessId = $("#flow_businessId").val();
+        flow.comment = $("#flow_comment").val();
+        flowEditStatus = $("#flow_edit_status").val();
+        setPageData();
+        if (flow.businessId != undefined && flow.businessId.length > 0) {
+            $.operate.post(prefix + "/general/flow/process/loadFormData", {flow: this.flow}, function (result) {
                 if (result.ok) {
                     formData = result.data;
+                    setPageData();
                 }
             });
         }
-        $.operate.post("${base}/flowTask/getUserTaskExtension", {
+        $.operate.post("/flowTask/getUserTaskExtension", {
             taskDefKey: this.flow.taskDefKey,
             procDefId: this.flow.procDefId
         }, function (data) {
@@ -163,13 +200,15 @@
         if (handleInitAfter != undefined) {
             handleInitAfter();
         }
-        if (businessId != "") {
+        if (flow.businessId != "") {
             var url = "/flowTask/histoicFlow?procInsId=${data.flow.procInsId}&startAct=&endAct=&t=" + new Date().getTime();
             $("#histoicFlowList").attr("src", url);
         }
     }
 
-    function handleSave() {
+    handleInit();
+
+    function handleSave(pass) {
         $.modal.confirm("确认提交并完成流程任务吗?", function () {
             flow.pass = pass;
             flow.turnDown = false;
@@ -360,7 +399,7 @@
     }
 
     function handleClose() {
-
+        $.modal.closeTab();
     }
 
     function handleWritingSignature() {
@@ -375,7 +414,48 @@
     }
 
     function getFormData() {
-        return {};
+        let elementArr = document.querySelector("#flowMainContainer").querySelectorAll("[name]");
+        let data = {};
+        elementArr.forEach(ele => {
+            let name = ele.getAttribute("name");
+            if (name) {
+                data[name] = ele.value;
+                if ("select-one" === ele.type) {
+                    data[name + "Text"] = ele.options[ele.selectedIndex].text;
+                }
+            }
+        });
+        return data;
+    }
+
+    function setPageData() {
+        console.info(flowData);
+        flowData = {
+            leaveType: "1",
+            title: "我要请假",
+            reason: "最近加班太多了",
+            startTime: "2020-06-03 12:00",
+            endTime: "2020-06-12 12:00",
+            totalTime: "",
+            totalTimeText: ""
+        };
+        let elementArr = document.querySelector("#flowMainContainer").querySelectorAll("[name]");
+        elementArr.forEach(ele => {
+            // console.info(ele);
+            // console.info(ele.type);
+            let eleName = ele.getAttribute("name");
+            switch (ele.type) {
+                case 'text':
+                case 'textarea':
+                    ele.value = flowData[eleName];
+                    break;
+                case 'select-one':
+                    $(ele).val(flowData[eleName]).trigger('change');
+                    break;
+                default:
+                    ele.value = flowData[eleName];
+            }
+        });
     }
 </script>
 </body>
