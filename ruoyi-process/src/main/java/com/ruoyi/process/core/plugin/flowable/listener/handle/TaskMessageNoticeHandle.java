@@ -11,6 +11,7 @@ import org.flowable.common.engine.api.delegate.event.FlowableEvent;
 import org.nutz.ioc.Ioc;
 import org.nutz.ioc.loader.annotation.IocBean;
 import org.nutz.lang.Strings;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 
@@ -19,7 +20,7 @@ import java.util.HashSet;
  * @date: 2019/4/30
  * 当前任务相关人员都会收到通知
  */
-@IocBean(args = {"refer:$ioc"})
+@Component
 public class TaskMessageNoticeHandle extends BaseEventListenerHandle {
 
     public TaskMessageNoticeHandle() {

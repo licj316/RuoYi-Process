@@ -11,6 +11,8 @@ import org.flowable.engine.*;
 import org.nutz.ioc.loader.annotation.Inject;
 import org.nutz.ioc.loader.annotation.IocBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author 黄川 huchuc@vip.qq.com
@@ -33,7 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * <p>
  * 示例：已经完成的实例/实例总数=2/3=0.6666666 ---- 满足3人两人通用则通过的表达式为 ${nrOfCompletedInstances/nrOfInstances >=0.6}
  */
-@IocBean
+//@Configuration
 public class NutzFwFlowAbleContextConfig {
 
     /**
@@ -51,47 +53,47 @@ public class NutzFwFlowAbleContextConfig {
         return processEngine;
     }
 
-    @IocBean
+    @Bean
     public ProcessEngine processEngine(@Autowired NutzFwProcessEngineConfiguration configuration) {
         return configuration.buildProcessEngine();
     }
 
-    @IocBean
+    @Bean
     public RepositoryService repositoryService() {
         return processEngine.getRepositoryService();
     }
 
-    @IocBean
+    @Bean
     public RuntimeService runtimeService() {
         return processEngine.getRuntimeService();
     }
 
-    @IocBean
+    @Bean
     public IdentityService identityService() {
         return processEngine.getIdentityService();
     }
 
-    @IocBean
+    @Bean
     public TaskService taskService() {
         return processEngine.getTaskService();
     }
 
-    @IocBean
+    @Bean
     public HistoryService historyService() {
         return processEngine.getHistoryService();
     }
 
-    @IocBean
+    @Bean
     public ManagementService managementService() {
         return processEngine.getManagementService();
     }
 
-    @IocBean
+    @Bean
     public FormService formService() {
         return processEngine.getFormService();
     }
 
-    @IocBean
+    @Bean
     public DynamicBpmnService dynamicBpmnService() {
         return processEngine.getDynamicBpmnService();
     }

@@ -8,7 +8,6 @@
 package com.ruoyi.process.core.plugin.flowable.service.impl;
 
 import com.ruoyi.framework.helper.RedisHelper;
-import com.ruoyi.process.core.plugin.flowable.config.NutzFwProcessEngineConfiguration;
 import com.ruoyi.process.core.plugin.flowable.service.FlowCacheService;
 import org.flowable.common.engine.impl.persistence.deploy.DeploymentCache;
 import org.flowable.engine.RepositoryService;
@@ -16,6 +15,7 @@ import org.flowable.engine.impl.persistence.deploy.DeploymentManager;
 import org.flowable.engine.impl.persistence.deploy.ProcessDefinitionCacheEntry;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +35,7 @@ public class FlowCacheServiceImpl implements FlowCacheService {
 	RepositoryService repositoryService;
 
     @Autowired
-    NutzFwProcessEngineConfiguration processEngineConfiguration;
+    SpringProcessEngineConfiguration processEngineConfiguration;
 
     @Override
     public ProcessDefinition getProcessDefinitionCache(String processDefinitionId) {

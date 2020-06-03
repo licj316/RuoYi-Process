@@ -9,7 +9,6 @@ package com.ruoyi.process.core.plugin.flowable.service.impl;
 
 import com.google.common.collect.Lists;
 import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.process.core.plugin.flowable.config.NutzFwProcessEngineConfiguration;
 import com.ruoyi.process.core.plugin.flowable.converter.CustomBpmnJsonConverter;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.service.FlowCacheService;
@@ -31,7 +30,7 @@ import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.repository.ProcessDefinitionQuery;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.image.impl.DefaultProcessDiagramGenerator;
-import org.nutz.ioc.Ioc;
+import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.nutz.lang.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,7 +52,7 @@ public class FlowProcessDefinitionServiceImpl implements FlowProcessDefinitionSe
     @Autowired
     FlowTypeService flowTypeService;
     @Autowired
-    NutzFwProcessEngineConfiguration nutzFwProcessEngineConfiguration;
+    SpringProcessEngineConfiguration springProcessEngineConfiguration;
     @Autowired
     FlowTaskService flowTaskService;
     @Autowired
@@ -101,7 +100,7 @@ public class FlowProcessDefinitionServiceImpl implements FlowProcessDefinitionSe
     public InputStream resourceRead(String processDefinitionId, String processInstanceId, String resourceType) {
         InputStream resourceAsStream = null;
         if (Objects.equals("image", resourceType)) {
-            String fontName = nutzFwProcessEngineConfiguration.getAnnotationFontName();
+            String fontName = springProcessEngineConfiguration.getAnnotationFontName();
             BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
             DefaultProcessDiagramGenerator diagramGenerator = new DefaultProcessDiagramGenerator();
             resourceAsStream = diagramGenerator.generateDiagram(bpmnModel, "png", fontName, fontName, fontName,

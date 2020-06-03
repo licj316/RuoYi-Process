@@ -7,16 +7,14 @@
 
 package com.ruoyi.process.core.plugin.flowable.listener.handle;
 
-import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.process.core.plugin.flowable.service.FlowCacheService;
 import org.flowable.common.engine.api.delegate.event.FlowableEvent;
 import org.flowable.common.engine.impl.event.FlowableEntityEventImpl;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.task.service.impl.persistence.entity.TaskEntityImpl;
-import org.nutz.ioc.Ioc;
-import org.nutz.ioc.loader.annotation.IocBean;
 import org.nutz.lang.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,6 +27,7 @@ public class TastCreateSetCategoryHandle extends BaseEventListenerHandle {
 
     FlowCacheService flowCacheService;
 
+    @Autowired
     public TastCreateSetCategoryHandle(FlowCacheService flowCacheService) {
         this.flowCacheService = flowCacheService;
     }
