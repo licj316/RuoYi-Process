@@ -1,8 +1,9 @@
-<%
-layout("/layouts/blank.html",{title:"流程历史"}){
-%>
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('流程历史')"/>
+</head>
 <style>
-
     .flow-history-box > .header.endEvent {
         background: #f1ad66;
     }
@@ -130,63 +131,53 @@ layout("/layouts/blank.html",{title:"流程历史"}){
     }
 
 </style>
-<% for(his in data.histoicFlowList) { %>
-<div class="flow-history-box">
+<body class="gray-bg">
+<div class="flow-history-box" th:each="his,hisStat : ${histoicFlowList}">
     <div class="header ${his.activityType}">
-        <div class="name">${hisLP.size-hisLP.index+1}.&nbsp;${his.activityName}</div>
-        <%if(his.endTime==null){ %>
-        <div class="status pending">办理中</div>
-        <% }else{ %>
-        <div class="status complete">已完成</div>
-        <%}%>
+        <div class="name" th:text="${hisStat.size - hisStat.index} + '.' + (${his.activityName} ne null ? ${his.activityName} : '')"></div>
+        <div class="status pending" th:if="${his.endTime} eq null">办理中</div>
+        <div class="status complete" th:if="${his.endTime} ne null">已完成</div>
     </div>
     <div class="history-content">
         <div class="time">
-            ${his.activityType!='endEvent'?"办理人:"}
-            ${his.assigneeName}&nbsp;&nbsp;&nbsp;&nbsp;开始时间：${his.startTime!,
-            dateFormat='yyyy-MM-dd HH:mm:ss'}
-            <%if(his.endTime!=null){ %>
-            &nbsp;&nbsp;&nbsp;&nbsp;处理时间：${his.endTime!,dateFormat='yyyy-MM-dd HH:mm:ss'}
-            <%}%>
-            <%if(Strings.isNotBlank(his.timeConsuming)){ %>
-            &nbsp;&nbsp;&nbsp;&nbsp;任务历时：${his.timeConsuming!}
-            <%}%>
+            <th:block th:text="${his.activityType!='endEvent'?'办理人:': ''}"></th:block>
+            <th:block th:text="${his.assigneeName}"></th:block>
+            开始时间：
+            <th:block th:text="${his.startTime}"></th:block>
+            <th:block th:if="${his.endTime} ne null">
+                处理时间:
+                <th:block th:text="${his.endTime}"></th:block>
+            </th:block>
+            <th:block th:if="${#strings.isEmpty(his.timeConsuming)}">
+                任务历时:
+                <th:block th:text="${his.timeConsuming}"></th:block>
+            </th:block>
         </div>
-        <% if(his.flowComments!=null) { %>
-        <div class="comment-box">
+        <div class="comment-box" th:if="${his.flowComments} ne null">
             <ul>
-                <% for(comment in his.flowComments!) { %>
-                <li class="comment clearfix">
+                <li class="comment clearfix" th:each="comment : ${his.flowComments}">
                     <div class="clearfix">
                         <div class="user-avatar">
-                            <img src="${base}/File/avatar?userName=${comment.userId}">
+                            <img th:src="'/File/avatar?userName=' + ${comment.userId}">
                         </div>
-                        <div class="comment-content">${comment.fullMessage}</div>
+                        <div class="comment-content" th:text="${comment.fullMessage}"></div>
                         <div class="btns">
-                        <span class="comment-user">
-                            ${comment.userDesc}&nbsp;&nbsp;&nbsp;&nbsp;
-                            ${comment.time!,dateFormat='yyyy-MM-dd HH:mm:ss'}
+                        <span class="comment-user" th:text="${comment.userDesc} + '&nbsp;&nbsp;&nbsp;&nbsp;' + ${comment.time}">
                         </span>
-                            <%if(comment.handWritingSignatureAttachment!=null){%>
-                            <div class="layui-btn layui-btn-primary layui-btn-xs signature-btn">查看签字
+                            <div class="layui-btn layui-btn-primary layui-btn-xs signature-btn" th:if="${comment.handWritingSignatureAttachment} ne null">查看签字
                                 <div class="signature">
                                     <img src="${comment.handWritingSignatureAttachment.content!}" width="100%">
                                 </div>
                             </div>
-                            <%}%>
-                            <%if(comment.flowAttachments.~size>0){%>
-                            <div class="layui-btn layui-btn-primary layui-btn-xs">查看附件</div>
-                            <%}%>
+                            <div class="layui-btn layui-btn-primary layui-btn-xs" th:if="${#lists.size(comment.flowAttachments)} gt 0">查看附件</div>
                         </div>
 
                     </div>
                 </li>
-                <%}%>
                 <li class="comment-bottom"></li>
             </ul>
         </div>
-        <%}%>
     </div>
 </div>
-<%}%>
-<%}%>
+</body>
+</html>

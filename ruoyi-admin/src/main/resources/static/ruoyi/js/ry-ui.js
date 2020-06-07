@@ -775,11 +775,9 @@
                         $.modal.loading("正在处理中，请稍后...");
                     },
                     success: function (result) {
-                        debugger;
                         if (typeof callback == "function") {
                             callback(result);
                         }
-                        debugger;
                         $.operate.ajaxSuccess(result);
                     }
                 };

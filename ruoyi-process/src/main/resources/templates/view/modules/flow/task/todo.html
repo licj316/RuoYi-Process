@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('待办任务')"/>
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 select-table table-striped">
+            <table id="bootstrap-table"></table>
+        </div>
+    </div>
+</div>
+<th:block th:include="include :: footer"/>
+<script th:inline="javascript">
+    var prefix = ctx + "flowTask";
+
+    $(function () {
+        var options = {
+            url: prefix + "/todoData",
+            sortName: "createTime",
+            sortOrder: "desc",
+            modalName: "参数",
+            columns: [
+                {
+                    checkbox: true
+                },
+                {
+                    field: 'numbers',
+                    title: '序号'
+                },
+                {
+                    field: 'categoryName',
+                    title: '流程分类'
+                },
+                {
+                    field: 'taskTitle',
+                    title: '标题'
+                },
+                {
+                    field: 'procDefKey',
+                    title: '流程标识'
+                },
+                {
+                    field: 'procDefname',
+                    title: '流程名称'
+                },
+                {
+                    field: 'taskName',
+                    title: '当前环节'
+                },
+                {
+                    field: 'version',
+                    title: '流程版本'
+                },
+                {
+                    field: 'createTime',
+                    title: '开始时间'
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function (value, row, index) {
+                        var actions = [];
+                        if (row.delegateStatus == 'PENDING') {
+                            actions.push('<a class="btn btn-info btn-xs" ' +
+                                'onclick="handleHandle(\'' + row.taskId + '\', \'' + row.taskName + '\', \'' + row.taskDefKey
+                                + '\', \'' + row.procInsId + '\', \'' + row.procDefId + '\', \'' + row.status + '\')" title="当前任务是他人委托您办理的。"><i class="fa fa-plus"></i>办理委托</a>')
+                        } else if (row.assignee != null) {
+                            actions.push(' <a class="btn btn-info btn-xs" ' +
+                                'onclick="handleHandle(\'' + row.taskId + '\', \'' + row.taskName + '\', \'' + row.taskDefKey
+                                + '\', \'' + row.procInsId + '\', \'' + row.procDefId + '\', \'' + row.status + '\')"><i class="fa fa-plus"></i>办理</a>');
+                            actions.push(' <a class="btn btn-info btn-xs" onclick="handleDelegate(\'' + row.taskId + '\')" title="将当前任务委托给他人办理，委托人完成后，任务会归还给您。"><i class="fa fa-plus"></i>委托</a>');
+                            actions.push(' <a class="btn btn-info btn-xs" onclick="handleTransfer(\'' + row.taskId + '\')" title="将当前任务转派给他人办理。"><i class="fa fa-plus"></i>转派</a>');
+                        }
+                        if (row.claimTime != null) {
+                            actions.push(' <a class="btn btn-info btn-xs" onclick="handleUnclaim(\'' + row.taskId + '\')"><i class="fa fa-plus"></i>取消签收</a>');
+                        } else if (row.assignee == null || row.assignee.length == 0) {
+                            actions.push(' <a class="btn btn-info btn-xs" onclick="handleClaim(\'' + row.taskId + '\')"><i class="fa fa-plus"></i>签收</a>');
+                        }
+                        console.info(row.executionId);
+                        if (row.executionId == null) {
+                            actions.push(' <a class="btn btn-info btn-xs" onclick="handleDel(\'' + row.procInsId + '\')"><i class="fa fa-plus"></i>删除</a>');
+                        }
+                        actions.push(' <a class="btn btn-info btn-xs" ' +
+                            'onclick="handleDiagramViewer(\'' + row.processFinished + '\',\'' + row.procDefId + '\',\'' + row.procInsId + '\')"><i class="fa fa-plus"></i>跟踪</a>')
+                        return actions.join('');
+                    }
+                }
+            ]
+        };
+        $.table.init(options);
+    });
+
+    // 取消签收
+    function handleUnclaim(taskId) {
+        axios.post("/flowTask/unclaim", {taskId: taskId}).then(json => {
+            $.modal.msg(json);
+            if (json.ok) {
+                handleSearchTable();
+            }
+        });
+    }
+
+    // 签收
+    function handleClaim(taskId) {
+        axios.post("/flowTask/claim", {taskId: taskId}).then(json => {
+            $.modal.msg(json);
+            if (json.ok) {
+                handleSearchTable();
+            }
+        });
+    }
+
+    // 委托
+    function handleDelegate(taskId) {
+        core.showSelectUsers({
+            option: {
+                multipleSelection: false,
+            },
+            onOk: async function (users) {
+                var json = await axios.post("/flowTask/delegate", {
+                    taskId: taskId,
+                    userName: users[0].userName
+                });
+                $.modal.msg(json);
+                if (json.ok) {
+                    handleSearchTable();
+                }
+                return true;
+            }
+        });
+    }
+
+    // 转派
+    function handleTransfer(taskId) {
+        layer.prompt("请输入转派原因", function (reason) {
+            core.showSelectUsers({
+                option: {
+                    multipleSelection: false,
+                },
+                onOk: async function (users) {
+                    var json = await axios.post("/flowTask/transfer", {
+                        taskId: taskId,
+                        userName: users[0].userName,
+                        reason: reason,
+                    });
+                    $.modal.msg(json);
+                    if (json.ok) {
+                        handleSearchTable();
+                    }
+                    return true;
+                }
+            });
+        })
+    }
+
+    // 删除
+    function handleDel(procInsId) {
+        layer.prompt("请输入删除理由", function (reason) {
+            axios.post("/flowTask/deleteTask", {procInsId: procInsId, reason: reason}).then(json => {
+                $.modal.msgSuccess(json.msg);
+                if (json.ok) {
+                    handleSearchTable();
+                }
+            });
+        });
+    }
+
+    // 办理
+    function handleHandle(taskId, taskName, taskDefKey, procInsId, procDefId, status) {
+        var param = '?taskId=' + taskId + '&taskName=' + encodeURIComponent(taskName) + '&taskDefKey=' + taskDefKey
+            + '&procInsId=' + procInsId + '&procDefId=' + procDefId + '&status=' + status;
+        var url = '/general/flow/process/form' + param;
+        $.modal.openTab("任务办理 [" + taskName + "]", url);
+        handleSearchTable();
+    }
+
+    function handleSearchTable() {
+        // TODO
+    }
+
+    function handleDiagramViewer(processFinished, procDefId, procInsId) {
+        $.modal.open("流程图查看", "/flowTask/diagramViewer?definitionId=" + procDefId + "&instanceId=" + procInsId);
+    }
+</script>
+</body>
+</html>

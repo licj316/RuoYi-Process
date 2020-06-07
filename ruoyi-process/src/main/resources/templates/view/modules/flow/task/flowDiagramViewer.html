@@ -1,27 +1,29 @@
-<%
-var title="流程定义";
-layout("/layouts/blank.html",{title:title}){
-%>
-<link href="${base}/static/diagram-viewer/jquery.qtip.min.css" rel="stylesheet" type="text/css"/>
-<link href="${base}/static/diagram-viewer/jquery.growl.css" rel="stylesheet" type="text/css"/>
-<link href="${base}/static/diagram-viewer/jquery-confirm.min.css" rel="stylesheet" type="text/css"/>
-<link href="${base}/static/diagram-viewer/displaymodel.css" rel="stylesheet" type="text/css"/>
-<script type="text/javascript" src="${base}/static/diagram-viewer/jquery.qtip.min.js"></script>
-<script type="text/javascript" src="${base}/static/diagram-viewer/jquery.growl.js"></script>
-<script type="text/javascript" src="${base}/static/diagram-viewer/jquery-confirm.min.js"></script>
-<script type="text/javascript" src="${base}/static/diagram-viewer/raphael.min.js"></script>
-<script type="text/javascript" src="${base}/static/diagram-viewer/bpmn-draw.js"></script>
-<script type="text/javascript" src="${base}/static/diagram-viewer/bpmn-icons.js"></script>
-<script type="text/javascript" src="${base}/static/diagram-viewer/Polyline.js"></script>
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('流程定义')"/>
+</head>
+<link href="/diagram-viewer/jquery.qtip.min.css" rel="stylesheet" type="text/css"/>
+<link href="/diagram-viewer/jquery.growl.css" rel="stylesheet" type="text/css"/>
+<link href="/diagram-viewer/jquery-confirm.min.css" rel="stylesheet" type="text/css"/>
+<link href="/diagram-viewer/displaymodel.css" rel="stylesheet" type="text/css"/>
+<body class="gray-bg">
+<input id="definitionId" type="hidden" th:value="${definitionId}" />
+<input id="instanceId" type="hidden" th:value="${instanceId}" />
+<input id="historyInstanceId" type="hidden" th:value="${hisInsId}" />
 <div class="main-content">
     <div class="box-main">
-
         <div id="bpmnModel" style="margin-left:auto;margin-right:auto;overflow-x:hidden;overflow-y:hidden;"></div>
-
     </div>
 </div>
-<% } %>
-
+<th:block th:include="include :: footer"/>
+<script type="text/javascript" src="/diagram-viewer/jquery.qtip.min.js"></script>
+<script type="text/javascript" src="/diagram-viewer/jquery.growl.js"></script>
+<script type="text/javascript" src="/diagram-viewer/jquery-confirm.min.js"></script>
+<script type="text/javascript" src="/diagram-viewer/raphael.min.js"></script>
+<script type="text/javascript" src="/diagram-viewer/bpmn-draw.js"></script>
+<script type="text/javascript" src="/diagram-viewer/bpmn-icons.js"></script>
+<script type="text/javascript" src="/diagram-viewer/Polyline.js"></script>
 <script type="text/javascript">
     var NORMAL_STROKE = 1;
     var SEQUENCEFLOW_STROKE = 1.5;
@@ -53,9 +55,9 @@ layout("/layouts/blank.html",{title:title}){
     var canvasWidth;
     var canvasHeight;
 
-    var definitionId = "${definitionId}";
-    var instanceId = "${instanceId}";
-    var historyInstanceId = "${hisInsId}";
+    var definitionId = $("#definitionId").val();
+    var instanceId = $("#instanceId").val();
+    var historyInstanceId = $("#historyInstanceId").val();
 
 
     var bpmnData;
@@ -107,19 +109,19 @@ layout("/layouts/blank.html",{title:title}){
         if (historyInstanceId != "") {
             request = $.ajax({
                 type: 'get',
-                url: '${base!}/flowDesign/admin/process-instances/' + historyInstanceId + '/history-model-json?processDefinitionId=' + definitionId + '&nocaching=' + new Date().getTime()
+                url: '/flowDesign/admin/process-instances/' + historyInstanceId + '/history-model-json?processDefinitionId=' + definitionId + '&nocaching=' + new Date().getTime()
             });
 
         } else if (instanceId != "") {
             request = $.ajax({
                 type: 'get',
-                url: '${base!}/flowDesign/admin/process-instances/' + instanceId + '/model-json?processDefinitionId=' + definitionId + '&nocaching=' + new Date().getTime()
+                url: '/flowDesign/admin/process-instances/' + instanceId + '/model-json?processDefinitionId=' + definitionId + '&nocaching=' + new Date().getTime()
             });
 
         } else {
             request = $.ajax({
                 type: 'get',
-                url: '${base!}/flowDesign/admin/process-definitions/' + definitionId + '/model-json?nocaching=' + new Date().getTime()
+                url: '/flowDesign/admin/process-definitions/' + definitionId + '/model-json?nocaching=' + new Date().getTime()
             });
         }
 
@@ -182,5 +184,6 @@ layout("/layouts/blank.html",{title:title}){
     _showProcessDiagram();
 
 </script>
-
+</body>
+</html>
 

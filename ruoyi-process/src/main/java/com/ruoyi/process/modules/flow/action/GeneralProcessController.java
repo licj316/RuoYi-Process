@@ -14,15 +14,18 @@ import com.ruoyi.framework.util.ShiroUtils;
 import com.ruoyi.process.core.plugin.flowable.dto.FlowSubmitInfoDTO;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskFormStatusEnum;
+import com.ruoyi.process.core.plugin.flowable.enums.TaskStatusEnum;
 import com.ruoyi.process.core.plugin.flowable.service.FlowProcessDefinitionService;
 import com.ruoyi.process.core.plugin.flowable.service.FlowTaskService;
 import com.ruoyi.process.core.plugin.flowable.util.FlowUtils;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.modules.flow.biz.GeneralFlowBiz;
 import com.ruoyi.process.modules.flow.service.FlowCustomQueryService;
+import com.ruoyi.process.modules.flow.vo.SaveAuditVO;
 import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.engine.RepositoryService;
@@ -36,6 +39,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -67,18 +71,25 @@ public class GeneralProcessController extends BaseProcessController {
 
     @GetMapping("/form")
     public String form(HttpServletRequest request, ModelMap modelMap) {
+        String taskId = request.getParameter("taskId");
+        String procInsId = request.getParameter("procInsId");
         String procDefId = request.getParameter("procDefId");
         String procDefKey = request.getParameter("procDefKey");
         String procDefversionStr = request.getParameter("procDefversion");
+        String status = request.getParameter("status");
         Integer procDefversion = null;
         if(StringUtils.isNotBlank(procDefversionStr)) {
             procDefversion = Integer.valueOf(procDefversionStr);
         }
-        FlowTaskVO flowTaskVO = FlowTaskVO.builder().procDefId(procDefId).procDefKey(procDefKey).procDefversion(procDefversion).build();
-        SysUser sessionUserAccount = getCurrUser();
+        FlowTaskVO flowTaskVO = FlowTaskVO.builder().taskId(taskId).procInsId(procInsId).procDefId(procDefId).procDefKey(procDefKey).procDefversion(procDefversion).build();
+        if(StringUtils.isNotBlank(status)) {
+            flowTaskVO.setStatus(TaskStatusEnum.valueOf(status));
+        }
+
+        SysUser currUser = getCurrUser();
 
         if (Strings.isNotBlank(flowTaskVO.getTaskId())) {
-            FlowUtils.setFlowTaskVo(flowTaskVO, flowTaskService.getTaskOrHistoryTask(flowTaskVO.getTaskId()), sessionUserAccount.getUserName());
+            FlowUtils.setFlowTaskVo(flowTaskVO, flowTaskService.getTaskOrHistoryTask(flowTaskVO.getTaskId()), String.valueOf(currUser.getUserId()));
             if (flowTaskVO.getProcInsId() != null) {
                 // 设置业务表ID
                 flowTaskVO.setBusinessId(flowProcessDefinitionService.getBusinessKeyId(flowTaskVO.getProcInsId()));
@@ -98,7 +109,7 @@ public class GeneralProcessController extends BaseProcessController {
         nutMap.put("formPage", formPage);
         nutMap.put("flow", flowTaskVO);
         nutMap.put("title", generalFlowBiz.getFlowName(flowTaskVO));
-        nutMap.put("formData", generalFlowBiz.loadFormData(flowTaskVO, sessionUserAccount));
+        nutMap.put("formData", generalFlowBiz.loadFormData(flowTaskVO, currUser));
         nutMap.put("status", TaskFormStatusEnum.EDIT);
         if (flowTaskVO.isFinishTask()) {
             nutMap.put("status", TaskFormStatusEnum.VIEW);
@@ -200,30 +211,31 @@ public class GeneralProcessController extends BaseProcessController {
     /**
      * 启动流程--工单执行（完成任务）
      *
-     * @param formData
-     * @param flowTaskVO
+     * @param data
      * @return
      */
     @RequestMapping("/saveAudit")
 //    @Aop(TransAop.READ_COMMITTED)
     @ResponseBody
-    public AjaxResult saveAudit(@Param("::form") Map formData, @Param("::flow") FlowTaskVO flowTaskVO) {
-        SysUser sessionUserAccount = getCurrUser();
+    public AjaxResult saveAudit(@RequestBody SaveAuditVO saveAuditVO) {
+        Map<String, Object> formData = saveAuditVO.getForm();
+        FlowTaskVO flowTaskVO = saveAuditVO.getFlow();
+        SysUser currUser = getCurrUser();
         if (formData != null && flowTaskVO != null) {
             if (flowTaskVO.getTurnDown() == true && Strings.isBlank(flowTaskVO.getComment())) {
                 return AjaxResult.error("驳回意见不能为空！");
             }
             if (Strings.isNotBlank(flowTaskVO.getBusinessId())) {
-                String message = generalFlowBiz.userAudit(formData, flowTaskVO, sessionUserAccount);
+                String message = generalFlowBiz.userAudit(formData, flowTaskVO, currUser);
                 if (message != null) {
                     return AjaxResult.error(message);
                 }
-            } else if (null == sessionUserAccount.getDeptId()) {
+            } else if (null == currUser.getDeptId()) {
                 return AjaxResult.error("流程发起人不存在任何部门中！");
             } else {
-//                String s = sysUserService.selectUserRoleGroup(sessionUserAccount.getUserId());
-                Set<String> roleKeySet = sysRoleService.selectRoleKeys(sessionUserAccount.getUserId());
-                String message = generalFlowBiz.start(formData, flowTaskVO, sessionUserAccount, roleKeySet);
+//                String s = sysUserService.selectUserRoleGroup(currUser.getUserId());
+                Set<String> roleKeySet = sysRoleService.selectRoleKeys(currUser.getUserId());
+                String message = generalFlowBiz.start(formData, flowTaskVO, currUser, roleKeySet);
                 return AjaxResult.success(message);
             }
             return AjaxResult.success("操作成功！");

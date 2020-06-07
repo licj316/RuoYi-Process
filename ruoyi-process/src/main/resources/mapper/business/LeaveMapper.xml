@@ -9,6 +9,9 @@
     </select>
 
     <insert id="save" parameterType="Leave">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            SELECT REPLACE(UUID(),'-','') FROM DUAL
+        </selectKey>
         INSERT INTO OA_LEAVE (ID, REASON, START_TIME, END_TIME, LEAVE_TYPE, DEPT_LEAD_TEXT, HR_TEXT, GENERAL_MANAGER_TEXT, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, REMARK)
         VALUES(#{id}, #{reason}, #{startTime}, #{endTime}, #{leaveType}, #{deptLeadText}, #{hrText}, #{generalManagerText}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remark})
     </insert>

@@ -80,30 +80,30 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
     }
 
     @Override
-    public String start(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount, Set<String> roleCodes) {
+    public String start(Map formData, FlowTaskVO flowTaskVO, SysUser currUser, Set<String> roleCodes) {
         // 设置当前流程任务办理人
-        Authentication.setAuthenticatedUserId(sessionUserAccount.getUserName());
+        Authentication.setAuthenticatedUserId(String.valueOf(currUser.getUserId()));
         ExternalFormExecutor executor = getExternalFormExecutor(flowTaskVO.getProcDefId());
         Map<String, Object> variables = Maps.newHashMap();
         variables.put(FlowConstant.FORM_DATA, formData);
         variables.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
-        flowTaskService.setValuedDataObject(variables, flowTaskVO.getProcDefId(), formData, sessionUserAccount, false);
+        flowTaskService.setValuedDataObject(variables, flowTaskVO.getProcDefId(), formData, currUser, false);
         if (Strings.isBlank(formData.getOrDefault(FlowConstant.PRIMARY_KEY, "").toString()) && Strings.isBlank(flowTaskVO.getTaskId())) {
             flowTaskVO.setComment("[发起任务]");
-            formData = executor.start(formData, flowTaskVO, sessionUserAccount);
+            formData = executor.start(formData, flowTaskVO, currUser);
             //存储最新的formData
             variables.put(FlowConstant.FORM_DATA, formData);
             String primaryKeyId = formData.getOrDefault(FlowConstant.PRIMARY_KEY, "").toString();
             if (Strings.isBlank(primaryKeyId)) {
                 throw new RuntimeException("业务ID不能为空");
             }
-            String procIns = flowTaskService.startProcess(flowTaskVO.getProcDefKey(), primaryKeyId, variables, sessionUserAccount.getUserName(), sessionUserAccount.getDeptId(), roleCodes);
+            String procIns = flowTaskService.startProcess(flowTaskVO.getProcDefKey(), primaryKeyId, variables, currUser.getUserId().toString(), currUser.getDeptId(), roleCodes);
             return "流程已启动！流水号：" + procIns;
         } else {
             //重申
             flowTaskVO.setReaffirm(true);
             // 完成流程任务
-            this.userAudit(formData, flowTaskVO, sessionUserAccount);
+            this.userAudit(formData, flowTaskVO, currUser);
             return MessageFormat.format("流程已[0]", (flowTaskVO.isPass() ? "[重申] " : "[销毁] "));
         }
     }

@@ -18,6 +18,7 @@ import com.ruoyi.system.domain.SysRole;
 import com.ruoyi.system.domain.SysUser;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.flowable.common.engine.impl.identity.Authentication;
+import org.flowable.engine.RuntimeService;
 import org.nutz.ioc.loader.annotation.Inject;
 import org.nutz.ioc.loader.annotation.IocBean;
 import org.nutz.lang.Strings;
@@ -25,11 +26,13 @@ import org.nutz.lang.util.NutMap;
 import org.nutz.mvc.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,6 +49,9 @@ public class FlowTaskController extends BaseProcessController{
 
     @Autowired
     FlowTaskService flowTaskService;
+
+    @Autowired
+    RuntimeService runtimeService;
 
     @Autowired
     FlowProcessDefinitionService flowProcessDefinitionService;
@@ -89,7 +95,8 @@ public class FlowTaskController extends BaseProcessController{
     }
 
     @RequestMapping("/diagramViewer")
-    public String diagramViewer(@RequestParam("definitionId") String definitionId, @RequestParam("instanceId") String instanceId, @RequestParam("hisInsId") String hisInsId, HttpServletRequest request) {
+    public String diagramViewer(@RequestParam("definitionId") String definitionId, @RequestParam(value = "instanceId", required = false) String instanceId,
+                                @RequestParam(value = "hisInsId", required = false) String hisInsId, HttpServletRequest request) {
         request.setAttribute("definitionId", Strings.sNull(definitionId));
         request.setAttribute("instanceId", Strings.sNull(instanceId));
         request.setAttribute("hisInsId", Strings.sNull(hisInsId));
@@ -106,7 +113,7 @@ public class FlowTaskController extends BaseProcessController{
     @RequestMapping("/hasSentData")
 	@ResponseBody
     public TableDataInfo hasSentDataList(FlowTaskVO flowTaskVO, HttpServletRequest request, HttpServletResponse response) {
-        List<FlowTaskVO> flowTaskVOList = flowTaskService.hasSentList(getCurrUser().getUserName());
+        List<FlowTaskVO> flowTaskVOList = flowTaskService.hasSentList(String.valueOf(getCurrUser().getUserId()));
         return getDataTable(flowTaskVOList);
     }
 
@@ -118,10 +125,9 @@ public class FlowTaskController extends BaseProcessController{
      * @RequestParam endAct    结束活动节点名称
      */
     @RequestMapping("/histoicFlow")
-    public String histoicFlow(@RequestParam("procInsId") String procInsId, @RequestParam("startAct") String startAct, @RequestParam("endAct") String endAct) {
-        NutMap data = NutMap.NEW();
+    public String histoicFlow(@RequestParam("procInsId") String procInsId, @RequestParam("startAct") String startAct, @RequestParam("endAct") String endAct, ModelMap modelMap) {
         if (Strings.isNotBlank(procInsId)) {
-            data.setv("histoicFlowList", flowTaskService.histoicFlowList(procInsId, startAct, endAct));
+            modelMap.put("histoicFlowList", flowTaskService.histoicFlowList(procInsId, startAct, endAct));
         }
         return "/view/modules/flow/task/flowTaskHistoricFlow.html";
     }
@@ -147,7 +153,7 @@ public class FlowTaskController extends BaseProcessController{
      */
     @RequestMapping("/getUserTaskExtension")
 	@ResponseBody
-    public UserTaskExtensionDTO getUserTaskExtension(String taskDefKey, String procDefId) {
+    public UserTaskExtensionDTO getUserTaskExtension(@RequestParam("taskDefKey") String taskDefKey, @RequestParam("procDefId") String procDefId) {
         //节点流程信息
         UserTaskExtensionDTO dto = flowProcessDefinitionService.getUserTaskExtension(taskDefKey, procDefId);
         if (dto == null) {
@@ -237,11 +243,16 @@ public class FlowTaskController extends BaseProcessController{
     @PostMapping("/deleteTask")
 	@ResponseBody
 //    @TryCatchMsg("删除失败！${errorMsg}")
-    public AjaxResult deleteTask(String taskId, String reason) {
+    public AjaxResult deleteTask(@RequestBody Map<String, String> params) {
+        String procInsId = params.get("procInsId");
+        String taskId = params.get("taskId");
+        String reason = params.get("reason");
+
         if (Strings.isBlank(reason)) {
             return AjaxResult.error("删除失败，请填写删除原因！");
         } else {
-            flowTaskService.deleteTask(taskId, reason);
+//            flowTaskService.deleteTask(taskId, reason);
+            runtimeService.deleteProcessInstance(procInsId, reason);
         }
         return AjaxResult.success("删除任务成功，任务ID=" + taskId);
     }

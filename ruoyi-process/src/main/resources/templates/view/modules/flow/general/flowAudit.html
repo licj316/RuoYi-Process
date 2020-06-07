@@ -66,8 +66,10 @@
             </button>
         </div>
         <ul class="nav nav-tabs" role="tablist" style="margin-top: 5px">
-            <li class="active" role="presentation"><a data-toggle="tab" href="#flowMainContainer" role="tab" th:text="${title}"></a></li>
-            <li role="presentation" th:if="${flow.businessId} ne null"><a data-toggle="tab" href="#informationContainer" role="tab">流转信息</a></li>
+            <li class="active" role="presentation"><a data-toggle="tab" href="#flowMainContainer" role="tab"
+                                                      th:text="${title}"></a></li>
+            <li role="presentation" th:if="${flow.businessId} ne null"><a data-toggle="tab" href="#informationContainer"
+                                                                          role="tab">流转信息</a></li>
             <li role="presentation"><a data-toggle="tab" href="#diagramContainer" role="tab">流程图</a></li>
         </ul>
         <div class="tab-content">
@@ -158,7 +160,7 @@
 
     var signatureInit = false;
 
-    var flowData;
+    var flowFormData;
 
     function handleInit() {
         flow.taskId = $("#flow_taskId").val();
@@ -172,18 +174,19 @@
         flowEditStatus = $("#flow_edit_status").val();
         setPageData();
         if (flow.businessId != undefined && flow.businessId.length > 0) {
-            $.operate.post(prefix + "/general/flow/process/loadFormData", {flow: this.flow}, function (result) {
-                if (result.ok) {
-                    formData = result.data;
+            axios.post("/general/flow/process/loadFormData", {flow: this.flow}).then(function (res) {
+                if (res.ok) {
+                    flowFormData = res.data;
                     setPageData();
                 }
-            });
+            }).catch(reason => console.log(reason));
+
         }
-        $.operate.post("/flowTask/getUserTaskExtension", {
-            taskDefKey: this.flow.taskDefKey,
-            procDefId: this.flow.procDefId
-        }, function (data) {
-            extensionProperty = data;
+        axios.post('/flowTask/getUserTaskExtension', $.param({
+            taskDefKey: flow.taskDefKey,
+            procDefId: flow.procDefId
+        }, {arrayFormat: 'brackets'})).then(res => {
+            extensionProperty = res;
             var showReplyOpinion = true;
             if (extensionProperty.replyOpinion == false || flowEditStatus == 'EDIT' || flowEditStatus == 'VIEW') {
                 //不允许填写意见 或者是 流程发起者步骤
@@ -197,11 +200,12 @@
             // $("#diagramTab").css({height: vm.boxMainHeight + 'px'});
             // $("#formBoxMain").css({height: vm.boxMainHeight + 'px'});
         });
+
         if (handleInitAfter != undefined) {
             handleInitAfter();
         }
         if (flow.businessId != "") {
-            var url = "/flowTask/histoicFlow?procInsId=${data.flow.procInsId}&startAct=&endAct=&t=" + new Date().getTime();
+            var url = "/flowTask/histoicFlow?procInsId=" + flow.procInsId + "&startAct=&endAct=&t=" + new Date().getTime();
             $("#histoicFlowList").attr("src", url);
         }
     }
@@ -228,11 +232,12 @@
         var status = handleSaveAuditBefor == undefined || handleSaveAuditBefor();
         if (status) {
             formDataSubmit = true;
-            $.operate.post("/general/flow/process/saveAudit", {
-                form: formData,
+            axios.post("/general/flow/process/saveAudit", {
+                form: getFormData(),
                 flow: flow
-            }, function (data) {
-                $.modal.alert(data)
+            }).then(data => {
+                debugger;
+                $.modal.alert(data.msg)
                 if (data.ok) {
                     setTimeout(function () {
                         window.parent.layer.closeAll()
@@ -240,7 +245,7 @@
                 } else {
                     fromDataSubmit = false;
                 }
-            }, "JSON");
+            });
         } else {
             console.info("校验失败！")
         }
@@ -400,6 +405,11 @@
 
     function handleClose() {
         $.modal.closeTab();
+        try {
+            $.modal.close();
+        } catch (e) {
+            console.info(e);
+        }
     }
 
     function handleWritingSignature() {
@@ -429,8 +439,8 @@
     }
 
     function setPageData() {
-        console.info(flowData);
-        flowData = {
+        console.info(flowFormData);
+        flowFormData = {
             leaveType: "1",
             title: "我要请假",
             reason: "最近加班太多了",
@@ -447,13 +457,13 @@
             switch (ele.type) {
                 case 'text':
                 case 'textarea':
-                    ele.value = flowData[eleName];
+                    ele.value = flowFormData[eleName];
                     break;
                 case 'select-one':
-                    $(ele).val(flowData[eleName]).trigger('change');
+                    $(ele).val(flowFormData[eleName]).trigger('change');
                     break;
                 default:
-                    ele.value = flowData[eleName];
+                    ele.value = flowFormData[eleName];
             }
         });
     }

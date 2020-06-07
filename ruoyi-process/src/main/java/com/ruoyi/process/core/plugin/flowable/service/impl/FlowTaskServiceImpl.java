@@ -70,7 +70,7 @@ import java.util.*;
 @Slf4j
 public class FlowTaskServiceImpl implements FlowTaskService {
     @Autowired
-    ISysUserService userAccountService;
+    ISysUserService sysUserService;
     @Autowired
     FlowTypeService flowTypeService;
     @Autowired
@@ -304,7 +304,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                     List<HistoricProcessInstance> il = historyService.createHistoricProcessInstanceQuery().processInstanceId(procInsId).orderByProcessInstanceStartTime().asc().list();
                     if (il.size() > 0) {
                         if (Strings.isNotBlank(il.get(0).getStartUserId())) {
-                            SysUser user = userAccountService.selectUserById(Long.valueOf(il.get(0).getStartUserId()));
+                            SysUser user = sysUserService.selectUserById(Long.valueOf(il.get(0).getStartUserId()));
                             if (user != null) {
                                 flowTaskHistoricVO.setAssignee(histIns.getAssignee());
                                 flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getUserId()));
@@ -316,7 +316,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                 if ("userTask".equals(histIns.getActivityType())) {
                     // 获取任务执行人名称
                     if (Strings.isNotBlank(histIns.getAssignee())) {
-                        SysUser user = userAccountService.selectUserById(Long.valueOf(histIns.getAssignee()));
+                        SysUser user = sysUserService.selectUserById(Long.valueOf(histIns.getAssignee()));
                         if (user != null) {
                             flowTaskHistoricVO.setAssignee(histIns.getAssignee());
                             flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getUserId()));
@@ -330,7 +330,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                             Collections.reverse(commentList);
                             List<FlowCommentVO> flowComments = new ArrayList<>();
                             commentList.forEach(comment -> {
-                                SysUser user = userAccountService.selectUserById(Long.valueOf(histIns.getAssignee()));
+                                SysUser user = sysUserService.selectUserById(Long.valueOf(histIns.getAssignee()));
                                 FlowCommentVO commentVO = FlowCommentVO.builder().time(comment.getTime()).userId(comment.getUserId()).userDesc(MessageFormat.format("{0}({1})", user.getUserName(), user.getUserId())).fullMessage(comment.getFullMessage()).build();
                                 commentVO.setFlowAttachments(this.getCommentAttachmentList(comment.getUserId(), attachmentList));
                                 commentVO.setHandWritingSignatureAttachment(this.getCommentHandWritingSignature(comment.getUserId(), attachmentList));

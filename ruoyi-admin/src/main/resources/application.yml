@@ -64,6 +64,8 @@ spring:
   jackson:
     time-zone: GMT+8
     date-format: yyyy-MM-dd HH:mm:ss
+    deserialization:
+      READ_UNKNOWN_ENUM_VALUES_AS_NULL: true
   profiles:
     active: druid
   # 文件上传

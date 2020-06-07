@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('已办任务')"/>
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 select-table table-striped">
+            <table id="bootstrap-table"></table>
+        </div>
+    </div>
+</div>
+<th:block th:include="include :: footer"/>
+<script th:inline="javascript">
+    var prefix = ctx + "flowTask";
+
+    $(function () {
+        var options = {
+            url: prefix + "/historicData",
+            sortName: "createTime",
+            sortOrder: "desc",
+            modalName: "参数",
+            columns: [
+                {
+                    checkbox: true
+                },
+                {
+                    field: 'numbers',
+                    title: '序号'
+                }, {
+                    field: 'categoryName',
+                    title: '流程分类'
+                },
+                {
+                    field: 'taskTitle',
+                    title: '标题'
+                },
+                {
+                    field: 'procDefname',
+                    title: '流程名称'
+                },
+                {
+                    field: 'taskName',
+                    title: '我已办环节'
+                },
+                {
+                    field: 'processFinished',
+                    title: '流程状态',
+                    formatter: function (value, row, index) {
+                        return value ? "<span style='color: #0080ff'>已结束</span>" : "<span>未结束</span>";
+                    }
+                },
+                {
+                    field: 'version',
+                    title: '流程版本',
+                    formatter: function (value, row, index) {
+                        return 'V:' + row.procDefversion;
+                    }
+                },
+                {
+                    field: 'createTime',
+                    title: '步骤开始时间'
+                },
+                {
+                    field: 'endDate',
+                    title: '步骤完成时间'
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function (value, row, index) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" ' +
+                            'onclick="handleView(\'' + row.taskId + '\',\'' + row.procInsId + '\',\'' + row.procDefId + '\', \'' + row.status + '\')"><i class="fa fa-plus"></i>详情查看</a>');
+                        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" ' +
+                            'onclick="handleDiagramViewer(\'' + row.procDefId + '\',\'' + row.procInsId + '\')"><i class="fa fa-plus"></i>跟踪</a>');
+                        return actions.join('');
+                    }
+                }]
+        };
+        $.table.init(options);
+    });
+
+    function handleView(taskId, procInsId, procDefId, status) {
+        $.modal.open("详情查看", '/general/flow/process/form?taskId=' + taskId + '&procInsId=' + procInsId
+            + '&procDefId=' + procDefId + '&status=' + status);
+    }
+
+    function handleDiagramViewer(procDefId, procInsId) {
+        $.modal.open("流程图查看", "/flowTask/diagramViewer?definitionId=" + procDefId + "&hisInsId=" + procInsId);
+    }
+</script>
+</body>
+</html>

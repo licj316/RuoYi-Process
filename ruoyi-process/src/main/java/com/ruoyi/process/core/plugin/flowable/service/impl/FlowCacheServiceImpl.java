@@ -60,13 +60,13 @@ public class FlowCacheServiceImpl implements FlowCacheService {
     @Override
     public Deployment getDeploymentCache(String deploymentId) {
         String key = RedisHelper.buildRediskey(FLOW_ABLE_CACHE, deploymentId);
-        if (redisHelper.exists(key)) {
-            return redisHelper.getBySerializable(key);
-        } else {
+//        if (redisHelper.exists(key)) {
+//            return redisHelper.getBySerializable(key);
+//        } else {
             Deployment deployment = repositoryService.createDeploymentQuery().deploymentId(deploymentId).singleResult();
             redisHelper.setNXSerializable(key, deployment, RedisHelper.DEFAULT_SECOND);
             return deployment;
-        }
+//        }
     }
 
     @Override
