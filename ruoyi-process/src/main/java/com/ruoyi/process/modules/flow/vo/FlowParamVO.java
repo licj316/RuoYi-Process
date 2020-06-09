@@ -4,7 +4,7 @@ import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 
 import java.util.Map;
 
-public class SaveAuditVO {
+public class FlowParamVO {
 
 	Map<String, Object> form;
 	FlowTaskVO flow;

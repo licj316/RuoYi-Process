@@ -21,22 +21,25 @@
     <!-- 流程页面按钮区域 -->
     <div id="container">
         <!-- 审批意见 -->
-        <div class="row comment-box" id="replyOpinion" th:if="${#strings.equals(status, 'AUDIT')}">
-            <label class="control-label col-sm-12" id="replyOpinionName">审批意见</label>
-            <div class="col-sm-12">
-                <textarea class="form-control required" name="flowComment" rows="3" style="resize: none"></textarea>
-            </div>
-        </div>
+        <!--        <div class="row comment-box" id="replyOpinion" th:if="${#strings.equals(status, 'AUDIT')}">-->
+        <!--            <label class="control-label col-sm-12" id="replyOpinionName">审批意见</label>-->
+        <!--            <div class="col-sm-12">-->
+        <!--                <textarea class="form-control required" name="flowComment" rows="3" style="resize: none"></textarea>-->
+        <!--            </div>-->
+        <!--        </div>-->
         <!-- 按钮区域 -->
         <div class="footer-btns">
             <button th:if="${#strings.equals(status, 'EDIT')}" class="btn btn-primary " type="button"
-                    onclick="handleSave(true)"><i class="fa fa-check"></i>&nbsp;发起任务
+                    onclick="handleSave()"><i class="fa fa-check"></i>&nbsp;保存
+            </button>
+            <button th:if="${#strings.equals(status, 'EDIT')}" class="btn btn-primary " type="button"
+                    onclick="handleSave()"><i class="fa fa-check"></i>&nbsp;发起任务
             </button>
             <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary " type="button"
-                    onclick="handleSave(true)"><i class="fa fa-check"></i>&nbsp;<span id="flowAgreeButtonName">同意</span>
+                    onclick="handleSubmit()"><i class="fa fa-check"></i>&nbsp;<span id="flowAgreeButtonName">提交</span>
             </button>
             <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-danger " type="button"
-                    onclick="handleSave(false)"><i class="fa fa-times"></i>&nbsp;<span
+                    onclick="handleReject()"><i class="fa fa-times"></i>&nbsp;<span
                     id="flowRefuseButtonName">拒绝</span></button>
             <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning " type="button"
                     onclick="handleBackToStep()" style="display: none">
@@ -56,11 +59,11 @@
             <!-- th:if="${extensionProperty.handwritingSignature}" -->
             <!-- th:if="${flow.handWritingSignatureData==''}" -->
             <!-- <span>查看签字</span>-->
-            <button th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleWritingSignature()"
-                    class="btn btn-sm btn-warning" type="button">
-                <i class="fa fa-edit"></i>
-                <span id="writingSignatureBtnText">手写签字</span>
-            </button>
+<!--            <button th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleWritingSignature()"-->
+<!--                    class="btn btn-sm btn-warning" type="button">-->
+<!--                <i class="fa fa-edit"></i>-->
+<!--                <span id="writingSignatureBtnText">手写签字</span>-->
+<!--            </button>-->
             <button onclick="handleClose()" class="btn btn-sm btn-default" type="button">
                 <i class="fa fa-close"></i>关闭页面
             </button>
@@ -89,12 +92,91 @@
         <div>
             <!-- 选择退回节点 -->
             <div id="callBackNodes" style="display: none;padding: 8px">
-                <!-- TODO 选择退回节点 -->
-                <select class="form-control" id="backToTaskDefKey">
-                    <!--                    <option value="">请选择</option>-->
-                    <!--                    <option :value="item" v-for="(item,i) in extensionProperty.callBackNodes.split(',')"-->
-                    <!--                            v-text="extensionProperty.callBackNodesDesc.split(',')[i]"></option>-->
-                </select>
+                <!-- 审批意见 -->
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5 id="backOpinionName">审批意见</h5>
+                        <div class="ibox-tools">
+                            <a class="collapse-link">
+                                <i class="fa fa-chevron-up"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="ibox-content">
+                        <textarea class="form-control required" name="flowBackComment" rows="3"
+                                  style="resize: none"></textarea>
+                    </div>
+                </div>
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>选择退回节点</h5>
+                        <div class="ibox-tools">
+                            <a class="collapse-link">
+                                <i class="fa fa-chevron-up"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="ibox-content">
+                        <div class="col-md-12" style="border: 1px solid #cccccc;" id="backNodeContainer">
+                            <div class="col-md-3" style="line-height: 48px;">
+                                节点名称：
+                            </div>
+                            <div class="col-md-9" id="backNodeName" style="line-height: 48px;">
+                                领导审批
+                            </div>
+                            <div class="col-md-3" style="line-height: 48px;">
+                                处理人：
+                            </div>
+                            <div class="col-md-9" id="backNodeAssigneContainer">
+                            </div>
+                        </div>
+                        <p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>
+                    </div>
+                </div>
+            </div>
+            <div style="display: none;padding: 8px;" id="submitNodeWin">
+                <!-- 审批意见 -->
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5 id="replyOpinionName">审批意见</h5>
+                        <div class="ibox-tools">
+                            <a class="collapse-link">
+                                <i class="fa fa-chevron-up"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="ibox-content">
+                        <textarea class="form-control required" name="flowComment" rows="3"
+                                  style="resize: none"></textarea>
+                    </div>
+                </div>
+                <!-- 下一步节点 -->
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>下一步节点</h5>
+                        <div class="ibox-tools">
+                            <a class="collapse-link">
+                                <i class="fa fa-chevron-up"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="ibox-content" id="nextNodeContainer">
+                        <div class="col-md-12" style="border: 1px solid #cccccc;">
+                            <div class="col-md-3" style="line-height: 48px;">
+                                节点名称：
+                            </div>
+                            <div class="col-md-9" id="nextNodeName" style="line-height: 48px;">
+                                领导审批
+                            </div>
+                            <div class="col-md-3" style="line-height: 48px;">
+                                处理人(<span style="color:red;">多人任一</span>)：
+                            </div>
+                            <div class="col-md-9" id="nextNodeAssigneContainer" style="line-height: 48px;">
+                            </div>
+                        </div>
+                        <p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- 签字区域-->
@@ -186,7 +268,7 @@
             taskDefKey: flow.taskDefKey,
             procDefId: flow.procDefId
         }, {arrayFormat: 'brackets'})).then(res => {
-            extensionProperty = res;
+            extensionProperty = res.data;
             var showReplyOpinion = true;
             if (extensionProperty.replyOpinion == false || flowEditStatus == 'EDIT' || flowEditStatus == 'VIEW') {
                 //不允许填写意见 或者是 流程发起者步骤
@@ -212,21 +294,75 @@
 
     handleInit();
 
-    function handleSave(pass) {
-        $.modal.confirm("确认提交并完成流程任务吗?", function () {
-            flow.pass = pass;
+    function handleSave() {
+        // TODO 保存按钮操作
+    }
+
+    // 提交按钮操作方法
+    function handleSubmit() {
+        flow.pass = true;
+        flow.turnDown = false;
+
+        var params = {form: getFormData(), flow: flow};
+        // 获取下一步节点信息
+        axios.post("/general/flow/process/getNextNode", params).then(res => {
+            let nextStepInfo = res.data.data;
+            let nodeAssigneHtmlArr = [];
+            if (!nextStepInfo.assigne) {
+                nodeAssigneHtmlArr.push("未指定");
+            } else {
+                // TODO 需要拿到下一步处理人列表
+                nodeAssigneHtmlArr.push('    <div class="radio check-box">');
+                nodeAssigneHtmlArr.push('        <label><input type="radio" checked="" value="option2" name="nextStepAssigne"> <i></i> 星尘</label>');
+                nodeAssigneHtmlArr.push('    </div>');
+            }
+            $("#nextNodeName").html(nextStepInfo.name);
+            $("#nextNodeAssigneContainer").html(nodeAssigneHtmlArr.join(""));
+
+            // 显示流程提交窗口
+            layer.open({
+                type: 1,
+                title: "提交下一步",
+                area: ['800px', '600px'],
+                content: $("#submitNodeWin"),
+                btn: ['确定', '取消'],
+                btn1: function (index) {
+                    if (formDataSubmit == false) {
+                        handleDoSaveAudit();
+                    } else {
+                        $.modal.msg('数据正在提交，请稍候...')
+                    }
+                    layer.close(index);
+                },
+                success: function (layero) {
+                    layer.setTop(layero);
+                }
+            });
+        });
+    }
+
+    // 拒绝按钮操作方法
+    function handleReject() {
+        $.modal.confirm("确认拒绝并结束流程么?", function () {
+            flow.pass = false;
             flow.turnDown = false;
             if (formDataSubmit == false) {
-                if (extensionProperty.dynamicFreeChoiceNextReviewerMode && flow.delegateStatus == '') {
-                    handleChoiceNextReviewerUser();
-                } else {
-                    handleDoSaveAudit();
-                }
+                handleDoSaveAudit();
             } else {
                 $.modal.msg('数据正在提交，请稍候...')
             }
         });
     }
+
+            // if (formDataSubmit == false) {
+            //     if (extensionProperty.dynamicFreeChoiceNextReviewerMode && flow.delegateStatus == '') {
+            //         handleChoiceNextReviewerUser();
+            //     } else {
+            //         handleDoSaveAudit();
+            //     }
+            // } else {
+            //     $.modal.msg('数据正在提交，请稍候...')
+            // }
 
     function handleDoSaveAudit() {
         var status = handleSaveAuditBefor == undefined || handleSaveAuditBefor();
@@ -236,7 +372,6 @@
                 form: getFormData(),
                 flow: flow
             }).then(data => {
-                debugger;
                 $.modal.alert(data.msg)
                 if (data.ok) {
                     setTimeout(function () {
@@ -251,18 +386,17 @@
         }
     }
 
+
     function handleChoiceNextReviewerUser() {
         var post = {form: getFormData(), flow: flow};
-        $.operate.post("/general/flow/process/getNextNode", post, function (data) {
-            if (data.ok) {
+        axios.post("/general/flow/process/getNextNode", post).then(res => {
+            let data = res.data;
+            if (data.code == 0) {
                 var opt = {
                     option: {
-                        url: "/general/flow/process/choiceNextReviewerUser",
+                        url: "/general/flow/process/choiceNextReviewerUser?nextNodeId=" + data.data,
                         method: "post",
-                        param: {
-                            flow: vm.flow,
-                            nextNodeId: data.data
-                        },
+                        param: flow,
                         key: "query",
                         checkbox: false,
                         openSearch: false,
@@ -297,26 +431,48 @@
     }
 
     function handleBackToStep() {
-        $.modal.confirm("确认回退吗？", function () {
-            if (extensionProperty.callBackType == 'FREE_STEP') {
-                layer.open({
-                    type: 1,
-                    title: "请选择回退节点",
-                    area: ['300px', '150px'],
-                    content: $("#callBackNodes"),
-                    btn: ['确定', '取消'],
-                    btn1: function (index) {
-                        vm.handleDoBackToStep();
-                        layer.close(index);
-                    },
-                    success: function (layero) {
-                        layer.setTop(layero);
-                    }
-                });
-            } else {
-                handleDoBackToStep()
+        if (extensionProperty.callBackType == 'FREE_STEP') {
+            // 自由回退
+            let backNodeHtmlArr = [];
+            let callBackNodes = extensionProperty.callBackNodes.split(",");
+            let callBackNodesDesc = extensionProperty.callBackNodesDesc.split(",");
+            for(let i = 0; i< callBackNodes.length;i++) {
+                // TODO 选择回退节点单选框未添加
+                backNodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
+                backNodeHtmlArr.push('    节点名称：');
+                backNodeHtmlArr.push('</div>');
+                backNodeHtmlArr.push('<div class="col-md-9" id="backNodeName" style="line-height: 48px;">');
+                backNodeHtmlArr.push(callBackNodesDesc[i]);
+                backNodeHtmlArr.push('</div>');
+                backNodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
+                backNodeHtmlArr.push('    处理人：');
+                backNodeHtmlArr.push('</div>');
+                backNodeHtmlArr.push('<div class="col-md-9" id="backNodeAssigneContainer" style="line-height: 48px;">');
+                backNodeHtmlArr.push('暂无')
+                backNodeHtmlArr.push('</div>');
             }
-        });
+            $("#backNodeContainer").html(backNodeHtmlArr.join(""));
+
+            layer.open({
+                type: 1,
+                title: "请选择回退节点",
+                area: ['300px', '150px'],
+                content: $("#callBackNodes"),
+                btn: ['确定', '取消'],
+                btn1: function (index) {
+                    // TODO 动态设置选择的节点
+                    flow.backToTaskDefKey = 'fillInForm';
+                    handleDoBackToStep();
+                    layer.close(index);
+                },
+                success: function (layero) {
+                    layer.setTop(layero);
+                }
+            });
+        } else {
+            // 划线回退
+            handleDoBackToStep()
+        }
     }
 
     function handleDoBackToStep() {

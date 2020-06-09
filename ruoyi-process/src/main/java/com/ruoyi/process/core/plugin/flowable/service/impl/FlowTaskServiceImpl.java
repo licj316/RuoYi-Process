@@ -57,6 +57,9 @@ import org.nutz.lang.stream.StringInputStream;
 import org.nutz.trans.Trans;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
@@ -750,12 +753,13 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      *
      * @param formData
      * @param flowTaskVO
-     * @param sessionUserAccount
+     * @param currUser
      * @return
      * @date 2019-10-09
      */
     @Override
-    public UserTask getNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public UserTask getNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) {
         UserTask userTask;
         try {
             Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
@@ -765,10 +769,10 @@ public class FlowTaskServiceImpl implements FlowTaskService {
             Map<String, Object> vars = Maps.newHashMap();
             vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
             vars.put(FlowConstant.FORM_DATA, formData);
-            setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, sessionUserAccount, true);
+            setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, currUser, true);
             userTask = managementService.executeCommand(new FindNextUserTaskNodeCmd(execution, bpmnModel, vars));
             //将寻找下一节点执行产生的的数据进行回滚
-            Trans.rollback();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         } catch (Exception e) {
             throw new RuntimeException("事务回滚失败！" + e.getMessage());
         }
@@ -780,12 +784,13 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      *
      * @param formData
      * @param flowTaskVO
-     * @param sessionUserAccount
+     * @param currUser
      * @return
      * @date 2019-10-09
      */
     @Override
-    public UserTask previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) throws Exception {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public UserTask previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) throws Exception {
         try {
             Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
             String executionId = task.getExecutionId();
@@ -794,11 +799,10 @@ public class FlowTaskServiceImpl implements FlowTaskService {
             Map<String, Object> vars = Maps.newHashMap();
             vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
             vars.put(FlowConstant.FORM_DATA, formData);
-            Trans.begin();
-            setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, sessionUserAccount, true);
+            setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, currUser, true);
             return managementService.executeCommand(new FindNextUserTaskNodeCmd(execution, bpmnModel, vars));
         } finally {
-            Trans.clear(true);
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
     }
 

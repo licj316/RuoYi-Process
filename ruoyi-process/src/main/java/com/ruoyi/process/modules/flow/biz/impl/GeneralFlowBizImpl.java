@@ -170,6 +170,7 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
                     needCheckFlowNextReviewerAssignee = true;
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 throw new RuntimeException("事务无法打开！");
             }
             if (needCheckFlowNextReviewerAssignee && Strings.isBlank(flowTaskVO.getFlowNextReviewerAssignee())) {

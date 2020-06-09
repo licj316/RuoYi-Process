@@ -81,14 +81,7 @@ spring:
       # 热部署开关
       enabled: true
 
-# RuoYi-Process 模块
-# 解决启动报错：class path resource [processes/] cannot be resolved to URL because it does not exist
-  flowable:
-    check-process-definitions: false
-    # 检测身份信息表是否存在
-    db-identity-used: false
-#    database-schema: generation
-#    database-schema-update: true
+
 
 # MyBatis
 mybatis:
@@ -148,3 +141,24 @@ xss:
   excludes: /system/notice/*
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# RuoYi-Process 模块
+flowable:
+  check-process-definitions: false
+  # 检测身份信息表是否存在
+  db-identity-used: false
+  async-executor-activate: false
+  process:
+    async:
+      executor:
+        auto-activate: false
+    async-history:
+      executor:
+        auto-activate: false
+  cmmn:
+    async:
+      executor:
+        auto-activate: false
+  async-history-executor-activate: false
+#    database-schema: generation
+#    database-schema-update: true

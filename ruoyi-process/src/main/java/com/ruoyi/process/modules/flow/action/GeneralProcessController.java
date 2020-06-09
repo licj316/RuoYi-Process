@@ -14,6 +14,7 @@ import com.ruoyi.framework.util.ShiroUtils;
 import com.ruoyi.process.core.plugin.flowable.dto.FlowSubmitInfoDTO;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskFormStatusEnum;
+import com.ruoyi.process.core.plugin.flowable.enums.TaskReviewerScopeEnum;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskStatusEnum;
 import com.ruoyi.process.core.plugin.flowable.service.FlowProcessDefinitionService;
 import com.ruoyi.process.core.plugin.flowable.service.FlowTaskService;
@@ -21,11 +22,10 @@ import com.ruoyi.process.core.plugin.flowable.util.FlowUtils;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.modules.flow.biz.GeneralFlowBiz;
 import com.ruoyi.process.modules.flow.service.FlowCustomQueryService;
-import com.ruoyi.process.modules.flow.vo.SaveAuditVO;
+import com.ruoyi.process.modules.flow.vo.FlowParamVO;
 import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.engine.RepositoryService;
@@ -39,8 +39,8 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -126,17 +126,28 @@ public class GeneralProcessController extends BaseProcessController {
     /**
      * 取得流程下一节点
      *
-     * @param formData
-     * @param flowTaskVO
+     * @param flowParamVO
      * @return
      */
     @PostMapping("/getNextNode")
 	@ResponseBody
-    public AjaxResult getNextNode(@Param("::form") Map formData, @Param("::flow") FlowTaskVO flowTaskVO) {
+    public AjaxResult getNextNode(@RequestBody FlowParamVO flowParamVO) {
         try {
+            Map<String, Object> formData = flowParamVO.getForm();
+            FlowTaskVO flowTaskVO = flowParamVO.getFlow();
             UserTask userTask = flowTaskService.previewNextNode(formData, flowTaskVO, getCurrUser());
+            Map<String, Object> resMap = new HashMap<>();
+            resMap.put("id", userTask.getId());
+            resMap.put("name", userTask.getName());
+            resMap.put("assignee", userTask.getAssignee());
+            resMap.put("candidateGroups", userTask.getCandidateGroups());
+            resMap.put("candidateUsers", userTask.getCandidateUsers());
+            // TODO 需要拿到下一步处理人列表
+            // UserTaskExtensionDTO userTaskExtension = FlowUtils.getUserTaskExtension(userTask);
+            // TaskReviewerScopeEnum taskReviewerScope = userTaskExtension.getTaskReviewerScope();
+
             if (userTask != null) {
-                return AjaxResult.success("操作成功", userTask.getId());
+                return AjaxResult.success("操作成功", resMap);
             }
             return AjaxResult.error("下一步不是用户节点");
         } catch (Exception e) {
@@ -152,7 +163,7 @@ public class GeneralProcessController extends BaseProcessController {
      */
     @PostMapping("/choiceNextReviewerUser")
     @ResponseBody
-    public TableDataInfo choiceNextReviewerUser(@Param("::flow") FlowTaskVO flowTaskVO, @Param("nextNodeId") String nextNodeId) {
+    public TableDataInfo choiceNextReviewerUser(@RequestBody FlowTaskVO flowTaskVO, @RequestParam("nextNodeId") String nextNodeId) {
         UserTaskExtensionDTO dto = flowProcessDefinitionService.getUserTaskExtension(flowTaskVO.getTaskDefKey(), flowTaskVO.getProcDefId());
         if (dto.isDynamicFreeChoiceNextReviewerMode()) {
             if (Strings.isNotBlank(nextNodeId)) {
@@ -167,13 +178,14 @@ public class GeneralProcessController extends BaseProcessController {
     /**
      * 流程回退
      *
-     * @param formData
-     * @param flowTaskVO
+     * @param backToStepVO
      */
     @PostMapping("/backToStep")
 //    @Aop(TransAop.READ_COMMITTED)
     @ResponseBody
-    public AjaxResult backToStep(@Param("::form") Map formData, @Param("::flow") FlowTaskVO flowTaskVO) {
+    public AjaxResult backToStep(@RequestBody FlowParamVO backToStepVO) {
+        Map formData = backToStepVO.getForm();
+        FlowTaskVO flowTaskVO = backToStepVO.getFlow();
         if (formData != null && flowTaskVO != null) {
             String message = generalFlowBiz.backToStep(formData, flowTaskVO, ShiroUtils.getSysUser());
             if (Strings.isNotBlank(message)) {
@@ -188,14 +200,15 @@ public class GeneralProcessController extends BaseProcessController {
     /**
      * 加签
      *
-     * @param formData
-     * @param flowTaskVO
+     * @param flowParamVO
      */
     @PostMapping("/addMultiInstance")
 //    @Aop(TransAop.READ_COMMITTED)
     @ResponseBody
-    public AjaxResult addMultiInstance(@Param("::form") Map formData, @Param("::flow") FlowTaskVO flowTaskVO) {
+    public AjaxResult addMultiInstance(@RequestBody FlowParamVO flowParamVO) {
         SysUser sessionUserAccount = getCurrUser();
+        Map<String, Object> formData = flowParamVO.getForm();
+        FlowTaskVO flowTaskVO = flowParamVO.getFlow();
         if (formData != null && flowTaskVO != null) {
             String message = generalFlowBiz.addMultiInstance(formData, flowTaskVO, sessionUserAccount);
             if (Strings.isNotBlank(message)) {
@@ -217,9 +230,9 @@ public class GeneralProcessController extends BaseProcessController {
     @RequestMapping("/saveAudit")
 //    @Aop(TransAop.READ_COMMITTED)
     @ResponseBody
-    public AjaxResult saveAudit(@RequestBody SaveAuditVO saveAuditVO) {
-        Map<String, Object> formData = saveAuditVO.getForm();
-        FlowTaskVO flowTaskVO = saveAuditVO.getFlow();
+    public AjaxResult saveAudit(@RequestBody FlowParamVO flowParamVO) {
+        Map<String, Object> formData = flowParamVO.getForm();
+        FlowTaskVO flowTaskVO = flowParamVO.getFlow();
         SysUser currUser = getCurrUser();
         if (formData != null && flowTaskVO != null) {
             if (flowTaskVO.getTurnDown() == true && Strings.isBlank(flowTaskVO.getComment())) {
@@ -253,7 +266,7 @@ public class GeneralProcessController extends BaseProcessController {
     @PostMapping("/loadFormData")
 //    @Ok("json:{dateFormat:'yyyy-MM-dd HH:mm',nullListAsEmpty:true}")
     @ResponseBody
-    public AjaxResult loadFormData(@Param("::flow") FlowTaskVO flowTaskVO) {
+    public AjaxResult loadFormData(@RequestBody FlowTaskVO flowTaskVO) {
         SysUser sessionUserAccount = getCurrUser();
         Object formData = generalFlowBiz.loadFormData(flowTaskVO, sessionUserAccount);
         if (formData == null) {
