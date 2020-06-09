@@ -12,6 +12,7 @@ import com.ruoyi.process.core.plugin.flowable.dto.FlowSubmitInfoDTO;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.system.domain.SysUser;
+import org.flowable.engine.runtime.ProcessInstance;
 import org.nutz.lang.util.NutMap;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public interface GeneralFlowBiz {
 
     String getFormPage(FlowTaskVO flowTaskVO);
 
-    String start(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount, Set<String> sessionUserRoleCodes);
+    ProcessInstance start(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount, Set<String> sessionUserRoleCodes);
 
     String backToStep(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount);
 

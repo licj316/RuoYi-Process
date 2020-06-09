@@ -32,39 +32,36 @@
             <button th:if="${#strings.equals(status, 'EDIT')}" class="btn btn-primary " type="button"
                     onclick="handleSave()"><i class="fa fa-check"></i>&nbsp;保存
             </button>
-            <button th:if="${#strings.equals(status, 'EDIT')}" class="btn btn-primary " type="button"
-                    onclick="handleSave()"><i class="fa fa-check"></i>&nbsp;发起任务
-            </button>
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary " type="button"
+            <button th:if="${!#strings.equals(status, 'VIEW')}" class="btn btn-primary " type="button"
                     onclick="handleSubmit()"><i class="fa fa-check"></i>&nbsp;<span id="flowAgreeButtonName">提交</span>
             </button>
             <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-danger " type="button"
                     onclick="handleReject()"><i class="fa fa-times"></i>&nbsp;<span
                     id="flowRefuseButtonName">拒绝</span></button>
             <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning " type="button"
-                    onclick="handleBackToStep()" style="display: none">
+                    onclick="handleBackToStep()">
                 <i class="fa fa-undo"></i>&nbsp;
                 <span id="callBackTypeText">驳回</span><!-- 自由回退 -->
             </button>
             <!-- v-if="extensionProperty.multiInstanceNode && extensionProperty.addMultiInstance" -->
             <div th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleAddMultiInstance()"
-                 class="btn btn-sm btn-warning">
+                 class="btn btn-warning">
                 <i class="fa fa-exchange"></i>&nbsp;加签
             </div>
             <!-- th:if="${extensionProperty.connectionCallBack}" -->
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning " type="button"
-                    onclick="handleConnectionCallBackSave(false)">
-                <i class="fa fa-exchange"></i>&nbsp;驳回
-            </button>
+            <!--            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning " type="button"-->
+            <!--                    onclick="handleConnectionCallBackSave(false)">-->
+            <!--                <i class="fa fa-exchange"></i>&nbsp;驳回-->
+            <!--            </button>-->
             <!-- th:if="${extensionProperty.handwritingSignature}" -->
             <!-- th:if="${flow.handWritingSignatureData==''}" -->
             <!-- <span>查看签字</span>-->
-<!--            <button th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleWritingSignature()"-->
-<!--                    class="btn btn-sm btn-warning" type="button">-->
-<!--                <i class="fa fa-edit"></i>-->
-<!--                <span id="writingSignatureBtnText">手写签字</span>-->
-<!--            </button>-->
-            <button onclick="handleClose()" class="btn btn-sm btn-default" type="button">
+            <!--            <button th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleWritingSignature()"-->
+            <!--                    class="btn btn-sm btn-warning" type="button">-->
+            <!--                <i class="fa fa-edit"></i>-->
+            <!--                <span id="writingSignatureBtnText">手写签字</span>-->
+            <!--            </button>-->
+            <button onclick="handleClose()" class="btn btn-default" type="button">
                 <i class="fa fa-close"></i>关闭页面
             </button>
         </div>
@@ -75,12 +72,12 @@
                                                                           role="tab">流转信息</a></li>
             <li role="presentation"><a data-toggle="tab" href="#diagramContainer" role="tab">流程图</a></li>
         </ul>
-        <div class="tab-content">
+        <div class="tab-content" style="height: 1000px;">
             <div class="tab-pane active" id="flowMainContainer" role="tabpanel">
                 <div th:replace="${formPage} :: form"></div>
             </div>
             <div class="tab-pane" id="informationContainer" role="tabpanel" th:if="${flow.businessId} ne null">
-                <iframe allowtransparency-y="yes" border="0" frameborder="no" height="400px" id="histoicFlowList"
+                <iframe allowtransparency-y="yes" border="0" frameborder="no" height="1000" id="histoicFlowList"
                         marginheight="0" marginwidth="0"
                         scrolling-x="no" scrolling-y="auto" width="100%"></iframe>
             </div>
@@ -90,7 +87,7 @@
             </div>
         </div>
         <div>
-            <!-- 选择退回节点 -->
+            <!-- 选择退回节点弹出层 -->
             <div id="callBackNodes" style="display: none;padding: 8px">
                 <!-- 审批意见 -->
                 <div class="ibox float-e-margins">
@@ -103,7 +100,7 @@
                         </div>
                     </div>
                     <div class="ibox-content">
-                        <textarea class="form-control required" name="flowBackComment" rows="3"
+                        <textarea class="form-control required" id="flowBackComment" rows="3"
                                   style="resize: none"></textarea>
                     </div>
                 </div>
@@ -116,24 +113,11 @@
                             </a>
                         </div>
                     </div>
-                    <div class="ibox-content">
-                        <div class="col-md-12" style="border: 1px solid #cccccc;" id="backNodeContainer">
-                            <div class="col-md-3" style="line-height: 48px;">
-                                节点名称：
-                            </div>
-                            <div class="col-md-9" id="backNodeName" style="line-height: 48px;">
-                                领导审批
-                            </div>
-                            <div class="col-md-3" style="line-height: 48px;">
-                                处理人：
-                            </div>
-                            <div class="col-md-9" id="backNodeAssigneContainer">
-                            </div>
-                        </div>
-                        <p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>
+                    <div class="ibox-content" id="backNodeContainer">
                     </div>
                 </div>
             </div>
+            <!-- 提交下一步弹出层 -->
             <div style="display: none;padding: 8px;" id="submitNodeWin">
                 <!-- 审批意见 -->
                 <div class="ibox float-e-margins">
@@ -146,7 +130,7 @@
                         </div>
                     </div>
                     <div class="ibox-content">
-                        <textarea class="form-control required" name="flowComment" rows="3"
+                        <textarea class="form-control required" id="flowComment" rows="3"
                                   style="resize: none"></textarea>
                     </div>
                 </div>
@@ -175,6 +159,23 @@
                             </div>
                         </div>
                         <p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>
+                    </div>
+                </div>
+            </div>
+            <div style="display: none;padding: 8px;" id="rejectApplyWin">
+                <!-- 审批意见 -->
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5 id="rejectOpinionName">审批意见</h5>
+                        <div class="ibox-tools">
+                            <a class="collapse-link">
+                                <i class="fa fa-chevron-up"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="ibox-content">
+                        <textarea class="form-control required" id="flowRejectComment" rows="3"
+                                  style="resize: none"></textarea>
                     </div>
                 </div>
             </div>
@@ -327,6 +328,10 @@
                 content: $("#submitNodeWin"),
                 btn: ['确定', '取消'],
                 btn1: function (index) {
+                    flow.comment = $("#flowComment").val();
+                    if (!flow.comment) {
+                        $.modal.alert("请填写提交审批意见。");
+                    }
                     if (formDataSubmit == false) {
                         handleDoSaveAudit();
                     } else {
@@ -346,6 +351,7 @@
         $.modal.confirm("确认拒绝并结束流程么?", function () {
             flow.pass = false;
             flow.turnDown = false;
+            flow.comment = $("#flowBackComment").val();
             if (formDataSubmit == false) {
                 handleDoSaveAudit();
             } else {
@@ -354,15 +360,15 @@
         });
     }
 
-            // if (formDataSubmit == false) {
-            //     if (extensionProperty.dynamicFreeChoiceNextReviewerMode && flow.delegateStatus == '') {
-            //         handleChoiceNextReviewerUser();
-            //     } else {
-            //         handleDoSaveAudit();
-            //     }
-            // } else {
-            //     $.modal.msg('数据正在提交，请稍候...')
-            // }
+    // if (formDataSubmit == false) {
+    //     if (extensionProperty.dynamicFreeChoiceNextReviewerMode && flow.delegateStatus == '') {
+    //         handleChoiceNextReviewerUser();
+    //     } else {
+    //         handleDoSaveAudit();
+    //     }
+    // } else {
+    //     $.modal.msg('数据正在提交，请稍候...')
+    // }
 
     function handleDoSaveAudit() {
         var status = handleSaveAuditBefor == undefined || handleSaveAuditBefor();
@@ -371,9 +377,11 @@
             axios.post("/general/flow/process/saveAudit", {
                 form: getFormData(),
                 flow: flow
-            }).then(data => {
+            }).then(res => {
+                console.log("提交流程返回", res)
+                let data = res.data;
                 $.modal.alert(data.msg)
-                if (data.ok) {
+                if (data.code == 0) {
                     setTimeout(function () {
                         window.parent.layer.closeAll()
                     }, 1000);
@@ -430,38 +438,53 @@
         });
     }
 
+    // 退回
     function handleBackToStep() {
+        console.log("驳回类型", extensionProperty.callBackType);
         if (extensionProperty.callBackType == 'FREE_STEP') {
             // 自由回退
             let backNodeHtmlArr = [];
             let callBackNodes = extensionProperty.callBackNodes.split(",");
             let callBackNodesDesc = extensionProperty.callBackNodesDesc.split(",");
-            for(let i = 0; i< callBackNodes.length;i++) {
+            for (let i = 0; i < callBackNodes.length; i++) {
                 // TODO 选择回退节点单选框未添加
-                backNodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
-                backNodeHtmlArr.push('    节点名称：');
+                backNodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
+                backNodeHtmlArr.push('    <div class="col-md-12">');
+                backNodeHtmlArr.push('        <div class="radio check-box" style="padding-left: 0px;">');
+                backNodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="' + callBackNodes[i] + '" name="flowBackStepRadio"> <i></i> ' + callBackNodesDesc[i] + '</label>');
+                backNodeHtmlArr.push('        </div>');
+                backNodeHtmlArr.push('    </div>');
+                backNodeHtmlArr.push('    <div class="col-md-3" style="line-height: 48px;">');
+                backNodeHtmlArr.push('        处理人：');
+                backNodeHtmlArr.push('    </div>');
+                backNodeHtmlArr.push('    <div class="col-md-9" id="backNodeAssigneContainer" style="line-height: 48px;">');
+                backNodeHtmlArr.push('    暂无')
+                backNodeHtmlArr.push('    </div>');
                 backNodeHtmlArr.push('</div>');
-                backNodeHtmlArr.push('<div class="col-md-9" id="backNodeName" style="line-height: 48px;">');
-                backNodeHtmlArr.push(callBackNodesDesc[i]);
-                backNodeHtmlArr.push('</div>');
-                backNodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
-                backNodeHtmlArr.push('    处理人：');
-                backNodeHtmlArr.push('</div>');
-                backNodeHtmlArr.push('<div class="col-md-9" id="backNodeAssigneContainer" style="line-height: 48px;">');
-                backNodeHtmlArr.push('暂无')
-                backNodeHtmlArr.push('</div>');
+                backNodeHtmlArr.push('<p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>');
             }
+
             $("#backNodeContainer").html(backNodeHtmlArr.join(""));
 
             layer.open({
                 type: 1,
-                title: "请选择回退节点",
-                area: ['300px', '150px'],
+                title: "退回",
+                area: ['800px', '600px'],
                 content: $("#callBackNodes"),
                 btn: ['确定', '取消'],
                 btn1: function (index) {
+                    let checkedTaskKey = $("input[name=flowBackStepRadio]:checked").val();
+                    if(!checkedTaskKey) {
+                        $.modal.msg("请选择要退回到的节点。");
+                    }
+                    return;
                     // TODO 动态设置选择的节点
-                    flow.backToTaskDefKey = 'fillInForm';
+                    flow.backToTaskDefKey = 'fillForm';
+                    flow.comment = $("#flowBackComment").val();
+                    if (!flow.comment) {
+                        $.modal.alert("请填写回退审批意见。");
+                    }
+
                     handleDoBackToStep();
                     layer.close(index);
                 },
@@ -478,21 +501,24 @@
     function handleDoBackToStep() {
         if (formDataSubmit == false) {
             var status = handleBackToStepBefor == undefined || handleBackToStepBefor();
+
             if (status) {
                 fromDataSubmit = true;
-                $.operate.post("${base}/general/flow/process/backToStep", {
+                axios.post("/general/flow/process/backToStep", {
                     form: getFormData(),
                     flow: flow,
-                }, function (data) {
-                    $.modal.alert(data)
-                    if (data.ok) {
+                }).then(res => {
+                    console.log("驳回返回数据", res);
+                    let data = res.data;
+                    $.modal.alert(data.msg);
+                    if (data.code == 0) {
                         setTimeout(function () {
                             window.parent.layer.closeAll()
                         }, 1000);
                     } else {
                         formDataSubmit = false;
                     }
-                }, "JSON");
+                });
             } else {
                 console.info("校验失败！")
             }
@@ -501,6 +527,7 @@
         }
     }
 
+    // 加签
     function handleAddMultiInstance() {
         $.modal.confirm("确认加签吗？", function () {
             if (formDataSubmit == false) {

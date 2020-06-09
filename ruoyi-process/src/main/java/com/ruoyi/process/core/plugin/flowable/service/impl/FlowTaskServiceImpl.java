@@ -460,7 +460,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * @return 流程实例ID
      */
     @Override
-    public String startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleCodes) {
+    public ProcessInstance startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleCodes) {
         return startProcess(procDefKey, businessId, Maps.newHashMap(), userName, deptId, roleCodes);
     }
 
@@ -473,7 +473,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * @return 流程实例ID
      */
     @Override
-    public String startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleCodes) {
+    public ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleCodes) {
         // 设置流程变量
         if (vars == null) {
             vars = Maps.newHashMap();
@@ -483,7 +483,10 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         vars.put(FlowConstant.SUBMITTER_DEPT_ID, deptId);
         vars.put(FlowConstant.SUBMITTER_ROLE_CODES, roleCodes);
         // 启动流程
-        return runtimeService.startProcessInstanceByKey(procDefKey, businessId, vars).getId();
+        return runtimeService.startProcessInstanceByKey(procDefKey, businessId, vars);
+//        processInstance.getId();
+
+//        return "";
     }
 
     /**
@@ -661,10 +664,10 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * 流程回退
      *
      * @param flowTaskVO
-     * @param userName
+     * @param userId
      */
     @Override
-    public String backToStep(FlowTaskVO flowTaskVO, String userName) {
+    public String backToStep(FlowTaskVO flowTaskVO, String userId) {
         String taskId = flowTaskVO.getTaskId();
         String comment = flowTaskVO.getComment();
         String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
@@ -687,7 +690,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
         String processInstanceId = task.getProcessInstanceId();
         //保存任务信息
-        task.setAssignee(userName);
+        task.setAssignee(userId);
         this.addTaskComment(taskId, processInstanceId, comment);
         taskService.saveTask(task);
 

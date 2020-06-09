@@ -32,6 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.common.engine.impl.identity.Authentication;
+import org.flowable.engine.runtime.ProcessInstance;
 import org.nutz.ioc.Ioc;
 import org.nutz.ioc.loader.annotation.Inject;
 import org.nutz.ioc.loader.annotation.IocBean;
@@ -80,7 +81,7 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
     }
 
     @Override
-    public String start(Map formData, FlowTaskVO flowTaskVO, SysUser currUser, Set<String> roleCodes) {
+    public ProcessInstance start(Map formData, FlowTaskVO flowTaskVO, SysUser currUser, Set<String> roleCodes) {
         // 设置当前流程任务办理人
         Authentication.setAuthenticatedUserId(String.valueOf(currUser.getUserId()));
         ExternalFormExecutor executor = getExternalFormExecutor(flowTaskVO.getProcDefId());
@@ -88,7 +89,7 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
         variables.put(FlowConstant.FORM_DATA, formData);
         variables.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
         flowTaskService.setValuedDataObject(variables, flowTaskVO.getProcDefId(), formData, currUser, false);
-        if (Strings.isBlank(formData.getOrDefault(FlowConstant.PRIMARY_KEY, "").toString()) && Strings.isBlank(flowTaskVO.getTaskId())) {
+//        if (Strings.isBlank(formData.getOrDefault(FlowConstant.PRIMARY_KEY, "").toString()) && Strings.isBlank(flowTaskVO.getTaskId())) {
             flowTaskVO.setComment("[发起任务]");
             formData = executor.start(formData, flowTaskVO, currUser);
             //存储最新的formData
@@ -97,28 +98,29 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
             if (Strings.isBlank(primaryKeyId)) {
                 throw new RuntimeException("业务ID不能为空");
             }
-            String procIns = flowTaskService.startProcess(flowTaskVO.getProcDefKey(), primaryKeyId, variables, currUser.getUserId().toString(), currUser.getDeptId(), roleCodes);
-            return "流程已启动！流水号：" + procIns;
-        } else {
-            //重申
-            flowTaskVO.setReaffirm(true);
-            // 完成流程任务
-            this.userAudit(formData, flowTaskVO, currUser);
-            return MessageFormat.format("流程已[0]", (flowTaskVO.isPass() ? "[重申] " : "[销毁] "));
-        }
+            return flowTaskService.startProcess(flowTaskVO.getProcDefKey(), primaryKeyId, variables, currUser.getUserId().toString(), currUser.getDeptId(), roleCodes);
+
+//            return "流程已启动！流水号：" + procIns;
+//        } else {
+//            重申
+//            flowTaskVO.setReaffirm(true);
+//             完成流程任务
+//            this.userAudit(formData, flowTaskVO, currUser);
+//            return MessageFormat.format("流程已[0]", (flowTaskVO.isPass() ? "[重申] " : "[销毁] "));
+//        }
     }
 
     @Override
     public String backToStep(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
         // 设置当前流程任务办理人
-        Authentication.setAuthenticatedUserId(sessionUserAccount.getUserName());
+        Authentication.setAuthenticatedUserId(String.valueOf(sessionUserAccount.getUserId()));
         ExternalFormExecutor executor = getExternalFormExecutor(flowTaskVO.getProcDefId());
         flowTaskVO.setComment("[回退] " + flowTaskVO.getComment());
         String errorMsg = executor.backToStep(formData, flowTaskVO, sessionUserAccount);
         if (errorMsg != null) {
             return errorMsg;
         }
-        return flowTaskService.backToStep(flowTaskVO, sessionUserAccount.getUserName());
+        return flowTaskService.backToStep(flowTaskVO, String.valueOf(sessionUserAccount.getUserId()));
     }
 
     @Override

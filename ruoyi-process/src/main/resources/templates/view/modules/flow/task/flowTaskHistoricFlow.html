@@ -88,7 +88,7 @@
     .comment .comment-content {
         float: left;
         width: calc(100% - 80px);
-        height: 60px;
+        /*height: 60px;*/
         overflow: auto;
         padding: 5px;
     }
@@ -157,9 +157,9 @@
             <ul>
                 <li class="comment clearfix" th:each="comment : ${his.flowComments}">
                     <div class="clearfix">
-                        <div class="user-avatar">
-                            <img th:src="'/File/avatar?userName=' + ${comment.userId}">
-                        </div>
+<!--                        <div class="user-avatar">-->
+<!--                            <img th:src="'/File/avatar?userName=' + ${comment.userId}">-->
+<!--                        </div>-->
                         <div class="comment-content" th:text="${comment.fullMessage}"></div>
                         <div class="btns">
                         <span class="comment-user" th:text="${comment.userDesc} + '&nbsp;&nbsp;&nbsp;&nbsp;' + ${comment.time}">

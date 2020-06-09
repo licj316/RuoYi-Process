@@ -29,7 +29,10 @@ import com.ruoyi.system.service.ISysUserService;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.engine.RepositoryService;
+import org.flowable.engine.TaskService;
 import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.engine.runtime.ProcessInstance;
+import org.flowable.task.api.Task;
 import org.nutz.lang.Strings;
 import org.nutz.lang.util.NutMap;
 import org.nutz.mvc.annotation.Param;
@@ -62,6 +65,8 @@ public class GeneralProcessController extends BaseProcessController {
     FlowCustomQueryService flowCustomQueryService;
     @Autowired
     FlowTaskService flowTaskService;
+    @Autowired
+    TaskService taskService;
     @Autowired
 	RepositoryService repositoryService;
     @Autowired
@@ -220,15 +225,48 @@ public class GeneralProcessController extends BaseProcessController {
         }
     }
 
+    /**
+     * 启动流程（完成任务）
+     *
+     * @param flowParamVO
+     * @return
+     */
+    @RequestMapping("/startFlow")
+    @ResponseBody
+    public AjaxResult startFlow(@RequestBody FlowParamVO flowParamVO) {
+        Map<String, Object> formData = flowParamVO.getForm();
+        FlowTaskVO flowTaskVO = flowParamVO.getFlow();
+        SysUser currUser = getCurrUser();
+        if (formData != null && flowTaskVO != null) {
+            if (null == currUser.getDeptId()) {
+                return AjaxResult.error("流程发起人不存在任何部门中！");
+            } else {
+                Set<String> roleKeySet = sysRoleService.selectRoleKeys(currUser.getUserId());
+                ProcessInstance processInstance = generalFlowBiz.start(formData, flowTaskVO, currUser, roleKeySet);
+                Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
+
+                Map<String, Object> resMap = new HashMap<>();
+                resMap.put("taskId", task.getId());
+                resMap.put("taskName", task.getName());
+                resMap.put("taskDefKey", task.getTaskDefinitionKey());
+                resMap.put("procInsId", processInstance.getId());
+                resMap.put("procDefId", processInstance.getProcessDefinitionId());
+                resMap.put("procDefKey", processInstance.getProcessDefinitionKey());
+                resMap.put("procDefversion", processInstance.getProcessDefinitionVersion());
+                return AjaxResult.success("发起流程成功", resMap);
+            }
+        } else {
+            return AjaxResult.error("参数异常");
+        }
+    }
 
     /**
-     * 启动流程--工单执行（完成任务）
+     * 工单执行（完成任务）
      *
-     * @param data
+     * @param flowParamVO
      * @return
      */
     @RequestMapping("/saveAudit")
-//    @Aop(TransAop.READ_COMMITTED)
     @ResponseBody
     public AjaxResult saveAudit(@RequestBody FlowParamVO flowParamVO) {
         Map<String, Object> formData = flowParamVO.getForm();
@@ -243,19 +281,14 @@ public class GeneralProcessController extends BaseProcessController {
                 if (message != null) {
                     return AjaxResult.error(message);
                 }
-            } else if (null == currUser.getDeptId()) {
-                return AjaxResult.error("流程发起人不存在任何部门中！");
-            } else {
-//                String s = sysUserService.selectUserRoleGroup(currUser.getUserId());
-                Set<String> roleKeySet = sysRoleService.selectRoleKeys(currUser.getUserId());
-                String message = generalFlowBiz.start(formData, flowTaskVO, currUser, roleKeySet);
-                return AjaxResult.success(message);
             }
             return AjaxResult.success("操作成功！");
         } else {
             return AjaxResult.error("参数异常");
         }
     }
+
+
 
 
     /**

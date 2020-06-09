@@ -97,7 +97,7 @@ public interface FlowTaskService {
      * @param userName
      * @return
      */
-    String startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleCodes);
+    ProcessInstance startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleCodes);
 
     /**
      * 启动流程
@@ -107,7 +107,7 @@ public interface FlowTaskService {
      * @param userName
      * @return
      */
-    String startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleCodes);
+    ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleCodes);
 
 
     /**
