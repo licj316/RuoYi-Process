@@ -28,10 +28,13 @@ import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserRoleService;
 import com.ruoyi.system.service.ISysUserService;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.common.engine.impl.identity.Authentication;
+import org.flowable.editor.constants.StencilConstants;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.nutz.ioc.Ioc;
 import org.nutz.ioc.loader.annotation.Inject;
@@ -124,6 +127,19 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
     }
 
     @Override
+    public String submitToBackStep(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
+        // 设置当前流程任务办理人
+        Authentication.setAuthenticatedUserId(String.valueOf(sessionUserAccount.getUserId()));
+        ExternalFormExecutor executor = getExternalFormExecutor(flowTaskVO.getProcDefId());
+        flowTaskVO.setComment("[退回重提] " + flowTaskVO.getComment());
+        String errorMsg = executor.backToStep(formData, flowTaskVO, sessionUserAccount);
+        if (errorMsg != null) {
+            return errorMsg;
+        }
+        return flowTaskService.submitToBackStep(flowTaskVO, String.valueOf(sessionUserAccount.getUserId()));
+    }
+
+    @Override
     public String addMultiInstance(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
         // 设置当前流程任务办理人
         Authentication.setAuthenticatedUserId(sessionUserAccount.getUserName());
@@ -166,8 +182,8 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
             boolean needCheckFlowNextReviewerAssignee = false;
             try {
                 //此方法前不要操作数据库，该方法会回滚数据库的
-                UserTask userTask = flowTaskService.getNextNode(formData, flowTaskVO, sessionUserAccount);
-                if (userTask != null) {
+                Pair<String, FlowElement> nextNodePair = flowTaskService.getNextNode(formData, flowTaskVO, sessionUserAccount);
+                if (nextNodePair != null && StencilConstants.STENCIL_TASK_USER.equals(nextNodePair.getLeft())) {
                     //下一节点存在，需要选择审核人
                     needCheckFlowNextReviewerAssignee = true;
                 }

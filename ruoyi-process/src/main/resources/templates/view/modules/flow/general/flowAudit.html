@@ -144,19 +144,8 @@
                             </a>
                         </div>
                     </div>
-                    <div class="ibox-content" id="nextNodeContainer">
-                        <div class="col-md-12" style="border: 1px solid #cccccc;">
-                            <div class="col-md-3" style="line-height: 48px;">
-                                节点名称：
-                            </div>
-                            <div class="col-md-9" id="nextNodeName" style="line-height: 48px;">
-                                领导审批
-                            </div>
-                            <div class="col-md-3" style="line-height: 48px;">
-                                处理人(<span style="color:red;">多人任一</span>)：
-                            </div>
-                            <div class="col-md-9" id="nextNodeAssigneContainer" style="line-height: 48px;">
-                            </div>
+                    <div class="ibox-content">
+                        <div class="col-md-12" style="border: 1px solid #cccccc;" id="nextNodeContainer">
                         </div>
                         <p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>
                     </div>
@@ -307,18 +296,63 @@
         var params = {form: getFormData(), flow: flow};
         // 获取下一步节点信息
         axios.post("/general/flow/process/getNextNode", params).then(res => {
-            let nextStepInfo = res.data.data;
-            let nodeAssigneHtmlArr = [];
-            if (!nextStepInfo.assigne) {
-                nodeAssigneHtmlArr.push("未指定");
-            } else {
-                // TODO 需要拿到下一步处理人列表
-                nodeAssigneHtmlArr.push('    <div class="radio check-box">');
-                nodeAssigneHtmlArr.push('        <label><input type="radio" checked="" value="option2" name="nextStepAssigne"> <i></i> 星尘</label>');
-                nodeAssigneHtmlArr.push('    </div>');
+            let nextStepInfoArr = res.data.data;
+            let nodeHtmlArr = [];
+            if(!nextStepInfoArr || nextStepInfoArr.length == 0) {
+                $.modal.alert("获取下一步节点信息出错！");
+                return;
             }
-            $("#nextNodeName").html(nextStepInfo.name);
-            $("#nextNodeAssigneContainer").html(nodeAssigneHtmlArr.join(""));
+
+            for(let nextStepInfo in nextStepInfoArr) {
+                if("UserTaskBack" === nextStepInfo.nodeType) {
+                    nodeHtmlArr.push('<div class="col-md-12" style="line-height: 48px;">');
+                    nodeHtmlArr.push('    <div class="radio check-box">');
+                    nodeHtmlArr.push('        <label><input type="radio" value="submitBackNode" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '</label>');
+                    nodeHtmlArr.push('    </div>');
+                    nodeHtmlArr.push('</div>');
+                    nodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
+                    nodeHtmlArr.push('    处理人(<span style="color:red;">单人处理</span>)：');
+                    nodeHtmlArr.push('</div>');
+                    nodeHtmlArr.push('<div class="col-md-9" style="line-height: 48px;">');
+                    nodeHtmlArr.push('    <div class="radio check-box">');
+                    nodeHtmlArr.push('        <label><input type="radio" value="1" name="backStepAssigne"> <i></i> 若依</label>');
+                    nodeHtmlArr.push('    </div>');
+                    nodeHtmlArr.push('</div>');
+                } else if ("UserTask" === nextStepInfo.nodeType) {
+                    nodeHtmlArr.push('<div class="col-md-12" style="line-height: 48px;">');
+                    nodeHtmlArr.push('    <div class="radio check-box">');
+                    nodeHtmlArr.push('        <label><input type="radio" value="normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '</label>');
+                    nodeHtmlArr.push('    </div>');
+                    nodeHtmlArr.push('</div>');
+                    nodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
+                    nodeHtmlArr.push('    处理人(<span style="color:red;">单人处理</span>)：');
+                    nodeHtmlArr.push('</div>');
+                    nodeHtmlArr.push('<div class="col-md-9" style="line-height: 48px;">');
+                    // TODO 需要拿到下一步处理人列表
+                    if (!nextStepInfo.assigne) {
+                        nodeHtmlArr.push("未指定");
+                    } else {
+                        nodeHtmlArr.push('    <div class="radio check-box">');
+                        nodeHtmlArr.push('        <label><input type="radio" value="1" name="nextStepAssigne"> <i></i> 若依</label>');
+                        nodeHtmlArr.push('    </div>');
+                    }
+                    nodeHtmlArr.push('</div>');
+                } else if("EndNoneEvent" === nextStepInfo.nodeType) {
+                    nodeHtmlArr.push('<div class="col-md-12" style="line-height: 48px;">');
+                    nodeHtmlArr.push('    <div class="radio check-box">');
+                    nodeHtmlArr.push('        <label><input type="radio" value="end" name="nextStepNode"> <i></i> 结束</label>');
+                    nodeHtmlArr.push('    </div>');
+                    nodeHtmlArr.push('</div>');
+                }
+            }
+
+            if(nodeHtmlArr.length == 0) {
+                $.modal.alert("获取下一步节点信息失败!");
+                return;
+            }
+
+            $("#nextNodeContainer").html(nodeHtmlArr.join(""));
+            $("input[name='nextStepNode']")[0].checked = true;
 
             // 显示流程提交窗口
             layer.open({
@@ -332,8 +366,16 @@
                     if (!flow.comment) {
                         $.modal.alert("请填写提交审批意见。");
                     }
+
                     if (formDataSubmit == false) {
-                        handleDoSaveAudit();
+                        let nextStepVal = $("input[name='nextStepNode']:checked").val();
+                        if("submitBackNode" === nextStepVal) {
+                            // TODO 提交到退回节点
+                        } else {
+                            let nextStepAssigne = $("input[name='nextStepAssigne']:checked").val();
+                            // TODO 指定下一步审批人
+                            handleDoSaveAudit();
+                        }
                     } else {
                         $.modal.msg('数据正在提交，请稍候...')
                     }
@@ -461,8 +503,8 @@
                 backNodeHtmlArr.push('    暂无')
                 backNodeHtmlArr.push('    </div>');
                 backNodeHtmlArr.push('</div>');
-                backNodeHtmlArr.push('<p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>');
             }
+            backNodeHtmlArr.push('<p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>');
 
             $("#backNodeContainer").html(backNodeHtmlArr.join(""));
 
@@ -473,8 +515,8 @@
                 content: $("#callBackNodes"),
                 btn: ['确定', '取消'],
                 btn1: function (index) {
-                    let checkedTaskKey = $("input[name=flowBackStepRadio]:checked").val();
-                    if(!checkedTaskKey) {
+                    let checkedTaskKey = $("input[name='flowBackStepRadio']:checked").val();
+                    if (!checkedTaskKey) {
                         $.modal.msg("请选择要退回到的节点。");
                     }
                     return;
@@ -533,34 +575,22 @@
             if (formDataSubmit == false) {
                 var status = handleAddMultiInstanceBefor == undefined || handleAddMultiInstanceBefor();
                 if (status) {
-                    // TODO 选择加签人员
-                    // core.showSelectUsers({
-                    //     option: {
-                    //         multipleSelection: false,
-                    //     },
-                    //     onOk: function (users) {
-                    //         if (users.length == 0) {
-                    //             core.warn("请选择人员")
-                    //             return false;
-                    //         }
-                    //         formDataSubmit = true;
-                    //         flow.addMultiInstanceAssignee = users[0].userName;
-                    //         $.post("${base}/general/flow/process/addMultiInstance", {
-                    //             form: getFormData(),
-                    //             flow: vm.flow,
-                    //         }, function (data) {
-                    //             core.msg(data);
-                    //             if (data.ok) {
-                    //                 setTimeout(function () {
-                    //                     window.parent.layer.closeAll()
-                    //                 }, 1000);
-                    //             } else {
-                    //                 formDataSubmit = false;
-                    //             }
-                    //         }, "JSON");
-                    //         return true;
-                    //     }
-                    // });
+                    $.modal.confirm("将加签给【若依】处理，确定么？", function () {
+                        formDataSubmit = true;
+                        flow.addMultiInstanceAssignee = 1;
+                        axios.post("/general/flow/process/addMultiInstance", {
+                            form: getFormData(),
+                            flow: flow
+                        }).then(res => {
+                            let data = res.data;
+                            $.modal.msg(data.msg);
+                            if (data.code == 0) {
+                                // TODO 关闭弹出层窗口
+                            } else {
+                                formDataSubmit = false;
+                            }
+                        })
+                    });
                 } else {
                     console.info("校验失败！")
                 }

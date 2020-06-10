@@ -10,6 +10,8 @@ package com.ruoyi.process.core.plugin.flowable.service;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskHistoricVO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.system.domain.SysUser;
+import org.apache.commons.lang3.tuple.Pair;
+import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -228,8 +230,15 @@ public interface FlowTaskService {
      */
     String backToStep(FlowTaskVO flowTaskVO, String userName);
 
-
     /**
+     * 退回重提
+     * @param flowTaskVO
+     * @param userId
+     * @return
+     */
+	String submitToBackStep(FlowTaskVO flowTaskVO, String userId);
+
+	/**
      * 设置流程变量（不是步骤变量）
      *
      * @param variables
@@ -248,7 +257,7 @@ public interface FlowTaskService {
      * @return
      * @throws Exception
      */
-    UserTask getNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) throws Exception;
+    Pair<String, FlowElement> getNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) throws Exception;
 
     /**
      * 预览下一步流程节点，会执行事务回滚保证数据安全
@@ -259,6 +268,6 @@ public interface FlowTaskService {
      * @return
      * @throws Exception
      */
-    UserTask previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) throws Exception;
+    Pair<String, FlowElement> previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) throws Exception;
 
 }

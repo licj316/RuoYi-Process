@@ -31,6 +31,8 @@ public interface GeneralFlowBiz {
 
     String backToStep(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount);
 
+    String submitToBackStep(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount);
+
     String addMultiInstance(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount);
 
     String userAudit(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount);

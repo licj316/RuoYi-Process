@@ -10,7 +10,7 @@ package com.ruoyi.process.core.plugin.flowable.service.impl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import com.ruoyi.process.core.plugin.flowable.cmd.FindNextUserTaskNodeCmd;
+import com.ruoyi.process.core.plugin.flowable.cmd.FindNextExecuteNodeCmd;
 import com.ruoyi.process.core.plugin.flowable.constant.FlowConstant;
 import com.ruoyi.process.core.plugin.flowable.converter.CustomBpmnJsonConverter;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
@@ -30,6 +30,7 @@ import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.flowable.bpmn.model.*;
 import org.flowable.common.engine.impl.identity.Authentication;
 import org.flowable.engine.*;
@@ -698,9 +699,35 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         List<String> currentActivityIds = new ArrayList<>();
         tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
         //执行驳回操作
+        // TODO 驳回应指定为提交人员
         runtimeService.createChangeActivityStateBuilder()
                 .processInstanceId(processInstanceId)
                 .moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
+                .changeState();
+        return null;
+    }
+
+    @Override
+    public String submitToBackStep(FlowTaskVO flowTaskVO, String userId) {
+        String taskId = flowTaskVO.getTaskId();
+        String comment = flowTaskVO.getComment();
+        String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
+        String backToTaskAssignee = flowTaskVO.getBackToTaskAssignee();
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        String processInstanceId = task.getProcessInstanceId();
+        //保存任务信息
+        task.setAssignee(userId);
+        this.addTaskComment(taskId, processInstanceId, comment);
+        taskService.saveTask(task);
+
+        List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+        List<String> currentActivityIds = new ArrayList<>();
+        tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
+        //执行驳回操作
+        // TODO 驳回应指定为提交人员
+        runtimeService.createChangeActivityStateBuilder()
+                .processInstanceId(processInstanceId)
+                .moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey, backToTaskAssignee)
                 .changeState();
         return null;
     }
@@ -762,8 +789,8 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      */
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public UserTask getNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) {
-        UserTask userTask;
+    public Pair<String, FlowElement> getNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) {
+        Pair<String, FlowElement> nextNode;
         try {
             Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
             String executionId = task.getExecutionId();
@@ -773,13 +800,13 @@ public class FlowTaskServiceImpl implements FlowTaskService {
             vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
             vars.put(FlowConstant.FORM_DATA, formData);
             setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, currUser, true);
-            userTask = managementService.executeCommand(new FindNextUserTaskNodeCmd(execution, bpmnModel, vars));
+            nextNode = managementService.executeCommand(new FindNextExecuteNodeCmd(execution, bpmnModel, vars));
             //将寻找下一节点执行产生的的数据进行回滚
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         } catch (Exception e) {
             throw new RuntimeException("事务回滚失败！" + e.getMessage());
         }
-        return userTask;
+        return nextNode;
     }
 
     /**
@@ -793,7 +820,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      */
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public UserTask previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) throws Exception {
+    public Pair<String, FlowElement> previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) throws Exception {
         try {
             Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
             String executionId = task.getExecutionId();
@@ -803,7 +830,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
             vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
             vars.put(FlowConstant.FORM_DATA, formData);
             setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, currUser, true);
-            return managementService.executeCommand(new FindNextUserTaskNodeCmd(execution, bpmnModel, vars));
+            return managementService.executeCommand(new FindNextExecuteNodeCmd(execution, bpmnModel, vars));
         } finally {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }

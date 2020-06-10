@@ -86,6 +86,10 @@ public class FlowTaskVO {
      */
     String backToTaskDefKey;
     /**
+     * 自由回退节点处理人
+     */
+    String backToTaskAssignee;
+    /**
      * 选择的加签给谁
      */
     String addMultiInstanceAssignee;
