@@ -77,8 +77,6 @@ public class GeneralProcessController extends BaseProcessController {
 	ISysUserService sysUserService;
 	@Autowired
 	ISysRoleService sysRoleService;
-	@Autowired
-	ProcessInstanceService processInstanceService;
 
 	@Autowired
 	RuntimeService runtimeService;
@@ -152,14 +150,17 @@ public class GeneralProcessController extends BaseProcessController {
 
 			List<Map<String, Object>> resList = new ArrayList<>();
 			Map<String, Object> resMap = new HashMap<>();
-			// TODO 获取退回节点
-			ActivityInstance prevActivityInstance = runtimeService.createActivityInstanceQuery().processInstanceId(flowTaskVO.getProcInsId()).finished().orderByActivityInstanceStartTime().desc().singleResult();
-			if ("userTask".equals(prevActivityInstance.getActivityType()) && StringUtils.isNotBlank(prevActivityInstance.getDeleteReason())) {
-				resMap.put("nodeType", "UserTaskBack");
-				resMap.put("id", prevActivityInstance.getActivityId());
-				resMap.put("name", prevActivityInstance.getActivityName());
-				resMap.put("assignee", prevActivityInstance.getAssignee());
-				resList.add(resMap);
+			// 获取退回节点
+			List<ActivityInstance> activityInstanceList = runtimeService.createActivityInstanceQuery().processInstanceId(flowTaskVO.getProcInsId()).finished().orderByActivityInstanceStartTime().desc().list();
+			if(activityInstanceList.size() > 0) {
+				ActivityInstance prevActivityInstance = activityInstanceList.get(0);
+				if ("userTask".equals(prevActivityInstance.getActivityType()) && StringUtils.isNotBlank(prevActivityInstance.getDeleteReason())) {
+					resMap.put("nodeType", "UserTaskBack");
+					resMap.put("id", prevActivityInstance.getActivityId());
+					resMap.put("name", prevActivityInstance.getActivityName());
+					resMap.put("assignee", prevActivityInstance.getAssignee());
+					resList.add(resMap);
+				}
 			}
 
 			Pair<String, FlowElement> nextNodePair = flowTaskService.previewNextNode(formData, flowTaskVO, getCurrUser());
@@ -260,7 +261,6 @@ public class GeneralProcessController extends BaseProcessController {
 	 * @param flowParamVO
 	 */
 	@PostMapping("/addMultiInstance")
-//    @Aop(TransAop.READ_COMMITTED)
 	@ResponseBody
 	public AjaxResult addMultiInstance(@RequestBody FlowParamVO flowParamVO) {
 		SysUser sessionUserAccount = getCurrUser();
@@ -278,7 +278,7 @@ public class GeneralProcessController extends BaseProcessController {
 	}
 
 	/**
-	 * 启动流程（完成任务）
+	 * 启动流程
 	 *
 	 * @param flowParamVO
 	 * @return

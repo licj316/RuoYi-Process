@@ -188,11 +188,11 @@ public class FlowTaskController extends BaseProcessController{
     @PostMapping("/delegate")
     @ResponseBody
 //    @TryCatchMsg("委托失败!")
-    public AjaxResult delegate(String taskId, String userName) {
-        if (Strings.isBlank(userName) || Strings.isBlank(taskId)) {
+    public AjaxResult delegate(@RequestParam("taskId") String taskId, @RequestParam("userId") String userId) {
+        if (Strings.isBlank(userId) || Strings.isBlank(taskId)) {
             return AjaxResult.error("参数异常");
         }
-        flowTaskService.delegateTask(taskId, userName);
+        flowTaskService.delegateTask(taskId, userId);
         return AjaxResult.success("委托成功");
     }
 

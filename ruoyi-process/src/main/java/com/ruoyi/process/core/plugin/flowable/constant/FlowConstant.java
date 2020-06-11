@@ -80,4 +80,53 @@ public interface FlowConstant {
      */
     String ADD_MULTIINSTANCE_ASSIGNEES_VAR = "sys_add_multiinstance_assignees_var";
 
+    /**
+     * 添加退回审批意见
+     */
+    String BACK_COMMENT = "BackComment";
+
+    /**
+     * 添加退回重提审批意见
+     */
+    String BACK_SUBMIT_COMMENT = "BackSubmitComment";
+
+    /**
+     * 添加委托审批意见
+     */
+    String DELEGATE_COMMENT = "DelegateComment";
+
+    /**
+     * 添加转派审批意见
+     */
+    String TRANSFER_COMMENT = "TransferComment";
+
+    /**
+     * 添加上会审批意见
+     */
+    String MEETING_COMMENT = "MeetingComment";
+
+    /**
+     * 正常任务类型
+     */
+    String TASK_TYPE_NORMAL = "Normal";
+
+    /**
+     * 退回任务类型
+     */
+    String TASK_TYPE_BACK = "Back";
+
+    /**
+     * 退回重提任务类型
+     */
+    String TASK_TYPE_BACK_SUBMIT = "BackSubmit";
+
+    /**
+     * 委托任务类型
+     */
+    String TASK_TYPE_DELEGATE = "Delegate";
+
+    /**
+     * 转派任务类型
+     */
+    String TASK_TYPE_TRANSFER = "Transfer";
 }

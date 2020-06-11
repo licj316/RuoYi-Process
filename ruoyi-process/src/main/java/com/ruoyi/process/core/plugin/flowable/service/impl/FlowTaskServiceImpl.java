@@ -607,7 +607,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         // 添加意见
         if (Strings.isNotBlank(procInsId) && Strings.isNotBlank(comment)) {
             if (delegation) {
-                taskService.addComment(taskId, procInsId, "[委托] " + comment);
+                taskService.addComment(taskId, procInsId, FlowConstant.DELEGATE_COMMENT, comment);
             } else {
                 taskService.addComment(taskId, procInsId, comment);
             }
@@ -668,6 +668,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * @param userId
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String backToStep(FlowTaskVO flowTaskVO, String userId) {
         String taskId = flowTaskVO.getTaskId();
         String comment = flowTaskVO.getComment();
@@ -708,6 +709,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String submitToBackStep(FlowTaskVO flowTaskVO, String userId) {
         String taskId = flowTaskVO.getTaskId();
         String comment = flowTaskVO.getComment();
@@ -723,11 +725,11 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
         List<String> currentActivityIds = new ArrayList<>();
         tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
-        //执行驳回操作
+        //执行驳回后重新提交操作
         // TODO 驳回应指定为提交人员
         runtimeService.createChangeActivityStateBuilder()
                 .processInstanceId(processInstanceId)
-                .moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey, backToTaskAssignee)
+                .moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
                 .changeState();
         return null;
     }

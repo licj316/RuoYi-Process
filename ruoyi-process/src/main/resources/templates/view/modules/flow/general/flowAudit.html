@@ -145,7 +145,7 @@
                         </div>
                     </div>
                     <div class="ibox-content">
-                        <div class="col-md-12" style="border: 1px solid #cccccc;" id="nextNodeContainer">
+                        <div class="col-md-12" id="nextNodeContainer">
                         </div>
                         <p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>
                     </div>
@@ -298,55 +298,66 @@
         axios.post("/general/flow/process/getNextNode", params).then(res => {
             let nextStepInfoArr = res.data.data;
             let nodeHtmlArr = [];
-            if(!nextStepInfoArr || nextStepInfoArr.length == 0) {
+            if (!nextStepInfoArr || nextStepInfoArr.length == 0) {
                 $.modal.alert("获取下一步节点信息出错！");
                 return;
             }
-
-            for(let nextStepInfo in nextStepInfoArr) {
-                if("UserTaskBack" === nextStepInfo.nodeType) {
-                    nodeHtmlArr.push('<div class="col-md-12" style="line-height: 48px;">');
-                    nodeHtmlArr.push('    <div class="radio check-box">');
-                    nodeHtmlArr.push('        <label><input type="radio" value="submitBackNode" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '</label>');
+            for (let i = 0; i < nextStepInfoArr.length; i++) {
+                nextStepInfo = nextStepInfoArr[i];
+                if ("UserTaskBack" === nextStepInfo.nodeType) {
+                    nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
+                    nodeHtmlArr.push('<div class="col-md-12">');
+                    nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
+                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="submitToBackStep" name="nextStepNode" data-id="' + nextStepInfo.id + '"> <i></i> ' + nextStepInfo.name + '(<span style="color:red;">退回节点</span>)</label>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
                     nodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
                     nodeHtmlArr.push('    处理人(<span style="color:red;">单人处理</span>)：');
                     nodeHtmlArr.push('</div>');
-                    nodeHtmlArr.push('<div class="col-md-9" style="line-height: 48px;">');
-                    nodeHtmlArr.push('    <div class="radio check-box">');
-                    nodeHtmlArr.push('        <label><input type="radio" value="1" name="backStepAssigne"> <i></i> 若依</label>');
+                    nodeHtmlArr.push('<div class="col-md-9">');
+                    nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
+                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" checked="checked" value="1" name="backStepAssigne"> <i></i> 若依</label>');
                     nodeHtmlArr.push('    </div>');
+                    nodeHtmlArr.push('</div>');
                     nodeHtmlArr.push('</div>');
                 } else if ("UserTask" === nextStepInfo.nodeType) {
-                    nodeHtmlArr.push('<div class="col-md-12" style="line-height: 48px;">');
-                    nodeHtmlArr.push('    <div class="radio check-box">');
-                    nodeHtmlArr.push('        <label><input type="radio" value="normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '</label>');
+                    nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
+                    nodeHtmlArr.push('<div class="col-md-12">');
+                    nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
+                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '</label>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
                     nodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
                     nodeHtmlArr.push('    处理人(<span style="color:red;">单人处理</span>)：');
                     nodeHtmlArr.push('</div>');
-                    nodeHtmlArr.push('<div class="col-md-9" style="line-height: 48px;">');
+                    nodeHtmlArr.push('<div class="col-md-9"">');
                     // TODO 需要拿到下一步处理人列表
+                    // TODO 单人处理
+                    // TODO 多人全部
+                    // TODO 多人任一
+                    // TODO N人处理
                     if (!nextStepInfo.assigne) {
-                        nodeHtmlArr.push("未指定");
+                        nodeHtmlArr.push('<span style="line-height: 48px">未指定</span>');
                     } else {
-                        nodeHtmlArr.push('    <div class="radio check-box">');
-                        nodeHtmlArr.push('        <label><input type="radio" value="1" name="nextStepAssigne"> <i></i> 若依</label>');
+                        nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
+                        nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="1" name="nextStepAssigne"> <i></i> 若依</label>');
                         nodeHtmlArr.push('    </div>');
                     }
                     nodeHtmlArr.push('</div>');
-                } else if("EndNoneEvent" === nextStepInfo.nodeType) {
-                    nodeHtmlArr.push('<div class="col-md-12" style="line-height: 48px;">');
-                    nodeHtmlArr.push('    <div class="radio check-box">');
-                    nodeHtmlArr.push('        <label><input type="radio" value="end" name="nextStepNode"> <i></i> 结束</label>');
+                    nodeHtmlArr.push('</div>');
+                } else if ("EndNoneEvent" === nextStepInfo.nodeType) {
+                    nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
+                    nodeHtmlArr.push('    <div class="col-md-12">');
+                    nodeHtmlArr.push('        <div class="radio check-box" style="padding-left: 0px;">');
+                    nodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="end" name="nextStepNode"> <i></i> 结束</label>');
+                    nodeHtmlArr.push('        </div>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
                 }
             }
 
-            if(nodeHtmlArr.length == 0) {
+
+            if (nodeHtmlArr.length == 0) {
                 $.modal.alert("获取下一步节点信息失败!");
                 return;
             }
@@ -368,9 +379,13 @@
                     }
 
                     if (formDataSubmit == false) {
-                        let nextStepVal = $("input[name='nextStepNode']:checked").val();
-                        if("submitBackNode" === nextStepVal) {
-                            // TODO 提交到退回节点
+                        let nextStepNodeChecked = $("input[name='nextStepNode']:checked");
+
+                        if ("submitToBackStep" === nextStepNodeChecked.val()) {
+                            flow.backToTaskDefKey = nextStepNodeChecked.attr("data-id");;
+                            flow.backToTaskAssignee = $("input[name='backStepAssigne']").val();
+                            // 提交到退回节点
+                            handleDoSubmitTOBackStep();
                         } else {
                             let nextStepAssigne = $("input[name='nextStepAssigne']:checked").val();
                             // TODO 指定下一步审批人
@@ -489,7 +504,6 @@
             let callBackNodes = extensionProperty.callBackNodes.split(",");
             let callBackNodesDesc = extensionProperty.callBackNodesDesc.split(",");
             for (let i = 0; i < callBackNodes.length; i++) {
-                // TODO 选择回退节点单选框未添加
                 backNodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                 backNodeHtmlArr.push('    <div class="col-md-12">');
                 backNodeHtmlArr.push('        <div class="radio check-box" style="padding-left: 0px;">');
@@ -519,8 +533,6 @@
                     if (!checkedTaskKey) {
                         $.modal.msg("请选择要退回到的节点。");
                     }
-                    return;
-                    // TODO 动态设置选择的节点
                     flow.backToTaskDefKey = 'fillForm';
                     flow.comment = $("#flowBackComment").val();
                     if (!flow.comment) {
@@ -551,6 +563,35 @@
                     flow: flow,
                 }).then(res => {
                     console.log("驳回返回数据", res);
+                    let data = res.data;
+                    $.modal.alert(data.msg);
+                    if (data.code == 0) {
+                        setTimeout(function () {
+                            window.parent.layer.closeAll()
+                        }, 1000);
+                    } else {
+                        formDataSubmit = false;
+                    }
+                });
+            } else {
+                console.info("校验失败！")
+            }
+        } else {
+            $.modal.msg("数据正在提交，请稍候...")
+        }
+    }
+
+    function handleDoSubmitTOBackStep() {
+        if (formDataSubmit == false) {
+            var status = handleSaveAuditBefor == undefined || handleSaveAuditBefor();
+
+            if (status) {
+                fromDataSubmit = true;
+                axios.post("/general/flow/process/submitToBackStep", {
+                    form: getFormData(),
+                    flow: flow,
+                }).then(res => {
+                    console.log("驳回重新提交返回数据", res);
                     let data = res.data;
                     $.modal.alert(data.msg);
                     if (data.code == 0) {

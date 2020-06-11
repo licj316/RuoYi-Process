@@ -169,6 +169,11 @@ public class FlowTaskVO {
      */
     Boolean reaffirm;
 
+    /**
+     * 任务类型
+     */
+    String taskType;
+
     public void setHisActInsDuTime(Long duTime) {
         if (duTime == null) {
             this.hisActInsDuTime = "";

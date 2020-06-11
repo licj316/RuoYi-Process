@@ -96,38 +96,36 @@
     function handleUnclaim(taskId) {
         axios.post("/flowTask/unclaim", {taskId: taskId}).then(json => {
             $.modal.msg(json);
-            if (json.ok) {
-                handleSearchTable();
-            }
-        });
-    }
-
-    // 签收
-    function handleClaim(taskId) {
-        axios.post("/flowTask/claim", {taskId: taskId}).then(json => {
-            $.modal.msg(json);
-            if (json.ok) {
+            if (json.code == 0) {
                 handleSearchTable();
             }
         });
     }
 
     // 委托
-    function handleDelegate(taskId) {
-        core.showSelectUsers({
-            option: {
-                multipleSelection: false,
-            },
-            onOk: async function (users) {
-                var json = await axios.post("/flowTask/delegate", {
-                    taskId: taskId,
-                    userName: users[0].userName
-                });
-                $.modal.msg(json);
-                if (json.ok) {
-                    handleSearchTable();
-                }
-                return true;
+    async function handleDelegate(taskId) {
+        let params = "?taskId=" + taskId + "&userId=2";
+        var json = await axios.post("/flowTask/delegate" + params, {});
+        $.modal.msg(json.msg);
+        if (json.code == 0) {
+            handleSearchTable();
+        }
+        // core.showSelectUsers({
+        //     option: {
+        //         multipleSelection: false,
+        //     },
+        // onOk: async function (users) {
+        //     return true;
+        // }
+        // });
+    }
+
+    // 签收
+    function handleClaim(taskId) {
+        axios.post("/flowTask/claim", {taskId: taskId}).then(json => {
+            $.modal.msg(json);
+            if (json.code == 0) {
+                handleSearchTable();
             }
         });
     }
