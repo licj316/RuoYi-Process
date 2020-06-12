@@ -280,6 +280,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
     public List<FlowTaskHistoricVO> histoicFlowList(String procInsId, String startAct, String endAct) {
         List<FlowTaskHistoricVO> actList = Lists.newArrayList();
         List<HistoricActivityInstance> list = historyService.createHistoricActivityInstanceQuery().processInstanceId(procInsId).orderByHistoricActivityInstanceStartTime().asc().list();
+        List<Comment> procInsCommentsList = taskService.getProcessInstanceComments(procInsId);
         boolean start = false;
         Map<String, Integer> actMap = Maps.newHashMap();
         for (int i = 0; i < list.size(); i++) {
@@ -329,7 +330,12 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                     // 获取意见评论内容 和 附件
                     if (Strings.isNotBlank(histIns.getTaskId())) {
                         List<Attachment> attachmentList = taskService.getTaskAttachments(histIns.getTaskId());
-                        List<Comment> commentList = taskService.getTaskComments(histIns.getTaskId());
+                        List<Comment> commentList = new ArrayList<>();//taskService.getTaskComments(histIns.getTaskId());
+                        procInsCommentsList.forEach(comment -> {
+                            if(histIns.getTaskId().equals(comment.getTaskId())) {
+                                commentList.add(comment);
+                            }
+                        });
                         if (commentList.size() > 0) {
                             Collections.reverse(commentList);
                             List<FlowCommentVO> flowComments = new ArrayList<>();
@@ -485,9 +491,6 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         vars.put(FlowConstant.SUBMITTER_ROLE_CODES, roleCodes);
         // 启动流程
         return runtimeService.startProcessInstanceByKey(procDefKey, businessId, vars);
-//        processInstance.getId();
-
-//        return "";
     }
 
     /**
@@ -558,7 +561,11 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * @param userId 被委托人
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delegateTask(String taskId, String userId) {
+        Task task = getTask(taskId);
+        task.setDescription(FlowConstant.TASK_TYPE_DELEGATE);
+        taskService.saveTask(task);
         taskService.delegateTask(taskId, userId);
     }
 
@@ -570,10 +577,13 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * @param reason 原因
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void transferTask(String taskId, String userId, String reason) {
         Task task = getTask(taskId);
-        taskService.addComment(taskId, task.getProcessInstanceId(), "[转派] " + reason);
+        task.setDescription(FlowConstant.TASK_TYPE_TRANSFER);
+        taskService.saveTask(task);
         taskService.setAssignee(taskId, userId);
+        taskService.addComment(taskId, task.getProcessInstanceId(), FlowConstant.TRANSFER_COMMENT, "[转派] " + reason);
     }
 
     /**
@@ -607,7 +617,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         // 添加意见
         if (Strings.isNotBlank(procInsId) && Strings.isNotBlank(comment)) {
             if (delegation) {
-                taskService.addComment(taskId, procInsId, FlowConstant.DELEGATE_COMMENT, comment);
+                taskService.addComment(taskId, procInsId, FlowConstant.DELEGATE_COMMENT, "[委托]" + comment);
             } else {
                 taskService.addComment(taskId, procInsId, comment);
             }
@@ -629,8 +639,8 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * 添加任务意见
      */
     @Override
-    public void addTaskComment(String taskId, String procInsId, String comment) {
-        taskService.addComment(taskId, procInsId, comment);
+    public void addTaskComment(String taskId, String procInsId, String type, String comment) {
+        taskService.addComment(taskId, procInsId, type, comment);
     }
 
     /**
@@ -689,12 +699,12 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                 }
             }
         }
-        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-        String processInstanceId = task.getProcessInstanceId();
+        Task currTask = taskService.createTaskQuery().taskId(taskId).singleResult();
+        String processInstanceId = currTask.getProcessInstanceId();
         //保存任务信息
-        task.setAssignee(userId);
-        this.addTaskComment(taskId, processInstanceId, comment);
-        taskService.saveTask(task);
+        currTask.setAssignee(userId);
+        this.addTaskComment(taskId, processInstanceId, FlowConstant.BACK_COMMENT, comment);
+        taskService.saveTask(currTask);
 
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
         List<String> currentActivityIds = new ArrayList<>();
@@ -705,6 +715,13 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                 .processInstanceId(processInstanceId)
                 .moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
                 .changeState();
+
+        // 标记退回后的当前流程类型为退回
+        List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+        for(Task task : afterTaskList) {
+            task.setDescription(FlowConstant.TASK_TYPE_BACK);
+            taskService.saveTask(task);
+        }
         return null;
     }
 
@@ -715,12 +732,13 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         String comment = flowTaskVO.getComment();
         String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
         String backToTaskAssignee = flowTaskVO.getBackToTaskAssignee();
-        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-        String processInstanceId = task.getProcessInstanceId();
+        Task currTask = taskService.createTaskQuery().taskId(taskId).singleResult();
+        String processInstanceId = currTask.getProcessInstanceId();
+
         //保存任务信息
-        task.setAssignee(userId);
-        this.addTaskComment(taskId, processInstanceId, comment);
-        taskService.saveTask(task);
+        currTask.setAssignee(userId);
+        this.addTaskComment(taskId, processInstanceId, FlowConstant.BACK_SUBMIT_COMMENT, comment);
+        taskService.saveTask(currTask);
 
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
         List<String> currentActivityIds = new ArrayList<>();
@@ -731,6 +749,13 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                 .processInstanceId(processInstanceId)
                 .moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
                 .changeState();
+
+        // 标记退回重提后的当前流程类型为退回重提
+        List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+        for(Task task : afterTaskList) {
+            task.setDescription(FlowConstant.TASK_TYPE_BACK_SUBMIT);
+            taskService.saveTask(task);
+        }
         return null;
     }
 

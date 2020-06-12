@@ -14,6 +14,7 @@
 <input type="hidden" id="flow_procDefKey" th:value="${flow.procDefKey}"/>
 <input type="hidden" id="flow_businessId" th:value="${flow.businessId}"/>
 <input type="hidden" id="flow_comment" th:value="${flow.comment}"/>
+<input type="hidden" id="flow_taskType" th:value="${flow.taskType}"/>
 
 <input type="hidden" id="flow_edit_status" th:value="${status}"/>
 
@@ -192,6 +193,7 @@
     var intViewportHeight = window.innerHeight - 175;
 
     var flow = {
+        taskType: '',
         taskId: '',
         taskName: '',
         taskDefKey: '',
@@ -235,6 +237,7 @@
     var flowFormData;
 
     function handleInit() {
+        flow.taskType = $("#flow_taskType").val();
         flow.taskId = $("#flow_taskId").val();
         flow.taskName = $("#flow_taskName").val();
         flow.taskDefKey = $("#flow_taskDefKey").val();
@@ -514,7 +517,7 @@
                 backNodeHtmlArr.push('        处理人：');
                 backNodeHtmlArr.push('    </div>');
                 backNodeHtmlArr.push('    <div class="col-md-9" id="backNodeAssigneContainer" style="line-height: 48px;">');
-                backNodeHtmlArr.push('    暂无')
+                backNodeHtmlArr.push('    暂无');
                 backNodeHtmlArr.push('    </div>');
                 backNodeHtmlArr.push('</div>');
             }
@@ -522,6 +525,7 @@
 
             $("#backNodeContainer").html(backNodeHtmlArr.join(""));
 
+            $("input[name='flowBackStepRadio']")[0].checked = true;
             layer.open({
                 type: 1,
                 title: "退回",

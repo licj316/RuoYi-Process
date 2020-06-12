@@ -164,6 +164,7 @@ public class FlowUtils {
         flowTaskVO.setProcInsId(task.getProcessInstanceId());
         flowTaskVO.setClaimTime(task.getClaimTime());
         flowTaskVO.setProcDefId(task.getProcessDefinitionId());
+        flowTaskVO.setTaskType(task.getDescription());
     }
 
 

@@ -11,6 +11,7 @@ package com.ruoyi.process.modules.flow.action;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.framework.util.ShiroUtils;
+import com.ruoyi.process.core.plugin.flowable.constant.FlowConstant;
 import com.ruoyi.process.core.plugin.flowable.dto.FlowSubmitInfoDTO;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskFormStatusEnum;
@@ -147,19 +148,21 @@ public class GeneralProcessController extends BaseProcessController {
 		try {
 			Map<String, Object> formData = flowParamVO.getForm();
 			FlowTaskVO flowTaskVO = flowParamVO.getFlow();
-
 			List<Map<String, Object>> resList = new ArrayList<>();
 			Map<String, Object> resMap = new HashMap<>();
-			// 获取退回节点
-			List<ActivityInstance> activityInstanceList = runtimeService.createActivityInstanceQuery().processInstanceId(flowTaskVO.getProcInsId()).finished().orderByActivityInstanceStartTime().desc().list();
-			if(activityInstanceList.size() > 0) {
-				ActivityInstance prevActivityInstance = activityInstanceList.get(0);
-				if ("userTask".equals(prevActivityInstance.getActivityType()) && StringUtils.isNotBlank(prevActivityInstance.getDeleteReason())) {
-					resMap.put("nodeType", "UserTaskBack");
-					resMap.put("id", prevActivityInstance.getActivityId());
-					resMap.put("name", prevActivityInstance.getActivityName());
-					resMap.put("assignee", prevActivityInstance.getAssignee());
-					resList.add(resMap);
+
+			if (FlowConstant.TASK_TYPE_BACK.equals(flowTaskVO.getTaskType())) {
+				// 获取退回节点
+				List<ActivityInstance> activityInstanceList = runtimeService.createActivityInstanceQuery().processInstanceId(flowTaskVO.getProcInsId()).finished().orderByActivityInstanceStartTime().desc().list();
+				if (activityInstanceList.size() > 0) {
+					ActivityInstance prevActivityInstance = activityInstanceList.get(0);
+					if ("userTask".equals(prevActivityInstance.getActivityType()) && StringUtils.isNotBlank(prevActivityInstance.getDeleteReason())) {
+						resMap.put("nodeType", "UserTaskBack");
+						resMap.put("id", prevActivityInstance.getActivityId());
+						resMap.put("name", prevActivityInstance.getActivityName());
+						resMap.put("assignee", prevActivityInstance.getAssignee());
+						resList.add(resMap);
+					}
 				}
 			}
 
@@ -236,6 +239,7 @@ public class GeneralProcessController extends BaseProcessController {
 
 	/**
 	 * 提交到退回节点
+	 *
 	 * @param backToStepVO
 	 * @return
 	 */

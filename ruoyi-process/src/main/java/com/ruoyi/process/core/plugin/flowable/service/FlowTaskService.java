@@ -200,9 +200,10 @@ public interface FlowTaskService {
      *
      * @param taskId
      * @param procInsId
+     * @param type
      * @param comment
      */
-    void addTaskComment(String taskId, String procInsId, String comment);
+    void addTaskComment(String taskId, String procInsId, String type, String comment);
 
     /**
      * 添加手写签字数据

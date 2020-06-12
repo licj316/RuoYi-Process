@@ -14,16 +14,13 @@ import com.ruoyi.process.core.plugin.flowable.service.FlowProcessDefinitionServi
 import com.ruoyi.process.core.plugin.flowable.service.FlowTaskService;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.core.plugin.flowable.vo.ProcessDefinitionEntitVO;
+import com.ruoyi.process.utils.DateUtil;
 import com.ruoyi.system.domain.SysRole;
 import com.ruoyi.system.domain.SysUser;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.commons.lang3.StringUtils;
 import org.flowable.common.engine.impl.identity.Authentication;
 import org.flowable.engine.RuntimeService;
-import org.nutz.ioc.loader.annotation.Inject;
-import org.nutz.ioc.loader.annotation.IocBean;
 import org.nutz.lang.Strings;
-import org.nutz.lang.util.NutMap;
-import org.nutz.mvc.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -86,7 +83,8 @@ public class FlowTaskController extends BaseProcessController{
 
     @PostMapping("/todoData")
 	@ResponseBody
-    public TableDataInfo todoData(FlowTaskVO flowTaskVO, HttpServletRequest request) {
+    public TableDataInfo todoData(HttpServletRequest request) {
+        FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
         SysUser currUser = getCurrUser();
         List<SysRole> userRoleList = getUserRoleList(currUser.getUserId());
         Set<String> roleIdSet = userRoleList.stream().map(sysRole -> sysRole.getRoleId().toString()).collect(Collectors.toSet());
@@ -105,14 +103,16 @@ public class FlowTaskController extends BaseProcessController{
 
     @RequestMapping("/historicData")
 	@ResponseBody
-    public TableDataInfo historicDataList(FlowTaskVO flowTaskVO, HttpServletRequest request, HttpServletResponse response) {
+    public TableDataInfo historicDataList(HttpServletRequest request, HttpServletResponse response) {
+        FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
         List<FlowTaskVO> flowTaskVOList = flowTaskService.historicList(flowTaskVO, getCurrUser().getUserId().toString());
         return getDataTable(flowTaskVOList);
     }
 
     @RequestMapping("/hasSentData")
 	@ResponseBody
-    public TableDataInfo hasSentDataList(FlowTaskVO flowTaskVO, HttpServletRequest request, HttpServletResponse response) {
+    public TableDataInfo hasSentDataList(HttpServletRequest request, HttpServletResponse response) {
+        FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
         List<FlowTaskVO> flowTaskVOList = flowTaskService.hasSentList(String.valueOf(getCurrUser().getUserId()));
         return getDataTable(flowTaskVOList);
     }
@@ -139,7 +139,7 @@ public class FlowTaskController extends BaseProcessController{
      */
     @RequestMapping("/processDataList")
     @ResponseBody
-    public TableDataInfo processDataList(String category, HttpServletRequest request) {
+    public TableDataInfo processDataList(@RequestParam(value = "category", required = false) String category, HttpServletRequest request) {
         List<ProcessDefinitionEntitVO> processDefinitionEntitVOList = flowProcessDefinitionService.processList(category);
         return getDataTable(processDefinitionEntitVOList);
     }
@@ -171,7 +171,7 @@ public class FlowTaskController extends BaseProcessController{
     @PostMapping("/claim")
 //    @TryCatchMsg("该任务已被其他人,签收失败!")
 	@ResponseBody
-    public AjaxResult claim(String taskId) {
+    public AjaxResult claim(@RequestParam("taskId") String taskId) {
         try {
             flowTaskService.claim(taskId, getCurrUser().getUserId().toString());
             return AjaxResult.success("签收成功");
@@ -204,7 +204,7 @@ public class FlowTaskController extends BaseProcessController{
     @PostMapping("/unclaim")
 	@ResponseBody
 //    @TryCatchMsg("取消签收失败！")
-    public AjaxResult unclaim(String taskId) {
+    public AjaxResult unclaim(@RequestParam("taskId") String taskId) {
         flowTaskService.unclaim(taskId, getCurrUser().getUserId().toString());
         return AjaxResult.success("取消签收成功");
     }
@@ -220,16 +220,16 @@ public class FlowTaskController extends BaseProcessController{
     @PostMapping("/transfer")
 	@ResponseBody
 //    @TryCatchMsg("转派失败!")
-    public AjaxResult transferTask(String taskId, String userName, String reason) {
+    public AjaxResult transferTask(@RequestParam("taskId") String taskId, @RequestParam("userId") String userId, @RequestParam("reason") String reason) {
         if (Strings.isBlank(reason)) {
             return AjaxResult.error("请输入转派原因");
         }
-        if (Strings.isBlank(userName) || Strings.isBlank(taskId)) {
+        if (Strings.isBlank(userId) || Strings.isBlank(taskId)) {
             return AjaxResult.error("参数异常");
         }
         // 设置当前流程任务办理人
         Authentication.setAuthenticatedUserId(getCurrUser().getUserId().toString());
-        flowTaskService.transferTask(taskId, userName, reason);
+        flowTaskService.transferTask(taskId, userId, reason);
         return AjaxResult.success("委托成功");
     }
 
@@ -255,5 +255,19 @@ public class FlowTaskController extends BaseProcessController{
             runtimeService.deleteProcessInstance(procInsId, reason);
         }
         return AjaxResult.success("删除任务成功，任务ID=" + taskId);
+    }
+
+    private FlowTaskVO buildFlowTaskVO(HttpServletRequest request) {
+        FlowTaskVO flowTaskVO = new FlowTaskVO();
+        flowTaskVO.setProcDefKey(request.getParameter("procDefKey"));
+        String beginDate = request.getParameter("beginDate");
+        String endDate = request.getParameter("endDate");
+        if(StringUtils.isNotBlank(beginDate)) {
+            flowTaskVO.setBeginDate(DateUtil.string2date(beginDate, "yyyy/mm/dd"));
+        }
+        if(StringUtils.isNotBlank(endDate)) {
+            flowTaskVO.setEndDate(DateUtil.string2date(endDate, "yyyy/mm/dd"));
+        }
+        return flowTaskVO;
     }
 }

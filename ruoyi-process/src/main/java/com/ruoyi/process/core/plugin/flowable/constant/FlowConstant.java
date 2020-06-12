@@ -106,6 +106,11 @@ public interface FlowConstant {
     String MEETING_COMMENT = "MeetingComment";
 
     /**
+     * 第一步任务类型
+     */
+    String TASK_TYPE_FIRST = "First";
+
+    /**
      * 正常任务类型
      */
     String TASK_TYPE_NORMAL = "Normal";

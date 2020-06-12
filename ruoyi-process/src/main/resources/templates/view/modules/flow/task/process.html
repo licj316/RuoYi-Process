@@ -88,7 +88,6 @@
             }
         };
         axios.post('/general/flow/process/startFlow', params).then(res => {
-            // console.info(res.data);
             let data = res.data.data;
             var param = '?taskId=' + data.taskId + '&taskName=' + encodeURIComponent(data.taskName) + '&taskDefKey=' + data.taskDefKey
                 + '&procInsId=' + data.procInsId + '&procDefId=' + data.procDefId + '&status=' + status;
