@@ -312,7 +312,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                             SysUser user = sysUserService.selectUserById(Long.valueOf(il.get(0).getStartUserId()));
                             if (user != null) {
                                 flowTaskHistoricVO.setAssignee(histIns.getAssignee());
-                                flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getUserId()));
+                                flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName()));
                             }
                         }
                     }
@@ -324,7 +324,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                         SysUser user = sysUserService.selectUserById(Long.valueOf(histIns.getAssignee()));
                         if (user != null) {
                             flowTaskHistoricVO.setAssignee(histIns.getAssignee());
-                            flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getUserId()));
+                            flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName()));
                         }
                     }
                     // 获取意见评论内容 和 附件
@@ -341,7 +341,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
                             List<FlowCommentVO> flowComments = new ArrayList<>();
                             commentList.forEach(comment -> {
                                 SysUser user = sysUserService.selectUserById(Long.valueOf(histIns.getAssignee()));
-                                FlowCommentVO commentVO = FlowCommentVO.builder().time(comment.getTime()).userId(comment.getUserId()).userDesc(MessageFormat.format("{0}({1})", user.getUserName(), user.getUserId())).fullMessage(comment.getFullMessage()).build();
+                                FlowCommentVO commentVO = FlowCommentVO.builder().time(comment.getTime()).userId(comment.getUserId()).userDesc(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName())).fullMessage(comment.getFullMessage()).build();
                                 commentVO.setFlowAttachments(this.getCommentAttachmentList(comment.getUserId(), attachmentList));
                                 commentVO.setHandWritingSignatureAttachment(this.getCommentHandWritingSignature(comment.getUserId(), attachmentList));
                                 flowComments.add(commentVO);

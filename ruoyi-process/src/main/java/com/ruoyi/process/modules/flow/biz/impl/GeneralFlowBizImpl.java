@@ -167,6 +167,7 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 	}
 
 	@Override
+	@Transactional
 	public String userAudit(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
 		// 设置当前流程任务办理人
 		Authentication.setAuthenticatedUserId(String.valueOf(sessionUserAccount.getUserId()));

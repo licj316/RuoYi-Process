@@ -182,7 +182,7 @@ public class GeneralProcessController extends BaseProcessController {
 				// UserTaskExtensionDTO userTaskExtension = FlowUtils.getUserTaskExtension(userTask);
 				// TaskReviewerScopeEnum taskReviewerScope = userTaskExtension.getTaskReviewerScope();
 			} else {
-				resMap.put("nodeType", nextNodePair.getRight());
+				resMap.put("nodeType", nextNodePair.getLeft());
 			}
 			resList.add(resMap);
 

@@ -52,7 +52,7 @@
                     title: '流程XML',
                     align: "center",
                     formatter: function (value, row, index) {
-                        return '<a target="_blank" href="' + prefix + '/flow/process/resource/read?procDefId=' + row.id + '&resType=xml" title="查看流程XML">' + row.resourceName + '</a>';
+                        return '<a target="_blank" href="/flow/process/resource/read?procDefId=' + row.id + '&resType=xml" title="查看流程XML">' + row.resourceName + '</a>';
                     }
                 },
                 {
@@ -60,7 +60,7 @@
                     title: '流程图片',
                     align: 'center',
                     formatter: function (value, row, index) {
-                        return '';
+                        return '<a href="javascript:void(0)" onclick="showDiagram(\'' + row.id + '\')" title="查看流程XML">' + row.resourceName + '</a>';
                     }
                 },
                 {
@@ -81,21 +81,40 @@
         $.table.init(options);
     });
 
+    function showDiagram(procDefId) {
+        $.modal.open('流程图查看', "/flow/process/resource/read?procDefId=" + procDefId + "&resType=image");
+    }
+
     function suspendFlow(procDefId) {
-        $.operate.post("/flow/process/update/suspend", {procDefId: procDefId}, function (result) {
+        axios.post("/flow/process/update/suspend?procDefId=" + procDefId, {}).then(result => {
             console.info(result);
+            let data = result. data;
+            $.modal.msg(data.msg);
+            if(data.code == 0) {
+                $.table.refresh();
+            }
         });
     }
 
     function activeFlow(procDefId) {
-        $.operate.post("/flow/process/update/active", {procDefId: procDefId}, function (result) {
+        axios.post("/flow/process/update/active?procDefId=" + procDefId, {}).then(result => {
             console.info(result);
+            let data = result. data;
+            $.modal.msg(data.msg);
+            if(data.code == 0) {
+                $.table.refresh();
+            }
         });
     }
 
     function deleteDeployment(deploymentId) {
-        $.operate.post("/flow/process/deleteDeployment", {deploymentId: deploymentId}, function (result) {
+        axios.post("/flow/process/deleteDeployment?deploymentId=" + deploymentId, {}).then(result => {
             console.info(result);
+            let data = result. data;
+            $.modal.msg(data.msg);
+            if(data.code == 0) {
+                $.table.refresh();
+            }
         });
     }
 </script>

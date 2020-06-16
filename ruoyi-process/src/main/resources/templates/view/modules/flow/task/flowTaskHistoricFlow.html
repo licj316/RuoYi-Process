@@ -143,10 +143,10 @@
             <th:block th:text="${his.activityType!='endEvent'?'办理人:': ''}"></th:block>
             <th:block th:text="${his.assigneeName}"></th:block>
             开始时间：
-            <th:block th:text="${his.startTime}"></th:block>
+            <th:block th:text="${#dates.format(his.startTime,'yyyy-MM-dd HH:mm:ss')}"></th:block>
             <th:block th:if="${his.endTime} ne null">
                 处理时间:
-                <th:block th:text="${his.endTime}"></th:block>
+                <th:block th:text="${#dates.format(his.endTime,'yyyy-MM-dd HH:mm:ss')}"></th:block>
             </th:block>
             <th:block th:if="${#strings.isEmpty(his.timeConsuming)}">
                 任务历时:
@@ -162,7 +162,7 @@
 <!--                        </div>-->
                         <div class="comment-content" th:text="${comment.fullMessage}"></div>
                         <div class="btns">
-                        <span class="comment-user" th:text="${comment.userDesc} + '&nbsp;&nbsp;&nbsp;&nbsp;' + ${comment.time}">
+                        <span class="comment-user" th:text="${comment.userDesc} + '&nbsp;&nbsp;&nbsp;&nbsp;' + ${#dates.format(comment.time,'yyyy-MM-dd HH:mm:ss')}">
                         </span>
                             <div class="layui-btn layui-btn-primary layui-btn-xs signature-btn" th:if="${comment.handWritingSignatureAttachment} ne null">查看签字
                                 <div class="signature">

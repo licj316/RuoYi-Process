@@ -32,6 +32,7 @@ public class LeaveExecutor implements ExternalFormExecutor {
 
     @Override
     public Map start(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
+        // 流程发起操作
         Leave leave = Lang.map2Object(formData, Leave.class);
         leaveService.save(leave);
         return Lang.obj2map(leave);
