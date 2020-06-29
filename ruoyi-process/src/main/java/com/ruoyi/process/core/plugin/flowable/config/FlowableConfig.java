@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 public class FlowableConfig implements EngineConfigurationConfigurer<SpringProcessEngineConfiguration> {
@@ -44,14 +45,14 @@ public class FlowableConfig implements EngineConfigurationConfigurer<SpringProce
 		//设置禁用Idm引擎
 		engineConfiguration.setDisableIdmEngine(true);
 		engineConfiguration.setIdGenerator(new FlowStrongUuidGenerator());
-		engineConfiguration.setTransactionsExternallyManaged(true);
-		engineConfiguration.setTransactionFactory(new NutzTransactionFactory());
+//		engineConfiguration.setTransactionsExternallyManaged(true);
+//		engineConfiguration.setTransactionFactory(new NutzTransactionFactory());
 		engineConfiguration.setProcessEngineLifecycleListener(new NutzFwProcessEngineLifecycleListener());
 		engineConfiguration.setEventListeners(this.getGlobalFlowableEventListener());
 		//自定义行为类工厂
 		engineConfiguration.setActivityBehaviorFactory(new CustomDefaultActivityBehaviorFactory());
 		engineConfiguration.setCreateUserTaskInterceptor(customCreateUserTaskInterceptor);
-		this.initElBeans();
+		engineConfiguration.setBeans(initElBeans());
 	}
 
 	/**
@@ -67,9 +68,9 @@ public class FlowableConfig implements EngineConfigurationConfigurer<SpringProce
 	/**
 	 * 注册 flowable el bean
 	 */
-	public void initElBeans() {
+	public Map<Object, Object> initElBeans() {
 		MultiInstanceCompleteTaskListener multiInstanceCompleteTaskListener = SpringUtils.getBean(MultiInstanceCompleteTaskListener.class);
 		MultiInstanceCompleteTask multiInstanceCompleteTask = SpringUtils.getBean(MultiInstanceCompleteTask.class);
-		ImmutableMap.of("multiInstanceCompleteTaskListener", multiInstanceCompleteTaskListener, "multiInstanceCompleteTask", multiInstanceCompleteTask);
+		return ImmutableMap.of("multiInstanceCompleteTaskListener", multiInstanceCompleteTaskListener, "multiInstanceCompleteTask", multiInstanceCompleteTask);
 	}
 }

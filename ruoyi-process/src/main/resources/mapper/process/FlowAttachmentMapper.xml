@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.process.modules.flow.mapper.FlowAttachmentMapper">
+
+    <resultMap type="FlowAttachment" id="FlowAttachmentResult">
+        <id property="id" column="ID_"/>
+        <result property="procDefKey" column="PROC_DEF_KEY_"/>
+        <result property="procInsId" column="PROC_INS_ID_"/>
+        <result property="attachType" column="ATTACH_TYPE_"/>
+        <result property="createBy" column="CREATE_BY"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateBy" column="UPDATE_BY"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+    </resultMap>
+
+    <insert id="batchSave" parameterType="list">
+        INSERT INTO FLOW_ATTACHMENT (PROC_DEF_KEY_, PROC_INS_ID_, ATTACH_TYPE_, REMARK, CREATE_BY, CREATE_TIME)
+        VALUES
+        <foreach item="item" collection="list" separator="," index="">
+            (#{item.procDefKey, jdbcType=VARCHAR}, #{item.procInsId, jdbcType=VARCHAR}, #{item.attachType, jdbcType=VARCHAR}, #{item.remark, jdbcType=VARCHAR}, #{item.createBy, jdbcType=VARCHAR}, #{item.createTime, jdbcType=DATE})
+        </foreach>
+    </insert>
+
+    <select id="findById" parameterType="string" resultMap="FlowAttachmentResult">
+         SELECT * FROM FLOW_ATTACHMENT WHERE ID_ = #{id}
+    </select>
+
+    <select id="listDetail" parameterType="hashMap" resultType="hashMap">
+        SELECT FA.ID_                       AS 'flowAttachmentId',
+               FAD.ID_                      AS 'flowAttachmentDetailId',
+               FA.ATTACH_TYPE_              AS 'attachType',
+               FAD.FILE_NAME_               AS 'fileName',
+               FAD.FILE_TYPE_               AS 'fileType',
+               FAD.FILE_SIZE_ / 1000 / 1000 AS 'fileSize',
+               FAD.CREATE_BY                AS 'createBy',
+               SU.USER_NAME                 AS 'createByName',
+               FAD.CREATE_TIME              AS 'createTime'
+        FROM FLOW_ATTACHMENT FA
+        LEFT JOIN FLOW_ATTACHMENT_DETAIL FAD ON FA.ID_ = FAD.FLOW_ATTACHMENT_ID_
+        LEFT JOIN SYS_USER SU ON FAD.CREATE_BY = SU.LOGIN_NAME
+        WHERE
+        <if test="procInsId != null and procInsId != ''">
+            FA.PROC_INS_ID_ = #{procInsId}
+        </if>
+        AND FAD.DEL_FLAG_ != '2'
+        ORDER BY FA.ID_, FAD.CREATE_TIME
+    </select>
+</mapper>

@@ -32,11 +32,11 @@ public interface FlowTaskService {
      * 获取待办、待签收列表
      *
      * @param flowTaskVO
-     * @param userName
-     * @param sessionRoleCodes
+     * @param userId
+     * @param sessionRoleKeys
      * @return
      */
-    List<FlowTaskVO> todoList(FlowTaskVO flowTaskVO, String userName, Set<String> sessionRoleCodes, boolean needFormData);
+    List<FlowTaskVO> todoList(FlowTaskVO flowTaskVO, String userId, Set<String> sessionRoleKeys, boolean needFormData);
 
     /**
      * 获取已发任务
@@ -99,7 +99,7 @@ public interface FlowTaskService {
      * @param userName
      * @return
      */
-    ProcessInstance startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleCodes);
+    ProcessInstance startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleKeys);
 
     /**
      * 启动流程
@@ -109,7 +109,7 @@ public interface FlowTaskService {
      * @param userName
      * @return
      */
-    ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleCodes);
+    ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleKeys);
 
 
     /**

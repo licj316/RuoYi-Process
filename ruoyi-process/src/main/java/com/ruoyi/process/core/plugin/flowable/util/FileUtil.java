@@ -149,6 +149,15 @@ public class FileUtil {
         return filePath;
     }
 
+    public static String getRelativePath(String saveFileName) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("/");
+        sb.append(DateUtil.getDate("yyyy/MM/dd"));
+        sb.append("/");
+        sb.append(saveFileName);
+        return Paths.get(sb.toString()).normalize().toString();
+    }
+
 
     /**
      * 根据文件名创建唯一文件
@@ -343,7 +352,7 @@ public class FileUtil {
             newFile = Paths.get(System.getProperty("java.io.tmpdir"), "NutzFw", R.UU16(), fileName);
         } while (newFile.toFile().exists());
         if (!newFile.getParent().toFile().exists()) {
-            Files.createDirectory(newFile.getParent());
+            Files.createDirectories(newFile.getParent());
         }
         Files.createFile(newFile);
         return newFile;

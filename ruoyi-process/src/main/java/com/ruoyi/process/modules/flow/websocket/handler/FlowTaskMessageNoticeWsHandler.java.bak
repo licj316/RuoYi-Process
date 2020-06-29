@@ -41,7 +41,7 @@ public class FlowTaskMessageNoticeWsHandler extends AbstractWsHandler implements
      *
      * @return
      */
-    private List<String> roleCode;
+    private List<String> roleKey;
 
     public FlowTaskMessageNoticeWsHandler(TaskService taskService) {
         super("wsroom:");
@@ -59,11 +59,11 @@ public class FlowTaskMessageNoticeWsHandler extends AbstractWsHandler implements
     @Override
     public void init() {
         super.init();
-        if (roleCode == null) {
+        if (roleKey == null) {
             List<Role> roles = (List<Role>) httpSession.getAttribute(Cons.SESSION_ROLES_KEY);
             Set<String> codes = Sets.newHashSet();
-            roles.forEach(role -> codes.add(role.getRoleCode()));
-            this.roleCode = Lists.newArrayList(codes);
+            roles.forEach(role -> codes.add(role.getRoleKey()));
+            this.roleKey = Lists.newArrayList(codes);
         }
         if (userName == null) {
             UserAccount userAccount = (UserAccount) httpSession.getAttribute(Cons.SESSION_USER_KEY);
@@ -83,7 +83,7 @@ public class FlowTaskMessageNoticeWsHandler extends AbstractWsHandler implements
                 .or()
                 .taskAssignee(userName)
                 .taskCandidateUser(userName)
-                .taskCandidateGroupIn(roleCode)
+                .taskCandidateGroupIn(roleKey)
                 .endOr()
                 .orderByTaskCreateTime().desc();
         List<Task> list = query.list();

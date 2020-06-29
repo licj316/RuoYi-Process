@@ -7,7 +7,6 @@
 
 package com.ruoyi.process.core.plugin.flowable.interceptor;
 
-import com.ruoyi.process.core.plugin.flowable.behavior.CustomNoneStartEventActivityBehavior;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.service.FlowCacheService;
 import com.ruoyi.process.core.plugin.flowable.service.FlowProcessDefinitionService;
@@ -35,7 +34,7 @@ import java.util.Map;
 @Component
 public class CustomCreateUserTaskInterceptor implements CreateUserTaskInterceptor {
 
-    private static final Logger log = LogManager.getLogger(CustomNoneStartEventActivityBehavior.class);
+    private static final Logger log = LogManager.getLogger(CustomCreateUserTaskInterceptor.class);
 
     FlowCacheService flowCacheService;
     FlowTaskService flowTaskService;

@@ -7,6 +7,7 @@
 
 package com.ruoyi.process.modules.flow.biz.impl;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.ruoyi.process.core.plugin.flowable.constant.FlowConstant;
 import com.ruoyi.process.core.plugin.flowable.dto.CandidateGroupsDTO;
@@ -21,8 +22,14 @@ import com.ruoyi.process.core.plugin.flowable.util.FlowDiagramUtils;
 import com.ruoyi.process.core.plugin.flowable.util.FlowUtils;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.modules.flow.biz.GeneralFlowBiz;
+import com.ruoyi.process.modules.flow.domain.FlowAttachment;
+import com.ruoyi.process.modules.flow.domain.FlowAttachmentConfig;
 import com.ruoyi.process.modules.flow.executor.ExternalFormExecutor;
+import com.ruoyi.process.modules.flow.mapper.FlowAttachmentConfigMapper;
+import com.ruoyi.process.modules.flow.mapper.FlowAttachmentMapper;
+import com.ruoyi.process.modules.flow.service.FlowAttachmentService;
 import com.ruoyi.process.modules.flow.service.FlowCustomQueryService;
+import com.ruoyi.process.utils.DateUtil;
 import com.ruoyi.process.utils.JsContex;
 import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysRoleService;
@@ -50,10 +57,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -83,6 +87,10 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 	FlowCustomQueryService flowCustomQueryService;
 	@Autowired
 	TaskService taskService;
+	@Autowired
+	FlowAttachmentConfigMapper flowAttachmentConfigMapper;
+	@Autowired
+	FlowAttachmentMapper flowAttachmentMapper;
 
 	@Override
 	public String getFormPage(FlowTaskVO flowTaskVO) {
@@ -92,7 +100,7 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
-	public ProcessInstance start(Map formData, FlowTaskVO flowTaskVO, SysUser currUser, Set<String> roleCodes) {
+	public ProcessInstance start(Map formData, FlowTaskVO flowTaskVO, SysUser currUser, Set<String> roleKeys) {
 		// 设置当前流程任务办理人
 		Authentication.setAuthenticatedUserId(String.valueOf(currUser.getUserId()));
 		ExternalFormExecutor executor = getExternalFormExecutor(flowTaskVO.getProcDefId());
@@ -109,7 +117,22 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 		if (Strings.isBlank(primaryKeyId)) {
 			throw new RuntimeException("业务ID不能为空");
 		}
-		ProcessInstance processInstance = flowTaskService.startProcess(flowTaskVO.getProcDefKey(), primaryKeyId, variables, currUser.getUserId().toString(), currUser.getDeptId(), roleCodes);
+		ProcessInstance processInstance = flowTaskService.startProcess(flowTaskVO.getProcDefKey(), primaryKeyId, variables, currUser.getUserId().toString(), currUser.getDeptId(), roleKeys);
+		// 创建流程附件列表
+		List<FlowAttachmentConfig> flowAttachmentConfigList = flowAttachmentConfigMapper.findByParams(ImmutableMap.of("procDefKey", flowTaskVO.getProcDefKey()));
+		if(flowAttachmentConfigList != null && flowAttachmentConfigList.size() > 0) {
+			List<FlowAttachment> flowAttachmentList = flowAttachmentConfigList.stream().map(flowAttachmentConfig -> {
+				FlowAttachment fa = new FlowAttachment();
+				fa.setProcInsId(processInstance.getId());
+				fa.setProcDefKey(flowAttachmentConfig.getProcDefKey());
+				fa.setAttachType(flowAttachmentConfig.getAttachType());
+				fa.setCreateBy(currUser.getLoginName());
+				fa.setCreateTime(new Date());
+				return fa;
+			}).collect(Collectors.toList());
+			flowAttachmentMapper.batchSave(flowAttachmentList);
+		}
+
 		List<Task> tasklist = taskService.createTaskQuery().processInstanceId(processInstance.getId()).list();
 		if(tasklist.size() > 0) {
 			Task task = tasklist.get(0);
@@ -247,12 +270,11 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 				candidateUserNames.add(flowSubmitterUserName);
 				break;
 			case MULTIPLE_USERS:
-				candidateUserNames = taskExtensionDTO.getCandidateUsers().stream().map(CandidateUsersDTO::getUserName).collect(Collectors.toList());
+				candidateUserNames = taskExtensionDTO.getCandidateUsers().stream().map(CandidateUsersDTO::getUserId).collect(Collectors.toList());
 				break;
 			case USER_ROLE_GROUPS:
-				List<String> roleCodes = taskExtensionDTO.getCandidateGroups().stream().map(CandidateGroupsDTO::getRoleCode).collect(Collectors.toList());
-				//candidateUserNames = userAccountBiz.listUserNameByRoleCodes(roleCodes);
-				List<SysUser> sysUserList = sysUserRoleService.selectUserListByRoleCodeList(roleCodes);
+				List<String> roleKeys = taskExtensionDTO.getCandidateGroups().stream().map(CandidateGroupsDTO::getRoleKey).collect(Collectors.toList());
+				List<SysUser> sysUserList = sysUserRoleService.selectUserListByRoleKeyList(roleKeys);
 				candidateUserNames = sysUserList.stream().map(sysUser -> sysUser.getLoginName()).distinct().collect(Collectors.toList());
 				break;
 			case DEPARTMENT_HEAD:

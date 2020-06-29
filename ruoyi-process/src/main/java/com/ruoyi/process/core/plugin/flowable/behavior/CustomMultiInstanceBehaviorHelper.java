@@ -73,12 +73,12 @@ public class CustomMultiInstanceBehaviorHelper {
             TaskReviewerScopeEnum taskReviewerScope = taskExtensionDTO.getTaskReviewerScope();
             switch (taskReviewerScope) {
                 case MULTIPLE_USERS:
-                    assigneesCollection = Optional.ofNullable(taskExtensionDTO.getCandidateUsers()).orElse(new ArrayList<>(0)).stream().map(CandidateUsersDTO::getUserName).collect(Collectors.toList());
+                    assigneesCollection = Optional.ofNullable(taskExtensionDTO.getCandidateUsers()).orElse(new ArrayList<>(0)).stream().map(CandidateUsersDTO::getUserId).collect(Collectors.toList());
                     break;
                 case USER_ROLE_GROUPS:
                     for (int i = 0; i < taskExtensionDTO.getSignNrOfInstances(); i++) {
                         //使用时需要拆分出来
-                        assigneesCollection.add(Optional.ofNullable(taskExtensionDTO.getCandidateGroups()).orElse(new ArrayList<>()).stream().map(CandidateGroupsDTO::getRoleCode).collect(Collectors.joining(",")));
+                        assigneesCollection.add(Optional.ofNullable(taskExtensionDTO.getCandidateGroups()).orElse(new ArrayList<>()).stream().map(CandidateGroupsDTO::getRoleKey).collect(Collectors.joining(",")));
                     }
                     break;
                 default:

@@ -162,16 +162,17 @@ public class FlowUtils {
         flowTaskVO.setAssignee(task.getAssignee());
         flowTaskVO.setCreateTime(task.getCreateTime());
         flowTaskVO.setProcInsId(task.getProcessInstanceId());
+        flowTaskVO.setExecutionId(task.getExecutionId());
         flowTaskVO.setClaimTime(task.getClaimTime());
         flowTaskVO.setProcDefId(task.getProcessDefinitionId());
         flowTaskVO.setTaskType(task.getDescription());
     }
 
 
-    public static void buildTodoQuery(TaskQuery todoTaskQuery, String userName, List<String> roleCodes) {
-        todoTaskQuery.or().taskAssignee(userName).taskCandidateUser(userName);
-        if (CollectionUtils.isNotEmpty(roleCodes)) {
-            todoTaskQuery.taskCandidateGroupIn(roleCodes);
+    public static void buildTodoQuery(TaskQuery todoTaskQuery, String userId, List<String> roleKeys) {
+        todoTaskQuery.or().taskAssignee(userId).taskCandidateUser(userId);
+        if (CollectionUtils.isNotEmpty(roleKeys)) {
+            todoTaskQuery.taskCandidateGroupIn(roleKeys);
         }
         todoTaskQuery.endOr();
     }

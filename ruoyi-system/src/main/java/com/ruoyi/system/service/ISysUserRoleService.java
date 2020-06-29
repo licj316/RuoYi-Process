@@ -11,6 +11,6 @@ public interface ISysUserRoleService {
 	 * @param roleIdList
 	 * @return
 	 */
-	List<SysUser> selectUserListByRoleCodeList(List<String> roleIdList);
+	List<SysUser> selectUserListByRoleKeyList(List<String> roleIdList);
 
 }

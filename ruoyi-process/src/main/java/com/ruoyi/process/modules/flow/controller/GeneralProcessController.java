@@ -5,7 +5,7 @@
  * 源 码 地 址：https://gitee.com/threefish/NutzFw
  */
 
-package com.ruoyi.process.modules.flow.action;
+package com.ruoyi.process.modules.flow.controller;
 
 
 import com.ruoyi.common.core.domain.AjaxResult;
@@ -15,7 +15,6 @@ import com.ruoyi.process.core.plugin.flowable.constant.FlowConstant;
 import com.ruoyi.process.core.plugin.flowable.dto.FlowSubmitInfoDTO;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskFormStatusEnum;
-import com.ruoyi.process.core.plugin.flowable.enums.TaskReviewerScopeEnum;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskStatusEnum;
 import com.ruoyi.process.core.plugin.flowable.service.FlowProcessDefinitionService;
 import com.ruoyi.process.core.plugin.flowable.service.FlowTaskService;
@@ -31,19 +30,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.UserTask;
-import org.flowable.cmmn.engine.impl.process.ProcessInstanceService;
 import org.flowable.editor.constants.StencilConstants;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ActivityInstance;
-import org.flowable.engine.runtime.ActivityInstanceQuery;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
+import org.flowable.task.api.TaskQuery;
 import org.nutz.lang.Strings;
 import org.nutz.lang.util.NutMap;
-import org.nutz.mvc.annotation.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -316,6 +313,16 @@ public class GeneralProcessController extends BaseProcessController {
 		}
 	}
 
+	@RequestMapping("/saveData")
+	@ResponseBody
+	public AjaxResult saveFlowData(@RequestBody FlowParamVO flowParamVO) {
+		Map<String, Object> formData = flowParamVO.getForm();
+		FlowTaskVO flowTaskVO = flowParamVO.getFlow();
+//		Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
+		runtimeService.setVariables(flowTaskVO.getExecutionId(), formData);
+		return success();
+	}
+
 	/**
 	 * 工单执行（完成任务）
 	 *
@@ -355,10 +362,14 @@ public class GeneralProcessController extends BaseProcessController {
 	@ResponseBody
 	public AjaxResult loadFormData(@RequestBody FlowTaskVO flowTaskVO) {
 		SysUser sessionUserAccount = getCurrUser();
-		Object formData = generalFlowBiz.loadFormData(flowTaskVO, sessionUserAccount);
-		if (formData == null) {
-			return AjaxResult.error("数据不存在，可能是新增");
+		try {
+			Object formData = generalFlowBiz.loadFormData(flowTaskVO, sessionUserAccount);
+			if (formData == null) {
+				return AjaxResult.error("数据不存在，可能是新增");
+			}
+			return AjaxResult.success(formData);
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
 		}
-		return AjaxResult.success(formData);
 	}
 }

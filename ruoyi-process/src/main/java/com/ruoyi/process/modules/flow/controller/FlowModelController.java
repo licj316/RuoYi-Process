@@ -5,7 +5,7 @@
  * 源 码 地 址：https://gitee.com/threefish/NutzFw
  */
 
-package com.ruoyi.process.modules.flow.action;
+package com.ruoyi.process.modules.flow.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,9 +35,6 @@ import org.nutz.lang.Encoding;
 import org.nutz.lang.Strings;
 import org.nutz.lang.random.R;
 import org.nutz.lang.util.NutMap;
-import org.nutz.mvc.annotation.At;
-import org.nutz.mvc.annotation.Ok;
-import org.nutz.mvc.annotation.Param;
 import org.nutz.mvc.upload.TempFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;

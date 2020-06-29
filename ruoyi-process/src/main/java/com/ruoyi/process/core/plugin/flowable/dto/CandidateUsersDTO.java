@@ -12,8 +12,16 @@ package com.ruoyi.process.core.plugin.flowable.dto;
  * @date: 2019/7/3
  */
 public class CandidateUsersDTO {
+    String userId;
     String userName;
-    String realName;
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     public String getUserName() {
         return userName;
@@ -21,13 +29,5 @@ public class CandidateUsersDTO {
 
     public void setUserName(String userName) {
         this.userName = userName;
-    }
-
-    public String getRealName() {
-        return realName;
-    }
-
-    public void setRealName(String realName) {
-        this.realName = realName;
     }
 }

@@ -5,7 +5,7 @@
  * 源 码 地 址：https://gitee.com/threefish/NutzFw
  */
 
-package com.ruoyi.process.modules.flow.action;
+package com.ruoyi.process.modules.flow.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
@@ -86,10 +86,11 @@ public class FlowTaskController extends BaseProcessController{
     public TableDataInfo todoData(HttpServletRequest request) {
         FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
         SysUser currUser = getCurrUser();
-        List<SysRole> userRoleList = getUserRoleList(currUser.getUserId());
-        Set<String> roleIdSet = userRoleList.stream().map(sysRole -> sysRole.getRoleId().toString()).collect(Collectors.toSet());
+        List<SysRole> roles = currUser.getRoles();
+//        List<SysRole> userRoleList = getUserRoleList(currUser.getUserId());
+        Set<String> roleKeySet = roles.stream().map(sysRole -> sysRole.getRoleKey()).collect(Collectors.toSet());
         //联查变量的情况下，分页功能失效
-        return getDataTable(flowTaskService.todoList(flowTaskVO, currUser.getUserId().toString(), roleIdSet, false));
+        return getDataTable(flowTaskService.todoList(flowTaskVO, currUser.getUserId().toString(), roleKeySet, false));
     }
 
     @RequestMapping("/diagramViewer")
@@ -219,18 +220,25 @@ public class FlowTaskController extends BaseProcessController{
      */
     @PostMapping("/transfer")
 	@ResponseBody
-//    @TryCatchMsg("转派失败!")
-    public AjaxResult transferTask(@RequestParam("taskId") String taskId, @RequestParam("userId") String userId, @RequestParam("reason") String reason) {
+    public AjaxResult transferTask(@RequestBody Map<String, String> params) {
+        String taskId = params.get("taskId");
+        String userId = params.get("userId");
+        String reason = params.get("reason");
         if (Strings.isBlank(reason)) {
             return AjaxResult.error("请输入转派原因");
         }
         if (Strings.isBlank(userId) || Strings.isBlank(taskId)) {
             return AjaxResult.error("参数异常");
         }
-        // 设置当前流程任务办理人
-        Authentication.setAuthenticatedUserId(getCurrUser().getUserId().toString());
-        flowTaskService.transferTask(taskId, userId, reason);
-        return AjaxResult.success("委托成功");
+        try {
+            // 设置当前流程任务办理人
+            Authentication.setAuthenticatedUserId(getCurrUser().getUserId().toString());
+            flowTaskService.transferTask(taskId, userId, reason);
+            return AjaxResult.success("委托成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("转派失败");
+        }
     }
 
 

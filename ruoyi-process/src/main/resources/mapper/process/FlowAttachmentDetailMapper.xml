@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.process.modules.flow.mapper.FlowAttachmentDetailMapper">
+
+    <resultMap type="FlowAttachmentDetail" id="FlowAttachmentDetailResult">
+        <id property="id" column="ID_"/>
+        <result property="flowAttachmentId" column="FLOW_ATTACHMENT_ID_"/>
+        <result property="fileName" column="FILE_NAME_"/>
+        <result property="saveFileName" column="SAVE_FILE_NAME_"/>
+        <result property="fileType" column="FILE_TYPE_"/>
+        <result property="fileSize" column="FILE_SIZE_"/>
+        <result property="filePath" column="FILE_PATH_"/>
+        <result property="delFlag" column="DEL_FLAG_"/>
+        <result property="remark" column="REMARK"/>
+        <result property="createBy" column="CREATE_BY"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateBy" column="UPDATE_BY"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+    </resultMap>
+
+    <insert id="save" parameterType="FlowAttachmentDetail">
+        INSERT INTO FLOW_ATTACHMENT_DETAIL (FLOW_ATTACHMENT_ID_, FILE_NAME_, SAVE_FILE_NAME_, FILE_TYPE_, FILE_SIZE_, FILE_PATH_, DEL_FLAG_, REMARK, CREATE_BY, CREATE_TIME)
+        VALUES (#{flowAttachmentId}, #{fileName}, #{saveFileName}, #{fileType}, #{fileSize}, #{filePath}, #{delFlag}, #{remark}, #{createBy}, #{createTime})
+    </insert>
+
+    <update id="deleteById" parameterType="string">
+        UPDATE FLOW_ATTACHMENT_DETAIL SET DEL_FLAG_ = '2' WHERE ID_ = #{id}
+    </update>
+
+</mapper>

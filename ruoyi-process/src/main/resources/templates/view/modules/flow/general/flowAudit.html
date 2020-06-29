@@ -10,6 +10,7 @@
 <input type="hidden" id="flow_taskName" th:value="${flow.taskName}"/>
 <input type="hidden" id="flow_taskDefKey" th:value="${flow.taskDefKey}"/>
 <input type="hidden" id="flow_procInsId" th:value="${flow.procInsId}"/>
+<input type="hidden" id="flow_executionId" th:value="${flow.executionId}"/>
 <input type="hidden" id="flow_procDefId" th:value="${flow.procDefId}"/>
 <input type="hidden" id="flow_procDefKey" th:value="${flow.procDefKey}"/>
 <input type="hidden" id="flow_businessId" th:value="${flow.businessId}"/>
@@ -30,7 +31,7 @@
         <!--        </div>-->
         <!-- 按钮区域 -->
         <div class="footer-btns">
-            <button th:if="${#strings.equals(status, 'EDIT')}" class="btn btn-primary " type="button"
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary " type="button"
                     onclick="handleSave()"><i class="fa fa-check"></i>&nbsp;保存
             </button>
             <button th:if="${!#strings.equals(status, 'VIEW')}" class="btn btn-primary " type="button"
@@ -67,20 +68,31 @@
             </button>
         </div>
         <ul class="nav nav-tabs" role="tablist" style="margin-top: 5px">
-            <li class="active" role="presentation"><a data-toggle="tab" href="#flowMainContainer" role="tab"
-                                                      th:text="${title}"></a></li>
-            <li role="presentation" th:if="${flow.businessId} ne null"><a data-toggle="tab" href="#informationContainer"
-                                                                          role="tab">审批意见</a></li>
-            <li role="presentation"><a data-toggle="tab" href="#diagramContainer" role="tab">流程图</a></li>
+            <li class="active" role="presentation">
+                <a data-toggle="tab" href="#flowMainContainer" role="tab" th:text="${title}"></a>
+            </li>
+            <li role="presentation">
+                <a data-toggle="tab" href="#flowAttachmentContainer" role="tab">流程附件</a>
+            </li>
+            <li role="presentation" th:if="${flow.businessId} ne null">
+                <a data-toggle="tab" href="#informationContainer" role="tab">审批意见</a>
+            </li>
+            <li role="presentation">
+                <a data-toggle="tab" href="#diagramContainer" role="tab">流程图</a>
+            </li>
         </ul>
         <div class="tab-content" style="height: 1000px;">
             <div class="tab-pane active" id="flowMainContainer" role="tabpanel">
                 <div th:replace="${formPage} :: form"></div>
             </div>
-            <div class="tab-pane" id="informationContainer" role="tabpanel" th:if="${flow.businessId} ne null">
+            <div class="tab-pane" id="flowAttachmentContainer" role="tabpanel">
+                <iframe th:src="'/flowAttachment/detail?procInsId=' + ${flow.procInsId}" allowtransparency-y="yes"
+                        border="0" frameborder="no" height="1000" id="flowAttachmentList"
+                        marginheight="0" marginwidth="0" scrolling-x="no" scrolling-y="auto" width="100%"></iframe>
+            </div>
+            <div class="tab-pane" id="informationContainer" role="tabpanel">
                 <iframe allowtransparency-y="yes" border="0" frameborder="no" height="1000" id="histoicFlowList"
-                        marginheight="0" marginwidth="0"
-                        scrolling-x="no" scrolling-y="auto" width="100%"></iframe>
+                        marginheight="0" marginwidth="0" scrolling-x="no" scrolling-y="auto" width="100%"></iframe>
             </div>
             <div class="tab-pane" id="diagramContainer" role="tabpanel" style="overflow: auto">
                 <img th:src="'/flow/process/resource/read?procDefId=' + ${flow.procDefId} + '&resType=image'"
@@ -198,6 +210,7 @@
         taskName: '',
         taskDefKey: '',
         procInsId: '',
+        executionId: '',
         procDefId: '',
         procDefKey: '',
         businessId: '',
@@ -207,8 +220,8 @@
         addMultiInstanceAssignee: '',
         flowNextReviewerAssignee: '',
         handWritingSignatureData: '',
-        pass: true,
-        turnDown: false
+        pass: true, // 审批是否通过
+        turnDown: false //驳回
     };
 
     var extensionProperty = {
@@ -242,6 +255,7 @@
         flow.taskName = $("#flow_taskName").val();
         flow.taskDefKey = $("#flow_taskDefKey").val();
         flow.procInsId = $("#flow_procInsId").val();
+        flow.executionId = $("#flow_executionId").val();
         flow.procDefId = $("#flow_procDefId").val();
         flow.procDefKey = $("#flow_procDefKey").val();
         flow.businessId = $("#flow_businessId").val();
@@ -249,7 +263,7 @@
         flowEditStatus = $("#flow_edit_status").val();
         setPageData();
         if (flow.businessId != undefined && flow.businessId.length > 0) {
-            axios.post("/general/flow/process/loadFormData", {flow: this.flow}).then(function (res) {
+            axios.post("/general/flow/process/loadFormData", flow).then(function (res) {
                 if (res.ok) {
                     flowFormData = res.data;
                     setPageData();
@@ -288,7 +302,11 @@
     handleInit();
 
     function handleSave() {
+        var params = {form: getFormData(), flow: flow};
         // TODO 保存按钮操作
+        axios.post("/general/flow/process/saveData", params).then(res => {
+
+        });
     }
 
     // 提交按钮操作方法
@@ -385,7 +403,8 @@
                         let nextStepNodeChecked = $("input[name='nextStepNode']:checked");
 
                         if ("submitToBackStep" === nextStepNodeChecked.val()) {
-                            flow.backToTaskDefKey = nextStepNodeChecked.attr("data-id");;
+                            flow.backToTaskDefKey = nextStepNodeChecked.attr("data-id");
+                            ;
                             flow.backToTaskAssignee = $("input[name='backStepAssigne']").val();
                             // 提交到退回节点
                             handleDoSubmitTOBackStep();
@@ -687,9 +706,25 @@
         elementArr.forEach(ele => {
             let name = ele.getAttribute("name");
             if (name) {
-                data[name] = ele.value;
+                let eleVal = ele.value;
+                let eleTextVal;
                 if ("select-one" === ele.type) {
-                    data[name + "Text"] = ele.options[ele.selectedIndex].text;
+                    eleTextVal = ele.options[ele.selectedIndex].text;
+                }
+                if (name.indexOf(".") != -1) {
+                    let nameArr = name.split(".");
+                    if (!data[nameArr[0]]) {
+                        data[nameArr[0]] = {};
+                    }
+                    data[nameArr[0]][nameArr[1]] = eleVal;
+                    if (eleTextVal) {
+                        data[nameArr[0]][nameArr[1] + 'Text'] = eleVal;
+                    }
+                } else {
+                    data[name] = eleVal;
+                    if (eleTextVal) {
+                        data[name + "Text"] = ele.options[ele.selectedIndex].text;
+                    }
                 }
             }
         });
@@ -699,29 +734,40 @@
     function setPageData() {
         console.info(flowFormData);
         flowFormData = {
-            leaveType: "1",
-            title: "我要请假",
-            reason: "最近加班太多了",
-            startTime: "2020-06-03 12:00",
-            endTime: "2020-06-12 12:00",
-            totalTime: "",
-            totalTimeText: ""
+            leaveInfo: {
+                leaveType: "1",
+                title: "我要请假",
+                reason: "最近加班太多了",
+                startTime: "2020-06-03 12:00",
+                endTime: "2020-06-12 12:00",
+                totalTime: "",
+                totalTimeText: ""
+            }
         };
         let elementArr = document.querySelector("#flowMainContainer").querySelectorAll("[name]");
         elementArr.forEach(ele => {
             // console.info(ele);
             // console.info(ele.type);
             let eleName = ele.getAttribute("name");
+            let eleVal;
+            if (eleName.indexOf(".") != -1) {
+                let nameArr = eleName.split(".");
+                if (flowFormData[nameArr[0]] && flowFormData[nameArr[0]][nameArr[1]]) {
+                    eleVal = flowFormData[nameArr[0]][nameArr[1]];
+                }
+            } else {
+                eleVal = flowFormData[eleName];
+            }
             switch (ele.type) {
                 case 'text':
                 case 'textarea':
-                    ele.value = flowFormData[eleName];
+                    ele.value = eleVal;
                     break;
                 case 'select-one':
-                    $(ele).val(flowFormData[eleName]).trigger('change');
+                    $(ele).val(eleVal).trigger('change');
                     break;
                 default:
-                    ele.value = flowFormData[eleName];
+                    ele.value = eleVal;
             }
         });
     }

@@ -74,7 +74,7 @@
                     actions.push('<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="editModel(\'' + row.id + '\')"><i class="fa fa-edit"></i>编辑</a> ');
                     actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="changeModelType(\'' + row.id + '\')"><i class="fa fa-remove"></i>调整分类</a> ');
                     actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="deploymentModel(\'' + row.id + '\')"><i class="fa fa-remove"></i>部署</a> ');
-                    actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="exportModel(\'' + row.deploymentId + '\')"><i class="fa fa-remove"></i>导出</a> ');
+                    actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="exportModel(\'' + row.id + '\')"><i class="fa fa-remove"></i>导出</a> ');
                     actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="delModel(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
                     return actions.join('');
                 }
@@ -114,7 +114,7 @@
     }
 
     function exportModel(deploymentId) {
-        window.open(prefix + "/export/" + data.id);
+        window.open(prefix + "/export/" + deploymentId);
     }
 
     function delModel(id) {

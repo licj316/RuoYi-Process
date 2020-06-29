@@ -27,7 +27,7 @@ public interface GeneralFlowBiz {
 
     String getFormPage(FlowTaskVO flowTaskVO);
 
-    ProcessInstance start(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount, Set<String> sessionUserRoleCodes);
+    ProcessInstance start(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount, Set<String> sessionUserRoleKeys);
 
     String backToStep(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount);
 

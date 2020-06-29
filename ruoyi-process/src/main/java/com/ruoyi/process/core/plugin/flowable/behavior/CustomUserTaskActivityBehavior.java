@@ -74,10 +74,10 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
                     assignee = flowSubmitter;
                     break;
                 case MULTIPLE_USERS:
-                    candidateUsers = taskExtensionDTO.getCandidateUsers().stream().map(CandidateUsersDTO::getUserName).collect(Collectors.toList());
+                    candidateUsers = taskExtensionDTO.getCandidateUsers().stream().map(CandidateUsersDTO::getUserId).collect(Collectors.toList());
                     break;
                 case USER_ROLE_GROUPS:
-                    candidateGroups = taskExtensionDTO.getCandidateGroups().stream().map(CandidateGroupsDTO::getRoleCode).collect(Collectors.toList());
+                    candidateGroups = taskExtensionDTO.getCandidateGroups().stream().map(CandidateGroupsDTO::getRoleKey).collect(Collectors.toList());
                     break;
                 case DEPARTMENT_HEAD:
                 case DEPARTMENT_LEADER:

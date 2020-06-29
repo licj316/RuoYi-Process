@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('流程附件配置管理')"/>
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 select-table table-striped">
+            <table id="bootstrap-table"></table>
+        </div>
+    </div>
+</div>
+<th:block th:include="include :: footer"/>
+<script th:inline="javascript">
+    var prefix = ctx + "flowAttachmentConfig";
+
+    $(function () {
+        var options = {
+            url: prefix + "/listPage",
+            removeUrl: prefix + "/remove",
+            sortName: "createTime",
+            sortOrder: "desc",
+            modalName: "参数",
+            columns: [{
+                checkbox: true
+            },
+                {
+                    field: 'processDefId',
+                    title: '流程Id'
+                },
+                {
+                    field: 'processName',
+                    title: '流程名称'
+                },
+                {
+                    field: 'processKey',
+                    title: '流程KEY'
+                },
+                {
+                    field: 'processVersion',
+                    title: '流程版本'
+                },
+                {
+                    field: 'attachType',
+                    title: '附件类型'
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function (value, row, index) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="deleteFlow(\'' + row.deploymentId + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+        };
+        $.table.init(options);
+    });
+
+    function showDiagram(procDefId) {
+        $.modal.open('流程图查看', "/flow/process/resource/read?procDefId=" + procDefId + "&resType=image");
+    }
+
+    function suspendFlow(procDefId) {
+        axios.post("/flow/process/update/suspend?procDefId=" + procDefId, {}).then(result => {
+            console.info(result);
+            let data = result.data;
+            $.modal.msg(data.msg);
+            if (data.code == 0) {
+                $.table.refresh();
+            }
+        });
+    }
+
+</script>
+</body>
+</html>

@@ -100,10 +100,10 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * @return
      */
     @Override
-    public List<FlowTaskVO> todoList(FlowTaskVO flowTaskVO, String userName, Set<String> roleCodes, boolean needFormData) {
+    public List<FlowTaskVO> todoList(FlowTaskVO flowTaskVO, String userId, Set<String> roleKeys, boolean needFormData) {
         //  单人或用户组待签收/待办理
         TaskQuery todoTaskQuery = buildQuery(flowTaskVO);
-        FlowUtils.buildTodoQuery(todoTaskQuery, userName, Lists.newArrayList(roleCodes));
+        FlowUtils.buildTodoQuery(todoTaskQuery, userId, Lists.newArrayList(roleKeys));
         todoTaskQuery.orderByTaskCreateTime().desc();
 //        layuiTableDataListVO.setCount(todoTaskQuery.count());
         List<Task> listPage = todoTaskQuery.listPage(0, 1000);
@@ -467,8 +467,8 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * @return 流程实例ID
      */
     @Override
-    public ProcessInstance startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleCodes) {
-        return startProcess(procDefKey, businessId, Maps.newHashMap(), userName, deptId, roleCodes);
+    public ProcessInstance startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleKeys) {
+        return startProcess(procDefKey, businessId, Maps.newHashMap(), userName, deptId, roleKeys);
     }
 
     /**
@@ -480,7 +480,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
      * @return 流程实例ID
      */
     @Override
-    public ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleCodes) {
+    public ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleKeys) {
         // 设置流程变量
         if (vars == null) {
             vars = Maps.newHashMap();
@@ -488,7 +488,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
         //设置流程发起人-可以在后面流程中驳回重新办理
         vars.put(FlowConstant.SUBMITTER, userName);
         vars.put(FlowConstant.SUBMITTER_DEPT_ID, deptId);
-        vars.put(FlowConstant.SUBMITTER_ROLE_CODES, roleCodes);
+        vars.put(FlowConstant.SUBMITTER_ROLE_CODES, roleKeys);
         // 启动流程
         return runtimeService.startProcessInstanceByKey(procDefKey, businessId, vars);
     }

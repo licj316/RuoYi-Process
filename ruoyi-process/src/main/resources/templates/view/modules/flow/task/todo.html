@@ -50,7 +50,7 @@
                     title: '当前环节'
                 },
                 {
-                    field: 'version',
+                    field: 'procDefversion',
                     title: '流程版本'
                 },
                 {
@@ -94,9 +94,10 @@
 
     // 取消签收
     function handleUnclaim(taskId) {
-        axios.post("/flowTask/unclaim", {taskId: taskId}).then(json => {
-            $.modal.msg(json);
-            if (json.code == 0) {
+        axios.post("/flowTask/unclaim?taskId=" + taskId, {}).then(json => {
+            let data = json.data;
+            $.modal.msg(data.msg);
+            if (data.code == 0) {
                 handleSearchTable();
             }
         });
@@ -122,9 +123,10 @@
 
     // 签收
     function handleClaim(taskId) {
-        axios.post("/flowTask/claim", {taskId: taskId}).then(json => {
-            $.modal.msg(json);
-            if (json.code == 0) {
+        axios.post("/flowTask/claim?taskId=" + taskId, {}).then(json => {
+            let data = json.data;
+            $.modal.msg(data.msg);
+            if (data.code == 0) {
                 handleSearchTable();
             }
         });
@@ -132,22 +134,19 @@
 
     // 转派
     function handleTransfer(taskId) {
-        layer.prompt("请输入转派原因", function (reason) {
-            core.showSelectUsers({
-                option: {
-                    multipleSelection: false,
-                },
-                onOk: async function (users) {
-                    var json = await axios.post("/flowTask/transfer", {
-                        taskId: taskId,
-                        userName: users[0].userName,
-                        reason: reason,
-                    });
-                    $.modal.msg(json);
-                    if (json.ok) {
-                        handleSearchTable();
-                    }
-                    return true;
+        layer.prompt("请输入转派原因", function (reason, index) {
+            layer.close(index);
+
+            $.modal.confirm("任务将转派给若依(ry)，确定么？", async function (index) {
+                var json = await axios.post("/flowTask/transfer", {
+                    taskId: taskId,
+                    userId: 2,
+                    reason: reason
+                });
+                let data = json.data;
+                $.modal.msg(data.msg);
+                if (data.code == 0) {
+                    handleSearchTable();
                 }
             });
         })
@@ -155,10 +154,12 @@
 
     // 删除
     function handleDel(procInsId) {
-        layer.prompt("请输入删除理由", function (reason) {
-            axios.post("/flowTask/deleteTask", {procInsId: procInsId, reason: reason}).then(json => {
-                $.modal.msgSuccess(json.msg);
-                if (json.ok) {
+        layer.prompt("请输入删除理由", function (reason, index) {
+            axios.post("/flowTask/deleteTask", {procInsId: procInsId, reason: reason}).then(result => {
+                let data = result.data;
+                layer.close(index);
+                $.modal.msgSuccess(data.msg);
+                if (data.code == 0) {
                     handleSearchTable();
                 }
             });
@@ -175,7 +176,7 @@
     }
 
     function handleSearchTable() {
-        // TODO
+        $.table.refresh();
     }
 
     function handleDiagramViewer(processFinished, procDefId, procInsId) {

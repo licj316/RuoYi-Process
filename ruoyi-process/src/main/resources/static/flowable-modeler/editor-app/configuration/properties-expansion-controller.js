@@ -151,19 +151,20 @@ angular.module('flowableModeler').controller('FlowableExpansionPopupCtrl',
         $scope.confirmUser = function (user) {
             if ($scope.expansionProperties.taskReviewerScope == "SINGLE_USER") {
                 //分配给指定用户
-                $scope.expansionProperties.assignee = user.userName;
+                $scope.expansionProperties.assignee = user.userId;
             } else if ($scope.expansionProperties.taskReviewerScope == "MULTIPLE_USERS") {
                 //多个候选用户
                 let isInCandidateUsers = false;
                 $scope.expansionProperties.candidateUsers.forEach(value => {
-                    if (value.userName == user.userName) {
+                    if (value.userId == user.userId) {
                         isInCandidateUsers = true;
                     }
                 });
                 if (!isInCandidateUsers) {
                     $scope.expansionProperties.candidateUsers.push({
-                        userName: user.userName,
-                        realName: user.realName
+                        userId: user.userId,
+                        loginName: user.loginName,
+                        userName: user.userName
                     });
                 }
             }
@@ -172,7 +173,7 @@ angular.module('flowableModeler').controller('FlowableExpansionPopupCtrl',
             let candidateUsers = [];
             //当前步骤
             $scope.expansionProperties.candidateUsers.forEach(value => {
-                if (value.userName != user.userName) {
+                if (value.userId != user.userId) {
                     candidateUsers.push(value);
                 }
             });
@@ -182,19 +183,19 @@ angular.module('flowableModeler').controller('FlowableExpansionPopupCtrl',
             //多个候选用户
             let isInCandidateUsers = false;
             $scope.expansionProperties.candidateGroups.forEach(value => {
-                if (value.roleCode == role.roleCode) {
+                if (value.roleKey == role.roleKey) {
                     isInCandidateUsers = true;
                 }
             });
             if (!isInCandidateUsers) {
-                $scope.expansionProperties.candidateGroups.push({roleCode: role.roleCode, roleName: role.roleName});
+                $scope.expansionProperties.candidateGroups.push({roleKey: role.roleKey, roleName: role.roleName});
             }
         }
 
         $scope.removeCandidateGroups = function (user) {
             let candidateGroups = [];
             $scope.expansionProperties.candidateGroups.forEach(value => {
-                if (value.roleCode != user.roleCode) {
+                if (value.roleKey != user.roleKey) {
                     candidateGroups.push(value);
                 }
             });

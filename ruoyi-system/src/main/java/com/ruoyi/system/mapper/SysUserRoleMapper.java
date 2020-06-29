@@ -64,8 +64,8 @@ public interface SysUserRoleMapper
 
     /**
      * 通过角色ID列表查询用户列表
-     * @param roleCodeList
+     * @param roleKeyList
      * @return
      */
-    List<SysUser> selectUserListByRoleCodeList(List<String> roleCodeList);
+    List<SysUser> selectUserListByRoleKeyList(List<String> roleKeyList);
 }

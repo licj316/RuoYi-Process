@@ -13,7 +13,7 @@ package com.ruoyi.process.core.plugin.flowable.dto;
  */
 public class CandidateGroupsDTO {
     String roleName;
-    String roleCode;
+    String roleKey;
 
     public String getRoleName() {
         return roleName;
@@ -23,11 +23,11 @@ public class CandidateGroupsDTO {
         this.roleName = roleName;
     }
 
-    public String getRoleCode() {
-        return roleCode;
+    public String getRoleKey() {
+        return roleKey;
     }
 
-    public void setRoleCode(String roleCode) {
-        this.roleCode = roleCode;
+    public void setRoleKey(String roleKey) {
+        this.roleKey = roleKey;
     }
 }
