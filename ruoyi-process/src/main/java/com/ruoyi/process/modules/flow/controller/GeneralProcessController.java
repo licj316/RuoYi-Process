@@ -21,7 +21,9 @@ import com.ruoyi.process.core.plugin.flowable.service.FlowTaskService;
 import com.ruoyi.process.core.plugin.flowable.util.FlowUtils;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.modules.flow.biz.GeneralFlowBiz;
+import com.ruoyi.process.modules.flow.domain.FlowData;
 import com.ruoyi.process.modules.flow.service.FlowCustomQueryService;
+import com.ruoyi.process.modules.flow.service.FlowDataService;
 import com.ruoyi.process.modules.flow.vo.FlowParamVO;
 import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysRoleService;
@@ -79,6 +81,9 @@ public class GeneralProcessController extends BaseProcessController {
 	@Autowired
 	RuntimeService runtimeService;
 
+	@Autowired
+	FlowDataService flowDataService;
+
 	@GetMapping("/form")
 	public String form(HttpServletRequest request, ModelMap modelMap) {
 		String taskId = request.getParameter("taskId");
@@ -104,13 +109,15 @@ public class GeneralProcessController extends BaseProcessController {
 				// 设置业务表ID
 				flowTaskVO.setBusinessId(flowProcessDefinitionService.getBusinessKeyId(flowTaskVO.getProcInsId()));
 			}
+		} else {
+			throw new RuntimeException("任务ID不能为空！");
 		}
-		if (Strings.isBlank(flowTaskVO.getTaskId()) && Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
-			//没有任务ID，是采用最新版本新增流程
-			ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey(flowTaskVO.getProcDefKey()).latestVersion().singleResult();
-			flowTaskVO.setProcDefId(processDefinition.getId());
-			flowTaskVO.setProcDefversion(processDefinition.getVersion());
-		}
+//		if (Strings.isBlank(flowTaskVO.getTaskId()) && Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
+//			//没有任务ID，是采用最新版本新增流程
+//			ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey(flowTaskVO.getProcDefKey()).latestVersion().singleResult();
+//			flowTaskVO.setProcDefId(processDefinition.getId());
+//			flowTaskVO.setProcDefversion(processDefinition.getVersion());
+//		}
 		NutMap nutMap = new NutMap();
 		String formPage = generalFlowBiz.getFormPage(flowTaskVO);
 		if (Strings.isBlank(formPage)) {
@@ -224,6 +231,7 @@ public class GeneralProcessController extends BaseProcessController {
 		Map formData = backToStepVO.getForm();
 		FlowTaskVO flowTaskVO = backToStepVO.getFlow();
 		if (formData != null && flowTaskVO != null) {
+			flowTaskService.saveCurrTaskData(flowTaskVO.getProcInsId(), formData);
 			String message = generalFlowBiz.backToStep(formData, flowTaskVO, ShiroUtils.getSysUser());
 			if (Strings.isNotBlank(message)) {
 				return AjaxResult.error(message);
@@ -237,15 +245,16 @@ public class GeneralProcessController extends BaseProcessController {
 	/**
 	 * 提交到退回节点
 	 *
-	 * @param backToStepVO
+	 * @param flowParamVO
 	 * @return
 	 */
 	@PostMapping("/submitToBackStep")
 	@ResponseBody
-	public AjaxResult submitToBackStep(@RequestBody FlowParamVO backToStepVO) {
-		Map formData = backToStepVO.getForm();
-		FlowTaskVO flowTaskVO = backToStepVO.getFlow();
+	public AjaxResult submitToBackStep(@RequestBody FlowParamVO flowParamVO) {
+		Map formData = flowParamVO.getForm();
+		FlowTaskVO flowTaskVO = flowParamVO.getFlow();
 		if (formData != null && flowTaskVO != null) {
+			flowTaskService.saveCurrTaskData(flowTaskVO.getProcInsId(), formData);
 			String message = generalFlowBiz.submitToBackStep(formData, flowTaskVO, ShiroUtils.getSysUser());
 			if (Strings.isNotBlank(message)) {
 				return AjaxResult.error(message);
@@ -316,10 +325,9 @@ public class GeneralProcessController extends BaseProcessController {
 	@RequestMapping("/saveData")
 	@ResponseBody
 	public AjaxResult saveFlowData(@RequestBody FlowParamVO flowParamVO) {
-		Map<String, Object> formData = flowParamVO.getForm();
-		FlowTaskVO flowTaskVO = flowParamVO.getFlow();
 //		Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
-		runtimeService.setVariables(flowTaskVO.getExecutionId(), formData);
+//		runtimeService.setVariables(flowTaskVO.getExecutionId(), formData);
+		flowTaskService.saveCurrTaskData(flowParamVO.getFlow().getProcInsId(), flowParamVO.getForm());
 		return success();
 	}
 
@@ -340,6 +348,7 @@ public class GeneralProcessController extends BaseProcessController {
 				return AjaxResult.error("驳回意见不能为空！");
 			}
 			if (Strings.isNotBlank(flowTaskVO.getBusinessId())) {
+				flowTaskService.saveCurrTaskData(flowTaskVO.getProcInsId(), formData);
 				String message = generalFlowBiz.userAudit(formData, flowTaskVO, currUser);
 				if (message != null) {
 					return AjaxResult.error(message);

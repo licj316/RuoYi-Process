@@ -9,6 +9,7 @@ package com.ruoyi.process.core.plugin.flowable.service;
 
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskHistoricVO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
+import com.ruoyi.process.modules.flow.vo.FlowParamVO;
 import com.ruoyi.system.domain.SysUser;
 import org.apache.commons.lang3.tuple.Pair;
 import org.flowable.bpmn.model.FlowElement;
@@ -271,4 +272,17 @@ public interface FlowTaskService {
      */
     Pair<String, FlowElement> previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) throws Exception;
 
+    /**
+     * 保存流程当前节点数据
+     * @param procInsId
+     * @param formData
+     */
+    void saveCurrTaskData(String procInsId, Map<String, Object> formData);
+
+    /**
+     * 保存流程数据到节点历史数据
+     * @param procInsId
+     * @param taskId
+     */
+    void saveToHisTaskData(String procInsId, String taskId);
 }

@@ -10,6 +10,7 @@ package com.ruoyi.process.core.plugin.flowable.service.impl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import com.ruoyi.framework.util.ShiroUtils;
 import com.ruoyi.process.core.plugin.flowable.cmd.FindNextExecuteNodeCmd;
 import com.ruoyi.process.core.plugin.flowable.constant.FlowConstant;
 import com.ruoyi.process.core.plugin.flowable.converter.CustomBpmnJsonConverter;
@@ -24,12 +25,16 @@ import com.ruoyi.process.core.plugin.flowable.vo.FlowAttachmentVO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowCommentVO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskHistoricVO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
+import com.ruoyi.process.modules.flow.domain.FlowData;
+import com.ruoyi.process.modules.flow.service.FlowDataService;
 import com.ruoyi.process.modules.flow.service.FlowTypeService;
+import com.ruoyi.process.modules.flow.vo.FlowParamVO;
 import com.ruoyi.process.utils.DateUtil;
 import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.flowable.bpmn.model.*;
 import org.flowable.common.engine.impl.identity.Authentication;
@@ -65,6 +70,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author 黄川 huchuc@vip.qq.com
@@ -73,795 +79,843 @@ import java.util.*;
 @Service("flowTaskService")
 @Slf4j
 public class FlowTaskServiceImpl implements FlowTaskService {
-    @Autowired
-    ISysUserService sysUserService;
-    @Autowired
-    FlowTypeService flowTypeService;
-    @Autowired
-    FlowProcessDefinitionService flowProcessDefinitionService;
-    @Autowired
-    FlowCacheService flowCacheService;
-    @Autowired
+	@Autowired
+	ISysUserService sysUserService;
+	@Autowired
+	FlowTypeService flowTypeService;
+	@Autowired
+	FlowProcessDefinitionService flowProcessDefinitionService;
+	@Autowired
+	FlowCacheService flowCacheService;
+	@Autowired
 	RuntimeService runtimeService;
-    @Autowired
+	@Autowired
 	TaskService taskService;
-    @Autowired
+	@Autowired
 	FormService formService;
-    @Autowired
+	@Autowired
 	HistoryService historyService;
-    @Autowired
+	@Autowired
 	RepositoryService repositoryService;
-    @Autowired
+	@Autowired
 	ManagementService managementService;
+	@Autowired
+	FlowDataService flowDataService;
 
-    /**
-     * 获取待办\待簽收列表
-     *
-     * @return
-     */
-    @Override
-    public List<FlowTaskVO> todoList(FlowTaskVO flowTaskVO, String userId, Set<String> roleKeys, boolean needFormData) {
-        //  单人或用户组待签收/待办理
-        TaskQuery todoTaskQuery = buildQuery(flowTaskVO);
-        FlowUtils.buildTodoQuery(todoTaskQuery, userId, Lists.newArrayList(roleKeys));
-        todoTaskQuery.orderByTaskCreateTime().desc();
+	/**
+	 * 获取待办\待簽收列表
+	 *
+	 * @return
+	 */
+	@Override
+	public List<FlowTaskVO> todoList(FlowTaskVO flowTaskVO, String userId, Set<String> roleKeys, boolean needFormData) {
+		//  单人或用户组待签收/待办理
+		TaskQuery todoTaskQuery = buildQuery(flowTaskVO);
+		FlowUtils.buildTodoQuery(todoTaskQuery, userId, Lists.newArrayList(roleKeys));
+		todoTaskQuery.orderByTaskCreateTime().desc();
 //        layuiTableDataListVO.setCount(todoTaskQuery.count());
-        List<Task> listPage = todoTaskQuery.listPage(0, 1000);
-        List<FlowTaskVO> list = taskQueryFlow(listPage, needFormData);
-        return list;
-    }
+		List<Task> listPage = todoTaskQuery.listPage(0, 1000);
+		List<FlowTaskVO> list = taskQueryFlow(listPage, needFormData);
+		return list;
+	}
 
 
-    private TaskQuery buildQuery(FlowTaskVO flowTaskVO) {
-        //联查变量的情况下，分页功能失效
-        TaskQuery query = taskService.createTaskQuery().includeProcessVariables().active();
-        // 设置查询条件
-        if (Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
-            query.taskDefinitionKey(flowTaskVO.getProcDefKey());
-        }
-        if (flowTaskVO.getBeginDate() != null) {
-            query.taskCreatedAfter(flowTaskVO.getBeginDate());
-        }
-        if (flowTaskVO.getEndDate() != null) {
-            query.taskCreatedBefore(flowTaskVO.getEndDate());
-        }
-        return query;
-    }
+	private TaskQuery buildQuery(FlowTaskVO flowTaskVO) {
+		//联查变量的情况下，分页功能失效
+		TaskQuery query = taskService.createTaskQuery().includeProcessVariables().active();
+		// 设置查询条件
+		if (Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
+			query.taskDefinitionKey(flowTaskVO.getProcDefKey());
+		}
+		if (flowTaskVO.getBeginDate() != null) {
+			query.taskCreatedAfter(flowTaskVO.getBeginDate());
+		}
+		if (flowTaskVO.getEndDate() != null) {
+			query.taskCreatedBefore(flowTaskVO.getEndDate());
+		}
+		return query;
+	}
 
-    private List<FlowTaskVO> taskQueryFlow(List<Task> listPage, boolean needFormData) {
-        List<FlowTaskVO> flowList = new ArrayList<>();
-        for (Task task : listPage) {
-            String categoryName = "未分类";
-            if (!FlowConstant.DEFAULT_CATEGORY.equals(task.getCategory())) {
-                categoryName = flowTypeService.fetchCategoryName(Long.valueOf(task.getCategory()));
-            }
-            String flowTitle = Strings.sNull(task.getProcessVariables().get(FlowConstant.PROCESS_TITLE));
-            ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(task.getProcessDefinitionId());
-            FlowTaskVO flow = FlowTaskVO.builder()
-                    .categoryName(categoryName)
-                    .category(task.getCategory())
-                    .taskTitle(flowTitle)
-                    .delegateUserName(task.getOwner())
-                    .delegateStatus(task.getDelegationState())
-                    .taskId(task.getId())
-                    .taskDefKey(task.getTaskDefinitionKey())
-                    .taskName(task.getName())
-                    .assignee(task.getAssignee())
-                    .createTime(task.getCreateTime())
-                    .procDefId(pd.getId())
-                    .procDefname(pd.getName())
-                    .procDefKey(pd.getKey())
-                    .procDefversion(pd.getVersion())
-                    .procInsId(task.getProcessInstanceId())
-                    .claimTime(task.getClaimTime())
-                    .status(Strings.isNotBlank(task.getAssignee()) ? TaskStatusEnum.TODO : TaskStatusEnum.CLAIM)
-                    .build();
-            if (needFormData) {
-                flow.setFormData(task.getProcessVariables().getOrDefault(FlowConstant.FORM_DATA, new Object()));
-            }
-            flowList.add(flow);
-        }
-        return flowList;
-    }
+	private List<FlowTaskVO> taskQueryFlow(List<Task> listPage, boolean needFormData) {
+		List<FlowTaskVO> flowList = new ArrayList<>();
+		for (Task task : listPage) {
+			String categoryName = "未分类";
+			if (!FlowConstant.DEFAULT_CATEGORY.equals(task.getCategory())) {
+				categoryName = flowTypeService.fetchCategoryName(Long.valueOf(task.getCategory()));
+			}
+			String flowTitle = Strings.sNull(task.getProcessVariables().get(FlowConstant.PROCESS_TITLE));
+			ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(task.getProcessDefinitionId());
+			FlowTaskVO flow = FlowTaskVO.builder()
+					.categoryName(categoryName)
+					.category(task.getCategory())
+					.taskTitle(flowTitle)
+					.delegateUserName(task.getOwner())
+					.delegateStatus(task.getDelegationState())
+					.taskId(task.getId())
+					.taskDefKey(task.getTaskDefinitionKey())
+					.taskName(task.getName())
+					.assignee(task.getAssignee())
+					.createTime(task.getCreateTime())
+					.procDefId(pd.getId())
+					.procDefname(pd.getName())
+					.procDefKey(pd.getKey())
+					.procDefversion(pd.getVersion())
+					.procInsId(task.getProcessInstanceId())
+					.claimTime(task.getClaimTime())
+					.status(Strings.isNotBlank(task.getAssignee()) ? TaskStatusEnum.TODO : TaskStatusEnum.CLAIM)
+					.build();
+			if (needFormData) {
+				flow.setFormData(task.getProcessVariables().getOrDefault(FlowConstant.FORM_DATA, new Object()));
+			}
+			flowList.add(flow);
+		}
+		return flowList;
+	}
 
-    /**
-     * 获取已发任务
-     *
-     * @return
-     */
-    @Override
-    public List<FlowTaskVO> hasSentList(String userId) {
-        HistoricProcessInstanceQuery historyProQuery = historyService.createHistoricProcessInstanceQuery().startedBy(userId).orderByProcessInstanceStartTime().desc();
-        // 查询总数
+	/**
+	 * 获取已发任务
+	 *
+	 * @return
+	 */
+	@Override
+	public List<FlowTaskVO> hasSentList(String userId) {
+		HistoricProcessInstanceQuery historyProQuery = historyService.createHistoricProcessInstanceQuery().startedBy(userId).orderByProcessInstanceStartTime().desc();
+		// 查询总数
 //        vo.setCount(historyProQuery.count());
-        // TODO 分页待处理
-        // 查询列表
-        List<HistoricProcessInstance> hispList = historyProQuery.listPage(0, 1000);
-        //处理分页问题
-        List<FlowTaskVO> actList = Lists.newArrayList();
-        for (HistoricProcessInstance hisprocIns : hispList) {
-            FlowTaskVO flow = new FlowTaskVO();
-            ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(hisprocIns.getProcessDefinitionId());
-            Deployment deployment = flowCacheService.getDeploymentCache(pd.getDeploymentId());
-            flow.setCategory(deployment.getCategory());
-            flow.setCategoryName(flowTypeService.fetchCategoryName(Long.valueOf(deployment.getCategory())));
-            flow.setProcDefId(pd.getId());
-            flow.setProcDefname(pd.getName());
-            flow.setProcDefKey(pd.getKey());
-            flow.setProcDefversion(pd.getVersion());
-            flow.setProcInsId(hisprocIns.getId());
-            HistoricVariableInstance historicVariableInstance = historyService.createHistoricVariableInstanceQuery().processInstanceId(hisprocIns.getId()).variableName(FlowConstant.PROCESS_TITLE).singleResult();
-            flow.setCreateTime(hisprocIns.getStartTime());
-            flow.setEndTime(hisprocIns.getEndTime());
-            flow.setTaskTitle(Objects.nonNull(historicVariableInstance.getValue()) ? historicVariableInstance.getValue().toString() : null);
-            flow.setBusinessId(hisprocIns.getBusinessKey());
-            flow.setHisActInsActName(hisprocIns.getName());
-            flow.setProcInsId(hisprocIns.getId());
-            flow.setHisProcInsId(hisprocIns.getId());
-            flow.setProcessFinished(hisprocIns.getEndActivityId() != null);
-            flow.setStatus(TaskStatusEnum.FINISH);
-            actList.add(flow);
-        }
-        return actList;
-    }
+		// TODO 分页待处理
+		// 查询列表
+		List<HistoricProcessInstance> hispList = historyProQuery.listPage(0, 1000);
+		//处理分页问题
+		List<FlowTaskVO> actList = Lists.newArrayList();
+		for (HistoricProcessInstance hisprocIns : hispList) {
+			FlowTaskVO flow = new FlowTaskVO();
+			ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(hisprocIns.getProcessDefinitionId());
+			Deployment deployment = flowCacheService.getDeploymentCache(pd.getDeploymentId());
+			flow.setCategory(deployment.getCategory());
+			flow.setCategoryName(flowTypeService.fetchCategoryName(Long.valueOf(deployment.getCategory())));
+			flow.setProcDefId(pd.getId());
+			flow.setProcDefname(pd.getName());
+			flow.setProcDefKey(pd.getKey());
+			flow.setProcDefversion(pd.getVersion());
+			flow.setProcInsId(hisprocIns.getId());
+			HistoricVariableInstance historicVariableInstance = historyService.createHistoricVariableInstanceQuery().processInstanceId(hisprocIns.getId()).variableName(FlowConstant.PROCESS_TITLE).singleResult();
+			flow.setCreateTime(hisprocIns.getStartTime());
+			flow.setEndTime(hisprocIns.getEndTime());
+			flow.setTaskTitle(Objects.nonNull(historicVariableInstance.getValue()) ? historicVariableInstance.getValue().toString() : null);
+			flow.setBusinessId(hisprocIns.getBusinessKey());
+			flow.setHisActInsActName(hisprocIns.getName());
+			flow.setProcInsId(hisprocIns.getId());
+			flow.setHisProcInsId(hisprocIns.getId());
+			flow.setProcessFinished(hisprocIns.getEndActivityId() != null);
+			flow.setStatus(TaskStatusEnum.FINISH);
+			actList.add(flow);
+		}
+		return actList;
+	}
 
-    /**
-     * 获取已办任务
-     *
-     * @return
-     */
-    @Override
-    public List<FlowTaskVO> historicList(FlowTaskVO flowTaskVO, String userId) {
-        HistoricTaskInstanceQuery histTaskQuery = historyService.createHistoricTaskInstanceQuery().taskAssignee(userId).finished()
-                .includeProcessVariables().orderByHistoricTaskInstanceEndTime().desc();
-        // 设置查询条件
-        if (Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
-            histTaskQuery.processDefinitionKey(flowTaskVO.getProcDefKey());
-        }
-        if (flowTaskVO.getBeginDate() != null) {
-            histTaskQuery.taskCompletedAfter(flowTaskVO.getBeginDate());
-        }
-        if (flowTaskVO.getEndDate() != null) {
-            histTaskQuery.taskCompletedBefore(flowTaskVO.getEndDate());
-        }
-        // TODO 分页待处理
-        // 查询列表
-        List<HistoricTaskInstance> histList = histTaskQuery.listPage(0, 1000);
-        //处理分页问题
-        List<FlowTaskVO> actList = Lists.newArrayList();
-        for (HistoricTaskInstance histTask : histList) {
-            String categoryName = "未分类";
-            String flowTitle = Strings.sNull(histTask.getProcessVariables().get(FlowConstant.PROCESS_TITLE));
-            ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(histTask.getProcessDefinitionId());
-            String category;
-            if (Strings.isBlank(histTask.getCategory())) {
-                Deployment deployment = flowCacheService.getDeploymentCache(pd.getDeploymentId());
-                category = deployment.getCategory();
-            } else {
-                category = histTask.getCategory();
-            }
-            if (!FlowConstant.DEFAULT_CATEGORY.equals(category)) {
-                categoryName = flowTypeService.fetchCategoryName(Long.valueOf(category));
-            }
-            HistoricProcessInstance historicTaskInstance = getHistoryProcIns(histTask.getProcessInstanceId());
-            FlowTaskVO flow = FlowTaskVO.builder()
-                    .categoryName(categoryName)
-                    .category(category)
-                    .taskTitle(flowTitle)
-                    .delegateUserName(histTask.getOwner())
-                    .taskId(histTask.getId())
-                    .taskDefKey(histTask.getTaskDefinitionKey())
-                    .taskName(histTask.getName())
-                    .assignee(histTask.getAssignee())
-                    .createTime(histTask.getCreateTime())
-                    .endDate(histTask.getEndTime())
-                    .procDefId(pd.getId())
-                    .procDefname(pd.getName())
-                    .procDefKey(pd.getKey())
-                    .procDefversion(pd.getVersion())
-                    .procInsId(histTask.getProcessInstanceId())
-                    .hisProcInsId(histTask.getProcessInstanceId())
-                    .processFinished(historicTaskInstance.getEndActivityId() != null)
-                    .status(TaskStatusEnum.FINISH)
-                    .build();
-            actList.add(flow);
-        }
-        return actList;
-    }
+	/**
+	 * 获取已办任务
+	 *
+	 * @return
+	 */
+	@Override
+	public List<FlowTaskVO> historicList(FlowTaskVO flowTaskVO, String userId) {
+		HistoricTaskInstanceQuery histTaskQuery = historyService.createHistoricTaskInstanceQuery().taskAssignee(userId).finished()
+				.includeProcessVariables().orderByHistoricTaskInstanceEndTime().desc();
+		// 设置查询条件
+		if (Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
+			histTaskQuery.processDefinitionKey(flowTaskVO.getProcDefKey());
+		}
+		if (flowTaskVO.getBeginDate() != null) {
+			histTaskQuery.taskCompletedAfter(flowTaskVO.getBeginDate());
+		}
+		if (flowTaskVO.getEndDate() != null) {
+			histTaskQuery.taskCompletedBefore(flowTaskVO.getEndDate());
+		}
+		// TODO 分页待处理
+		// 查询列表
+		List<HistoricTaskInstance> histList = histTaskQuery.listPage(0, 1000);
+		//处理分页问题
+		List<FlowTaskVO> actList = Lists.newArrayList();
+		for (HistoricTaskInstance histTask : histList) {
+			String categoryName = "未分类";
+			String flowTitle = Strings.sNull(histTask.getProcessVariables().get(FlowConstant.PROCESS_TITLE));
+			ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(histTask.getProcessDefinitionId());
+			String category;
+			if (Strings.isBlank(histTask.getCategory())) {
+				Deployment deployment = flowCacheService.getDeploymentCache(pd.getDeploymentId());
+				category = deployment.getCategory();
+			} else {
+				category = histTask.getCategory();
+			}
+			if (!FlowConstant.DEFAULT_CATEGORY.equals(category)) {
+				categoryName = flowTypeService.fetchCategoryName(Long.valueOf(category));
+			}
+			HistoricProcessInstance historicTaskInstance = getHistoryProcIns(histTask.getProcessInstanceId());
+			FlowTaskVO flow = FlowTaskVO.builder()
+					.categoryName(categoryName)
+					.category(category)
+					.taskTitle(flowTitle)
+					.delegateUserName(histTask.getOwner())
+					.taskId(histTask.getId())
+					.taskDefKey(histTask.getTaskDefinitionKey())
+					.taskName(histTask.getName())
+					.assignee(histTask.getAssignee())
+					.createTime(histTask.getCreateTime())
+					.endDate(histTask.getEndTime())
+					.procDefId(pd.getId())
+					.procDefname(pd.getName())
+					.procDefKey(pd.getKey())
+					.procDefversion(pd.getVersion())
+					.procInsId(histTask.getProcessInstanceId())
+					.hisProcInsId(histTask.getProcessInstanceId())
+					.processFinished(historicTaskInstance.getEndActivityId() != null)
+					.status(TaskStatusEnum.FINISH)
+					.build();
+			actList.add(flow);
+		}
+		return actList;
+	}
 
-    /**
-     * 获取流转历史列表
-     *
-     * @param procInsId 流程实例
-     * @param startAct  开始活动节点名称
-     * @param endAct    结束活动节点名称
-     */
-    @Override
-    public List<FlowTaskHistoricVO> histoicFlowList(String procInsId, String startAct, String endAct) {
-        List<FlowTaskHistoricVO> actList = Lists.newArrayList();
-        List<HistoricActivityInstance> list = historyService.createHistoricActivityInstanceQuery().processInstanceId(procInsId).orderByHistoricActivityInstanceStartTime().asc().list();
-        List<Comment> procInsCommentsList = taskService.getProcessInstanceComments(procInsId);
-        boolean start = false;
-        Map<String, Integer> actMap = Maps.newHashMap();
-        for (int i = 0; i < list.size(); i++) {
-            HistoricActivityInstance histIns = list.get(i);
-            // 过滤开始节点前的节点
-            if (Strings.isNotBlank(startAct) && startAct.equals(histIns.getActivityId())) {
-                start = true;
-            }
-            if (Strings.isNotBlank(startAct) && !start) {
-                continue;
-            }
-            if ("userTask".equals(histIns.getActivityType()) || "startEvent".equals(histIns.getActivityType()) || "endEvent".equals(histIns.getActivityType())) {
-                // 给节点增加一个序号
-                Integer actNum = actMap.get(histIns.getActivityId());
-                if (actNum == null) {
-                    actMap.put(histIns.getActivityId(), actMap.size());
-                }
-                FlowTaskHistoricVO flowTaskHistoricVO = new FlowTaskHistoricVO();
-                flowTaskHistoricVO.setActivityName(histIns.getActivityName());
-                flowTaskHistoricVO.setStartTime(histIns.getStartTime());
-                flowTaskHistoricVO.setEndTime(histIns.getEndTime());
-                flowTaskHistoricVO.setActivityType(histIns.getActivityType());
-                flowTaskHistoricVO.setTimeConsuming(histIns.getDurationInMillis() == null ? "" : DateUtil.getDistanceTime(histIns.getDurationInMillis()));
-                // 获取流程发起人名称
-                if ("startEvent".equals(histIns.getActivityType())) {
-                    List<HistoricProcessInstance> il = historyService.createHistoricProcessInstanceQuery().processInstanceId(procInsId).orderByProcessInstanceStartTime().asc().list();
-                    if (il.size() > 0) {
-                        if (Strings.isNotBlank(il.get(0).getStartUserId())) {
-                            SysUser user = sysUserService.selectUserById(Long.valueOf(il.get(0).getStartUserId()));
-                            if (user != null) {
-                                flowTaskHistoricVO.setAssignee(histIns.getAssignee());
-                                flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName()));
-                            }
-                        }
-                    }
-                }
-                //用户任务
-                if ("userTask".equals(histIns.getActivityType())) {
-                    // 获取任务执行人名称
-                    if (Strings.isNotBlank(histIns.getAssignee())) {
-                        SysUser user = sysUserService.selectUserById(Long.valueOf(histIns.getAssignee()));
-                        if (user != null) {
-                            flowTaskHistoricVO.setAssignee(histIns.getAssignee());
-                            flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName()));
-                        }
-                    }
-                    // 获取意见评论内容 和 附件
-                    if (Strings.isNotBlank(histIns.getTaskId())) {
-                        List<Attachment> attachmentList = taskService.getTaskAttachments(histIns.getTaskId());
-                        List<Comment> commentList = new ArrayList<>();//taskService.getTaskComments(histIns.getTaskId());
-                        procInsCommentsList.forEach(comment -> {
-                            if(histIns.getTaskId().equals(comment.getTaskId())) {
-                                commentList.add(comment);
-                            }
-                        });
-                        if (commentList.size() > 0) {
-                            Collections.reverse(commentList);
-                            List<FlowCommentVO> flowComments = new ArrayList<>();
-                            commentList.forEach(comment -> {
-                                SysUser user = sysUserService.selectUserById(Long.valueOf(histIns.getAssignee()));
-                                FlowCommentVO commentVO = FlowCommentVO.builder().time(comment.getTime()).userId(comment.getUserId()).userDesc(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName())).fullMessage(comment.getFullMessage()).build();
-                                commentVO.setFlowAttachments(this.getCommentAttachmentList(comment.getUserId(), attachmentList));
-                                commentVO.setHandWritingSignatureAttachment(this.getCommentHandWritingSignature(comment.getUserId(), attachmentList));
-                                flowComments.add(commentVO);
-                            });
-                            flowTaskHistoricVO.setFlowComments(flowComments);
-                        }
-                    }
-                }
-                actList.add(flowTaskHistoricVO);
-            }
-            // 过滤结束节点后的节点
-            if (Strings.isNotBlank(endAct) && endAct.equals(histIns.getActivityId())) {
-                boolean bl = false;
-                Integer actNum = actMap.get(histIns.getActivityId());
-                // 该活动节点，后续节点是否在结束节点之前，在后续节点中是否存在
-                for (int j = i + 1; j < list.size(); j++) {
-                    HistoricActivityInstance hi = list.get(j);
-                    Integer actNumA = actMap.get(hi.getActivityId());
-                    boolean b = (actNumA != null && actNumA < actNum) || Strings.equals(hi.getActivityId(), histIns.getActivityId());
-                    if (b) {
-                        bl = true;
-                    }
-                }
-                if (!bl) {
-                    break;
-                }
-            }
-        }
-        Collections.reverse(actList);
-        return actList;
-    }
+	/**
+	 * 获取流转历史列表
+	 *
+	 * @param procInsId 流程实例
+	 * @param startAct  开始活动节点名称
+	 * @param endAct    结束活动节点名称
+	 */
+	@Override
+	public List<FlowTaskHistoricVO> histoicFlowList(String procInsId, String startAct, String endAct) {
+		List<FlowTaskHistoricVO> actList = Lists.newArrayList();
+		List<HistoricActivityInstance> list = historyService.createHistoricActivityInstanceQuery().processInstanceId(procInsId).orderByHistoricActivityInstanceStartTime().asc().list();
+		List<Comment> procInsCommentsList = taskService.getProcessInstanceComments(procInsId);
+		boolean start = false;
+		Map<String, Integer> actMap = Maps.newHashMap();
+		for (int i = 0; i < list.size(); i++) {
+			HistoricActivityInstance histIns = list.get(i);
+			// 过滤开始节点前的节点
+			if (Strings.isNotBlank(startAct) && startAct.equals(histIns.getActivityId())) {
+				start = true;
+			}
+			if (Strings.isNotBlank(startAct) && !start) {
+				continue;
+			}
+			if ("userTask".equals(histIns.getActivityType()) || "startEvent".equals(histIns.getActivityType()) || "endEvent".equals(histIns.getActivityType())) {
+				// 给节点增加一个序号
+				Integer actNum = actMap.get(histIns.getActivityId());
+				if (actNum == null) {
+					actMap.put(histIns.getActivityId(), actMap.size());
+				}
+				FlowTaskHistoricVO flowTaskHistoricVO = new FlowTaskHistoricVO();
+				flowTaskHistoricVO.setActivityName(histIns.getActivityName());
+				flowTaskHistoricVO.setStartTime(histIns.getStartTime());
+				flowTaskHistoricVO.setEndTime(histIns.getEndTime());
+				flowTaskHistoricVO.setActivityType(histIns.getActivityType());
+				flowTaskHistoricVO.setTimeConsuming(histIns.getDurationInMillis() == null ? "" : DateUtil.getDistanceTime(histIns.getDurationInMillis()));
+				// 获取流程发起人名称
+				if ("startEvent".equals(histIns.getActivityType())) {
+					List<HistoricProcessInstance> il = historyService.createHistoricProcessInstanceQuery().processInstanceId(procInsId).orderByProcessInstanceStartTime().asc().list();
+					if (il.size() > 0) {
+						if (Strings.isNotBlank(il.get(0).getStartUserId())) {
+							SysUser user = sysUserService.selectUserById(Long.valueOf(il.get(0).getStartUserId()));
+							if (user != null) {
+								flowTaskHistoricVO.setAssignee(histIns.getAssignee());
+								flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName()));
+							}
+						}
+					}
+				}
+				//用户任务
+				if ("userTask".equals(histIns.getActivityType())) {
+					// 获取任务执行人名称
+					if (Strings.isNotBlank(histIns.getAssignee())) {
+						SysUser user = sysUserService.selectUserById(Long.valueOf(histIns.getAssignee()));
+						if (user != null) {
+							flowTaskHistoricVO.setAssignee(histIns.getAssignee());
+							flowTaskHistoricVO.setAssigneeName(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName()));
+						}
+					}
+					// 获取意见评论内容 和 附件
+					if (Strings.isNotBlank(histIns.getTaskId())) {
+						List<Attachment> attachmentList = taskService.getTaskAttachments(histIns.getTaskId());
+						List<Comment> commentList = new ArrayList<>();//taskService.getTaskComments(histIns.getTaskId());
+						procInsCommentsList.forEach(comment -> {
+							if (histIns.getTaskId().equals(comment.getTaskId())) {
+								commentList.add(comment);
+							}
+						});
+						if (commentList.size() > 0) {
+							Collections.reverse(commentList);
+							List<FlowCommentVO> flowComments = new ArrayList<>();
+							commentList.forEach(comment -> {
+								SysUser user = sysUserService.selectUserById(Long.valueOf(histIns.getAssignee()));
+								FlowCommentVO commentVO = FlowCommentVO.builder().time(comment.getTime()).userId(comment.getUserId()).userDesc(MessageFormat.format("{0}({1})", user.getUserName(), user.getLoginName())).fullMessage(comment.getFullMessage()).build();
+								commentVO.setFlowAttachments(this.getCommentAttachmentList(comment.getUserId(), attachmentList));
+								commentVO.setHandWritingSignatureAttachment(this.getCommentHandWritingSignature(comment.getUserId(), attachmentList));
+								flowComments.add(commentVO);
+							});
+							flowTaskHistoricVO.setFlowComments(flowComments);
+						}
+					}
+				}
+				actList.add(flowTaskHistoricVO);
+			}
+			// 过滤结束节点后的节点
+			if (Strings.isNotBlank(endAct) && endAct.equals(histIns.getActivityId())) {
+				boolean bl = false;
+				Integer actNum = actMap.get(histIns.getActivityId());
+				// 该活动节点，后续节点是否在结束节点之前，在后续节点中是否存在
+				for (int j = i + 1; j < list.size(); j++) {
+					HistoricActivityInstance hi = list.get(j);
+					Integer actNumA = actMap.get(hi.getActivityId());
+					boolean b = (actNumA != null && actNumA < actNum) || Strings.equals(hi.getActivityId(), histIns.getActivityId());
+					if (b) {
+						bl = true;
+					}
+				}
+				if (!bl) {
+					break;
+				}
+			}
+		}
+		Collections.reverse(actList);
+		return actList;
+	}
 
-    private FlowAttachmentVO getCommentHandWritingSignature(String userName, List<Attachment> attachmentList) {
-        if (CollectionUtils.isNotEmpty(attachmentList)) {
-            for (Attachment attachment : attachmentList) {
-                if (!attachment.getUserId().equals(userName)) {
-                    continue;
-                }
-                FlowAttachmentVO flowAttachmentVO = FlowAttachmentVO.builder().contentId(attachment.getContentId()).name(attachment.getName()).type(attachment.getType()).userId(attachment.getUserId()).build();
-                if (attachment.getName().equals(FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME)) {
-                    byte[] bytes = Streams.readBytesAndClose(taskService.getAttachmentContent(attachment.getId()));
-                    flowAttachmentVO.setContent(new String(bytes, StandardCharsets.UTF_8));
-                    return flowAttachmentVO;
-                }
-            }
-        }
-        return null;
-    }
+	private FlowAttachmentVO getCommentHandWritingSignature(String userName, List<Attachment> attachmentList) {
+		if (CollectionUtils.isNotEmpty(attachmentList)) {
+			for (Attachment attachment : attachmentList) {
+				if (!attachment.getUserId().equals(userName)) {
+					continue;
+				}
+				FlowAttachmentVO flowAttachmentVO = FlowAttachmentVO.builder().contentId(attachment.getContentId()).name(attachment.getName()).type(attachment.getType()).userId(attachment.getUserId()).build();
+				if (attachment.getName().equals(FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME)) {
+					byte[] bytes = Streams.readBytesAndClose(taskService.getAttachmentContent(attachment.getId()));
+					flowAttachmentVO.setContent(new String(bytes, StandardCharsets.UTF_8));
+					return flowAttachmentVO;
+				}
+			}
+		}
+		return null;
+	}
 
-    /**
-     * 取得步骤具体人员意见上传的全部附件
-     *
-     * @param userName
-     * @param attachmentList
-     * @return
-     */
-    private List<FlowAttachmentVO> getCommentAttachmentList(String userName, List<Attachment> attachmentList) {
-        List<FlowAttachmentVO> attachmentVOS = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(attachmentList)) {
-            for (Attachment attachment : attachmentList) {
-                if (!attachment.getUserId().equals(userName) || attachment.getName().equals(FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME)) {
-                    continue;
-                }
-                attachmentVOS.add(FlowAttachmentVO.builder()
-                        .contentId(attachment.getContentId()).name(attachment.getName()).type(attachment.getType()).userId(attachment.getUserId())
-                        .build());
-            }
-        }
-        return attachmentVOS;
-    }
+	/**
+	 * 取得步骤具体人员意见上传的全部附件
+	 *
+	 * @param userName
+	 * @param attachmentList
+	 * @return
+	 */
+	private List<FlowAttachmentVO> getCommentAttachmentList(String userName, List<Attachment> attachmentList) {
+		List<FlowAttachmentVO> attachmentVOS = new ArrayList<>();
+		if (CollectionUtils.isNotEmpty(attachmentList)) {
+			for (Attachment attachment : attachmentList) {
+				if (!attachment.getUserId().equals(userName) || attachment.getName().equals(FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME)) {
+					continue;
+				}
+				attachmentVOS.add(FlowAttachmentVO.builder()
+						.contentId(attachment.getContentId()).name(attachment.getName()).type(attachment.getType()).userId(attachment.getUserId())
+						.build());
+			}
+		}
+		return attachmentVOS;
+	}
 
-    /**
-     * 获取流程表单（首先获取任务节点表单KEY，如果没有则取流程开始节点表单KEY）
-     *
-     * @return
-     */
-    @Override
-    public String getFormKey(String procDefId, String taskDefKey) {
-        String formKey = "";
-        if (Strings.isNotBlank(procDefId)) {
-            try {
-                if (Strings.isNotBlank(taskDefKey)) {
-                    formKey = formService.getTaskFormKey(procDefId, taskDefKey);
-                }
-            } catch (Exception e) {
-                formKey = "";
-            }
-            if (Strings.isBlank(formKey)) {
-                formKey = formService.getStartFormKey(procDefId);
-            }
-        }
-        log.debug("getFormKey: %s", formKey);
-        return formKey;
-    }
+	/**
+	 * 获取流程表单（首先获取任务节点表单KEY，如果没有则取流程开始节点表单KEY）
+	 *
+	 * @return
+	 */
+	@Override
+	public String getFormKey(String procDefId, String taskDefKey) {
+		String formKey = "";
+		if (Strings.isNotBlank(procDefId)) {
+			try {
+				if (Strings.isNotBlank(taskDefKey)) {
+					formKey = formService.getTaskFormKey(procDefId, taskDefKey);
+				}
+			} catch (Exception e) {
+				formKey = "";
+			}
+			if (Strings.isBlank(formKey)) {
+				formKey = formService.getStartFormKey(procDefId);
+			}
+		}
+		log.debug("getFormKey: %s", formKey);
+		return formKey;
+	}
 
-    /**
-     * 获取流程实例对象
-     *
-     * @param procInsId
-     * @return
-     */
-    @Override
-    public ProcessInstance getProcIns(String procInsId) {
-        return runtimeService.createProcessInstanceQuery().processInstanceId(procInsId).singleResult();
-    }
+	/**
+	 * 获取流程实例对象
+	 *
+	 * @param procInsId
+	 * @return
+	 */
+	@Override
+	public ProcessInstance getProcIns(String procInsId) {
+		return runtimeService.createProcessInstanceQuery().processInstanceId(procInsId).singleResult();
+	}
 
-    /**
-     * 获取历史流程实例对象
-     *
-     * @param procInsId
-     * @return
-     */
-    @Override
-    public HistoricProcessInstance getHistoryProcIns(String procInsId) {
-        return historyService.createHistoricProcessInstanceQuery().processInstanceId(procInsId).singleResult();
-    }
+	/**
+	 * 获取历史流程实例对象
+	 *
+	 * @param procInsId
+	 * @return
+	 */
+	@Override
+	public HistoricProcessInstance getHistoryProcIns(String procInsId) {
+		return historyService.createHistoricProcessInstanceQuery().processInstanceId(procInsId).singleResult();
+	}
 
-    /**
-     * 启动流程
-     *
-     * @param procDefKey 流程定义KEY
-     * @param businessId 业务表编号
-     * @return 流程实例ID
-     */
-    @Override
-    public ProcessInstance startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleKeys) {
-        return startProcess(procDefKey, businessId, Maps.newHashMap(), userName, deptId, roleKeys);
-    }
+	/**
+	 * 启动流程
+	 *
+	 * @param procDefKey 流程定义KEY
+	 * @param businessId 业务表编号
+	 * @return 流程实例ID
+	 */
+	@Override
+	public ProcessInstance startProcess(String procDefKey, String businessId, String userName, Long deptId, Set<String> roleKeys) {
+		return startProcess(procDefKey, businessId, Maps.newHashMap(), userName, deptId, roleKeys);
+	}
 
-    /**
-     * 启动流程
-     *
-     * @param procDefKey 流程定义KEY
-     * @param businessId 业务表编号
-     * @param vars       流程变量
-     * @return 流程实例ID
-     */
-    @Override
-    public ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleKeys) {
-        // 设置流程变量
-        if (vars == null) {
-            vars = Maps.newHashMap();
-        }
-        //设置流程发起人-可以在后面流程中驳回重新办理
-        vars.put(FlowConstant.SUBMITTER, userName);
-        vars.put(FlowConstant.SUBMITTER_DEPT_ID, deptId);
-        vars.put(FlowConstant.SUBMITTER_ROLE_CODES, roleKeys);
-        // 启动流程
-        return runtimeService.startProcessInstanceByKey(procDefKey, businessId, vars);
-    }
+	/**
+	 * 启动流程
+	 *
+	 * @param procDefKey 流程定义KEY
+	 * @param businessId 业务表编号
+	 * @param vars       流程变量
+	 * @return 流程实例ID
+	 */
+	@Override
+	public ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleKeys) {
+		// 设置流程变量
+		if (vars == null) {
+			vars = Maps.newHashMap();
+		}
+		//设置流程发起人-可以在后面流程中驳回重新办理
+		vars.put(FlowConstant.SUBMITTER, userName);
+		vars.put(FlowConstant.SUBMITTER_DEPT_ID, deptId);
+		vars.put(FlowConstant.SUBMITTER_ROLE_CODES, roleKeys);
+		// 启动流程
+		return runtimeService.startProcessInstanceByKey(procDefKey, businessId, vars);
+	}
 
-    /**
-     * 获取任务
-     *
-     * @param taskId 任务ID
-     */
-    @Override
-    public Task getTask(String taskId) {
-        return taskService.createTaskQuery().taskId(taskId).singleResult();
-    }
+	/**
+	 * 获取任务
+	 *
+	 * @param taskId 任务ID
+	 */
+	@Override
+	public Task getTask(String taskId) {
+		return taskService.createTaskQuery().taskId(taskId).singleResult();
+	}
 
-    /**
-     * 获取历史任务
-     *
-     * @param taskId 任务ID
-     */
-    @Override
-    public HistoricTaskInstance getHistoryTask(String taskId) {
-        return historyService.createHistoricTaskInstanceQuery().taskId(taskId).singleResult();
-    }
+	/**
+	 * 获取历史任务
+	 *
+	 * @param taskId 任务ID
+	 */
+	@Override
+	public HistoricTaskInstance getHistoryTask(String taskId) {
+		return historyService.createHistoricTaskInstanceQuery().taskId(taskId).singleResult();
+	}
 
-    @Override
-    public TaskInfo getTaskOrHistoryTask(String taskId) {
-        TaskInfo taskInfo = getTask(taskId);
-        if (taskInfo == null) {
-            taskInfo = getHistoryTask(taskId);
-        }
-        return taskInfo;
-    }
+	@Override
+	public TaskInfo getTaskOrHistoryTask(String taskId) {
+		TaskInfo taskInfo = getTask(taskId);
+		if (taskInfo == null) {
+			taskInfo = getHistoryTask(taskId);
+		}
+		return taskInfo;
+	}
 
-    /**
-     * 获取历史任务
-     *
-     * @param procInsId 流程实例ID
-     */
-    @Override
-    public HistoricTaskInstance getHistoryTaskByProcessInstanceId(String procInsId) {
-        return historyService.createHistoricTaskInstanceQuery().processInstanceId(procInsId).orderByHistoricTaskInstanceEndTime().desc().list().get(0);
-    }
+	/**
+	 * 获取历史任务
+	 *
+	 * @param procInsId 流程实例ID
+	 */
+	@Override
+	public HistoricTaskInstance getHistoryTaskByProcessInstanceId(String procInsId) {
+		return historyService.createHistoricTaskInstanceQuery().processInstanceId(procInsId).orderByHistoricTaskInstanceEndTime().desc().list().get(0);
+	}
 
-    /**
-     * 删除任务
-     *
-     * @param taskId       任务ID
-     * @param deleteReason 删除原因
-     */
-    @Override
-    public void deleteTask(String taskId, String deleteReason) {
-        taskService.deleteTask(taskId, deleteReason);
-    }
+	/**
+	 * 删除任务
+	 *
+	 * @param taskId       任务ID
+	 * @param deleteReason 删除原因
+	 */
+	@Override
+	public void deleteTask(String taskId, String deleteReason) {
+		taskService.deleteTask(taskId, deleteReason);
+	}
 
-    /**
-     * 签收任务
-     *
-     * @param taskId 任务ID
-     * @param userId 签收用户ID（用户登录名）
-     */
-    @Override
-    public void claim(String taskId, String userId) {
-        taskService.claim(taskId, userId);
-    }
+	/**
+	 * 签收任务
+	 *
+	 * @param taskId 任务ID
+	 * @param userId 签收用户ID（用户登录名）
+	 */
+	@Override
+	public void claim(String taskId, String userId) {
+		taskService.claim(taskId, userId);
+	}
 
-    /**
-     * 委托他人完成任务
-     *
-     * @param taskId 任务ID
-     * @param userId 被委托人
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void delegateTask(String taskId, String userId) {
-        Task task = getTask(taskId);
-        task.setDescription(FlowConstant.TASK_TYPE_DELEGATE);
-        taskService.saveTask(task);
-        taskService.delegateTask(taskId, userId);
-    }
+	/**
+	 * 委托他人完成任务
+	 *
+	 * @param taskId 任务ID
+	 * @param userId 被委托人
+	 */
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void delegateTask(String taskId, String userId) {
+		Task task = getTask(taskId);
+		task.setDescription(FlowConstant.TASK_TYPE_DELEGATE);
+		taskService.saveTask(task);
+		taskService.delegateTask(taskId, userId);
+	}
 
-    /**
-     * 转派他人完成
-     *
-     * @param taskId 任务ID
-     * @param userId 被委托人
-     * @param reason 原因
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void transferTask(String taskId, String userId, String reason) {
-        Task task = getTask(taskId);
-        task.setDescription(FlowConstant.TASK_TYPE_TRANSFER);
-        taskService.saveTask(task);
-        taskService.setAssignee(taskId, userId);
-        taskService.addComment(taskId, task.getProcessInstanceId(), FlowConstant.TRANSFER_COMMENT, "[转派] " + reason);
-    }
+	/**
+	 * 转派他人完成
+	 *
+	 * @param taskId 任务ID
+	 * @param userId 被委托人
+	 * @param reason 原因
+	 */
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void transferTask(String taskId, String userId, String reason) {
+		Task task = getTask(taskId);
+		task.setDescription(FlowConstant.TASK_TYPE_TRANSFER);
+		taskService.saveTask(task);
+		taskService.setAssignee(taskId, userId);
+		taskService.addComment(taskId, task.getProcessInstanceId(), FlowConstant.TRANSFER_COMMENT, "[转派] " + reason);
+	}
 
-    /**
-     * 取消签收任务
-     *
-     * @param taskId 任务ID
-     * @param userId 签收用户ID（用户登录名）
-     */
-    @Override
-    public void unclaim(String taskId, String userId) {
-        taskService.unclaim(taskId);
-    }
+	/**
+	 * 取消签收任务
+	 *
+	 * @param taskId 任务ID
+	 * @param userId 签收用户ID（用户登录名）
+	 */
+	@Override
+	public void unclaim(String taskId, String userId) {
+		taskService.unclaim(taskId);
+	}
 
-    /**
-     * 提交任务, 并保存意见
-     *
-     * @param vars 任务变量
-     */
-    @Override
-    public void complete(FlowTaskVO flowTaskVO, Map<String, Object> vars) {
-        String taskId = flowTaskVO.getTaskId();
-        String comment = flowTaskVO.getComment();
-        // 设置流程变量
-        if (vars == null) {
-            vars = Maps.newHashMap();
-        }
-        Task task = getTask(taskId);
-        String procInsId = task.getProcessInstanceId();
-        //是否委托
-        boolean delegation = task.getDelegationState() != null && DelegationState.PENDING == task.getDelegationState();
-        // 添加意见
-        if (Strings.isNotBlank(procInsId) && Strings.isNotBlank(comment)) {
-            if (delegation) {
-                taskService.addComment(taskId, procInsId, FlowConstant.DELEGATE_COMMENT, "[委托]" + comment);
-            } else {
-                taskService.addComment(taskId, procInsId, comment);
-            }
-        }
-        //添加流程手写签字数据
-        if (Strings.isNotBlank(flowTaskVO.getHandWritingSignatureData())) {
-            this.addTaskHandWritingSignatureAttachment(taskId, procInsId, flowTaskVO.getHandWritingSignatureData());
-        }
-        if (delegation) {
-            // 完成任务委托
-            taskService.resolveTask(taskId, vars);
-        } else {
-            // 完成提交任务
-            taskService.complete(taskId, vars);
-        }
-    }
+	/**
+	 * 提交任务, 并保存意见
+	 *
+	 * @param vars 任务变量
+	 */
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void complete(FlowTaskVO flowTaskVO, Map<String, Object> vars) {
+		String taskId = flowTaskVO.getTaskId();
+		String comment = flowTaskVO.getComment();
+		// 设置流程变量
+		if (vars == null) {
+			vars = Maps.newHashMap();
+		}
+		Task task = getTask(taskId);
+		String procInsId = task.getProcessInstanceId();
+		//是否委托
+		boolean delegation = task.getDelegationState() != null && DelegationState.PENDING == task.getDelegationState();
+		// 添加意见
+		if (Strings.isNotBlank(procInsId) && Strings.isNotBlank(comment)) {
+			if (delegation) {
+				taskService.addComment(taskId, procInsId, FlowConstant.DELEGATE_COMMENT, "[委托]" + comment);
+			} else {
+				taskService.addComment(taskId, procInsId, comment);
+			}
+		}
+		//添加流程手写签字数据
+		if (Strings.isNotBlank(flowTaskVO.getHandWritingSignatureData())) {
+			this.addTaskHandWritingSignatureAttachment(taskId, procInsId, flowTaskVO.getHandWritingSignatureData());
+		}
+		if (delegation) {
+			// 完成任务委托
+			taskService.resolveTask(taskId, vars);
+		} else {
+			// 完成提交任务
+			taskService.complete(taskId, vars);
+			// 保存到任务历史数据
+			saveToHisTaskData(procInsId, taskId);
+		}
+	}
 
-    /**
-     * 添加任务意见
-     */
-    @Override
-    public void addTaskComment(String taskId, String procInsId, String type, String comment) {
-        taskService.addComment(taskId, procInsId, type, comment);
-    }
+	/**
+	 * 添加任务意见
+	 */
+	@Override
+	public void addTaskComment(String taskId, String procInsId, String type, String comment) {
+		taskService.addComment(taskId, procInsId, type, comment);
+	}
 
-    /**
-     * 添加手写签字数据
-     */
-    @Override
-    public void addTaskHandWritingSignatureAttachment(String taskId, String procInsId, String base64data) {
-        String userName = Authentication.getAuthenticatedUserId();
-        List<Attachment> attachmentList = taskService.getTaskAttachments(taskId);
-        Attachment attachment = attachmentList.stream().filter(attach -> attach.getUserId().equals(userName) && attach.getName().equals(FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME)).findAny().orElse(null);
-        if (attachment != null) {
-            taskService.deleteAttachment(attachment.getId());
-        }
-        taskService.createAttachment("jpg", taskId, procInsId, FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME, FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME, new StringInputStream(base64data));
-    }
+	/**
+	 * 添加手写签字数据
+	 */
+	@Override
+	public void addTaskHandWritingSignatureAttachment(String taskId, String procInsId, String base64data) {
+		String userName = Authentication.getAuthenticatedUserId();
+		List<Attachment> attachmentList = taskService.getTaskAttachments(taskId);
+		Attachment attachment = attachmentList.stream().filter(attach -> attach.getUserId().equals(userName) && attach.getName().equals(FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME)).findAny().orElse(null);
+		if (attachment != null) {
+			taskService.deleteAttachment(attachment.getId());
+		}
+		taskService.createAttachment("jpg", taskId, procInsId, FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME, FlowConstant.HAND_WRITING_SIGNATURE_ATTACHMENT_NAME, new StringInputStream(base64data));
+	}
 
-    /**
-     * 多实例加签
-     * 只有多实例节点才可以加签、减签
-     *
-     * @param flowTaskVO
-     * @param comment
-     */
-    @Override
-    public String addMultiInstance(FlowTaskVO flowTaskVO, String comment) {
-        //要加签的节点id 流程实例id
-        runtimeService.addMultiInstanceExecution(flowTaskVO.getTaskDefKey(), flowTaskVO.getProcInsId(), Collections.singletonMap("assignee", flowTaskVO.getAddMultiInstanceAssignee()));
-        return null;
-    }
+	/**
+	 * 多实例加签
+	 * 只有多实例节点才可以加签、减签
+	 *
+	 * @param flowTaskVO
+	 * @param comment
+	 */
+	@Override
+	public String addMultiInstance(FlowTaskVO flowTaskVO, String comment) {
+		//要加签的节点id 流程实例id
+		runtimeService.addMultiInstanceExecution(flowTaskVO.getTaskDefKey(), flowTaskVO.getProcInsId(), Collections.singletonMap("assignee", flowTaskVO.getAddMultiInstanceAssignee()));
+		return null;
+	}
 
-    /**
-     * 流程回退
-     *
-     * @param flowTaskVO
-     * @param userId
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public String backToStep(FlowTaskVO flowTaskVO, String userId) {
-        String taskId = flowTaskVO.getTaskId();
-        String comment = flowTaskVO.getComment();
-        String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
-        UserTaskExtensionDTO extensionPropertyDTO = flowProcessDefinitionService.getUserTaskExtension(flowTaskVO.getTaskDefKey(), flowTaskVO.getProcDefId());
-        if (extensionPropertyDTO != null) {
-            if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.NONE) {
-                return "当前流程不允许回退";
-            } else if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.PREVIOUS_STEP) {
-                backToTaskDefKey = extensionPropertyDTO.getCallBackNodes();
-                if (Strings.isEmpty(backToTaskDefKey)) {
-                    return "请设置当前流程应该回退的上一步骤！";
-                }
-            } else if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.FREE_STEP) {
-                List<String> nodes = Arrays.asList(extensionPropertyDTO.getCallBackNodes().split(","));
-                if (Strings.isEmpty(backToTaskDefKey) || !nodes.contains(backToTaskDefKey)) {
-                    return "请设置当前流程应该回退的步骤！";
-                }
-            }
-        }
-        Task currTask = taskService.createTaskQuery().taskId(taskId).singleResult();
-        String processInstanceId = currTask.getProcessInstanceId();
-        //保存任务信息
-        currTask.setAssignee(userId);
-        this.addTaskComment(taskId, processInstanceId, FlowConstant.BACK_COMMENT, comment);
-        taskService.saveTask(currTask);
+	/**
+	 * 流程回退
+	 *
+	 * @param flowTaskVO
+	 * @param userId
+	 */
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public String backToStep(FlowTaskVO flowTaskVO, String userId) {
+		String taskId = flowTaskVO.getTaskId();
+		String comment = flowTaskVO.getComment();
+		String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
+		UserTaskExtensionDTO extensionPropertyDTO = flowProcessDefinitionService.getUserTaskExtension(flowTaskVO.getTaskDefKey(), flowTaskVO.getProcDefId());
+		if (extensionPropertyDTO != null) {
+			if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.NONE) {
+				return "当前流程不允许回退";
+			} else if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.PREVIOUS_STEP) {
+				backToTaskDefKey = extensionPropertyDTO.getCallBackNodes();
+				if (Strings.isEmpty(backToTaskDefKey)) {
+					return "请设置当前流程应该回退的上一步骤！";
+				}
+			} else if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.FREE_STEP) {
+				List<String> nodes = Arrays.asList(extensionPropertyDTO.getCallBackNodes().split(","));
+				if (Strings.isEmpty(backToTaskDefKey) || !nodes.contains(backToTaskDefKey)) {
+					return "请设置当前流程应该回退的步骤！";
+				}
+			}
+		}
+		Task currTask = taskService.createTaskQuery().taskId(taskId).singleResult();
+		String processInstanceId = currTask.getProcessInstanceId();
+		//保存任务信息
+		currTask.setAssignee(userId);
+		this.addTaskComment(taskId, processInstanceId, FlowConstant.BACK_COMMENT, comment);
+		taskService.saveTask(currTask);
 
-        List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
-        List<String> currentActivityIds = new ArrayList<>();
-        tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
-        //执行驳回操作
-        // TODO 驳回应指定为提交人员
-        runtimeService.createChangeActivityStateBuilder()
-                .processInstanceId(processInstanceId)
-                .moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
-                .changeState();
+		List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+		List<String> currentActivityIds = new ArrayList<>();
+		tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
+		//执行驳回操作
+		// TODO 驳回应指定为提交人员
+		runtimeService.createChangeActivityStateBuilder()
+				.processInstanceId(processInstanceId)
+				.moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
+				.changeState();
 
-        // 标记退回后的当前流程类型为退回
-        List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
-        for(Task task : afterTaskList) {
-            task.setDescription(FlowConstant.TASK_TYPE_BACK);
-            taskService.saveTask(task);
-        }
-        return null;
-    }
+		// 标记退回后的当前流程类型为退回
+		List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+		for (Task task : afterTaskList) {
+			task.setDescription(FlowConstant.TASK_TYPE_BACK);
+			taskService.saveTask(task);
+		}
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public String submitToBackStep(FlowTaskVO flowTaskVO, String userId) {
-        String taskId = flowTaskVO.getTaskId();
-        String comment = flowTaskVO.getComment();
-        String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
-        String backToTaskAssignee = flowTaskVO.getBackToTaskAssignee();
-        Task currTask = taskService.createTaskQuery().taskId(taskId).singleResult();
-        String processInstanceId = currTask.getProcessInstanceId();
+		// 保存任务历史数据
+		saveToHisTaskData(processInstanceId, taskId);
+		return null;
+	}
 
-        //保存任务信息
-        currTask.setAssignee(userId);
-        this.addTaskComment(taskId, processInstanceId, FlowConstant.BACK_SUBMIT_COMMENT, comment);
-        taskService.saveTask(currTask);
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public String submitToBackStep(FlowTaskVO flowTaskVO, String userId) {
+		String taskId = flowTaskVO.getTaskId();
+		String comment = flowTaskVO.getComment();
+		String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
+		String backToTaskAssignee = flowTaskVO.getBackToTaskAssignee();
+		Task currTask = taskService.createTaskQuery().taskId(taskId).singleResult();
+		String processInstanceId = currTask.getProcessInstanceId();
 
-        List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
-        List<String> currentActivityIds = new ArrayList<>();
-        tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
-        //执行驳回后重新提交操作
-        // TODO 驳回应指定为提交人员
-        runtimeService.createChangeActivityStateBuilder()
-                .processInstanceId(processInstanceId)
-                .moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
-                .changeState();
+		//保存任务信息
+		currTask.setAssignee(userId);
+		this.addTaskComment(taskId, processInstanceId, FlowConstant.BACK_SUBMIT_COMMENT, comment);
+		taskService.saveTask(currTask);
 
-        // 标记退回重提后的当前流程类型为退回重提
-        List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
-        for(Task task : afterTaskList) {
-            task.setDescription(FlowConstant.TASK_TYPE_BACK_SUBMIT);
-            taskService.saveTask(task);
-        }
-        return null;
-    }
+		List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+		List<String> currentActivityIds = new ArrayList<>();
+		tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
+		//执行驳回后重新提交操作
+		// TODO 驳回应指定为提交人员
+		runtimeService.createChangeActivityStateBuilder()
+				.processInstanceId(processInstanceId)
+				.moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
+				.changeState();
 
-    @Override
-    public void setValuedDataObject(Map<String, Object> variables, String processDefinitionId, Object form, SysUser userAccount, boolean update) {
-        List<ValuedDataObject> ValuedDataObjects = repositoryService.getBpmnModel(processDefinitionId).getMainProcess().getDataObjects();
-        if (!ValuedDataObjects.stream().filter(va -> FlowConstant.PROCESS_TITLE.equals(va.getId())).findAny().isPresent()) {
-            throw Lang.makeThrow("流程应该设置标题模版数据对象，ID为 %s", FlowConstant.PROCESS_TITLE);
-        }
-        ValuedDataObjects.stream().forEach(valued -> {
-            List<ExtensionElement> extensionElements = valued.getExtensionElements().get(CustomBpmnJsonConverter.DATA_OBJECTS_EXPRESSION);
-            if (CollectionUtils.isNotEmpty(extensionElements)) {
-                String expression = Strings.sNull(extensionElements.get(0).getElementText());
-                if (update) {
-                    //更新变量时，只有值不为空时才更新，因为可能存在提交的表单数据不完整的情况
-                    try {
-                        String valStr = El.render(expression, Lang.context().set("form", form).set("user", userAccount));
-                        if (Strings.isNotBlank(valStr)) {
-                            variables.put(valued.getId(), getVal(valued, valStr));
-                        }
-                    } catch (Exception e) {
-                        //忽略异常，需要注意：数据不完整的情况下，可能导致变量数据不能及时更新
-                    }
-                } else {
-                    //新增变量时，如变量无法按照规则产出，则需要抛出异常
-                    variables.put(valued.getId(), getVal(valued, El.render(expression, Lang.context().set("form", form).set("user", userAccount))));
-                }
-            }
-        });
-    }
+		// 标记退回重提后的当前流程类型为退回重提
+		List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+		for (Task task : afterTaskList) {
+			task.setDescription(FlowConstant.TASK_TYPE_BACK_SUBMIT);
+			taskService.saveTask(task);
+		}
 
-    private Object getVal(ValuedDataObject valued, String valStr) {
-        Object val = null;
-        if (valued instanceof StringDataObject) {
-            val = valStr;
-        } else if (valued instanceof IntegerDataObject) {
-            val = Integer.parseInt(valStr);
-        } else if (valued instanceof LongDataObject) {
-            val = Long.parseLong(valStr);
-        } else if (valued instanceof DoubleDataObject) {
-            val = Double.parseDouble(valStr);
-        } else if (valued instanceof BooleanDataObject) {
-            val = Boolean.parseBoolean(valStr);
-        } else if (valued instanceof DateDataObject) {
-            val = DateUtil.string2date(valStr, DateUtil.YYYY_MM_DD_HH_MM_SS);
-        }
-        return val;
-    }
+		// 保存任务历史数据
+		saveToHisTaskData(processInstanceId, taskId);
+		return null;
+	}
 
-    /**
-     * 未经过足够的测试，谨慎使用
-     *
-     * @param formData
-     * @param flowTaskVO
-     * @param currUser
-     * @return
-     * @date 2019-10-09
-     */
-    @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Pair<String, FlowElement> getNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) {
-        Pair<String, FlowElement> nextNode;
-        try {
-            Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
-            String executionId = task.getExecutionId();
-            ExecutionEntity execution = (ExecutionEntity) runtimeService.createExecutionQuery().executionId(executionId).singleResult();
-            BpmnModel bpmnModel = repositoryService.getBpmnModel(execution.getProcessDefinitionId());
-            Map<String, Object> vars = Maps.newHashMap();
-            vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
-            vars.put(FlowConstant.FORM_DATA, formData);
-            setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, currUser, true);
-            nextNode = managementService.executeCommand(new FindNextExecuteNodeCmd(execution, bpmnModel, vars));
-            //将寻找下一节点执行产生的的数据进行回滚
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-        } catch (Exception e) {
-            throw new RuntimeException("事务回滚失败！" + e.getMessage());
-        }
-        return nextNode;
-    }
+	@Override
+	public void setValuedDataObject(Map<String, Object> variables, String processDefinitionId, Object form, SysUser userAccount, boolean update) {
+		List<ValuedDataObject> ValuedDataObjects = repositoryService.getBpmnModel(processDefinitionId).getMainProcess().getDataObjects();
+		if (!ValuedDataObjects.stream().filter(va -> FlowConstant.PROCESS_TITLE.equals(va.getId())).findAny().isPresent()) {
+			throw Lang.makeThrow("流程应该设置标题模版数据对象，ID为 %s", FlowConstant.PROCESS_TITLE);
+		}
+		ValuedDataObjects.stream().forEach(valued -> {
+			List<ExtensionElement> extensionElements = valued.getExtensionElements().get(CustomBpmnJsonConverter.DATA_OBJECTS_EXPRESSION);
+			if (CollectionUtils.isNotEmpty(extensionElements)) {
+				String expression = Strings.sNull(extensionElements.get(0).getElementText());
+				if (update) {
+					//更新变量时，只有值不为空时才更新，因为可能存在提交的表单数据不完整的情况
+					try {
+						String valStr = El.render(expression, Lang.context().set("form", form).set("user", userAccount));
+						if (Strings.isNotBlank(valStr)) {
+							variables.put(valued.getId(), getVal(valued, valStr));
+						}
+					} catch (Exception e) {
+						//忽略异常，需要注意：数据不完整的情况下，可能导致变量数据不能及时更新
+					}
+				} else {
+					//新增变量时，如变量无法按照规则产出，则需要抛出异常
+					variables.put(valued.getId(), getVal(valued, El.render(expression, Lang.context().set("form", form).set("user", userAccount))));
+				}
+			}
+		});
+	}
 
-    /**
-     * 未经过足够的测试，谨慎使用
-     *
-     * @param formData
-     * @param flowTaskVO
-     * @param currUser
-     * @return
-     * @date 2019-10-09
-     */
-    @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Pair<String, FlowElement> previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) throws Exception {
-        try {
-            Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
-            String executionId = task.getExecutionId();
-            ExecutionEntity execution = (ExecutionEntity) runtimeService.createExecutionQuery().executionId(executionId).singleResult();
-            BpmnModel bpmnModel = repositoryService.getBpmnModel(execution.getProcessDefinitionId());
-            Map<String, Object> vars = Maps.newHashMap();
-            vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
-            vars.put(FlowConstant.FORM_DATA, formData);
-            setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, currUser, true);
-            return managementService.executeCommand(new FindNextExecuteNodeCmd(execution, bpmnModel, vars));
-        } finally {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-        }
-    }
+	private Object getVal(ValuedDataObject valued, String valStr) {
+		Object val = null;
+		if (valued instanceof StringDataObject) {
+			val = valStr;
+		} else if (valued instanceof IntegerDataObject) {
+			val = Integer.parseInt(valStr);
+		} else if (valued instanceof LongDataObject) {
+			val = Long.parseLong(valStr);
+		} else if (valued instanceof DoubleDataObject) {
+			val = Double.parseDouble(valStr);
+		} else if (valued instanceof BooleanDataObject) {
+			val = Boolean.parseBoolean(valStr);
+		} else if (valued instanceof DateDataObject) {
+			val = DateUtil.string2date(valStr, DateUtil.YYYY_MM_DD_HH_MM_SS);
+		}
+		return val;
+	}
 
+	/**
+	 * 未经过足够的测试，谨慎使用
+	 *
+	 * @param formData
+	 * @param flowTaskVO
+	 * @param currUser
+	 * @return
+	 * @date 2019-10-09
+	 */
+	@Override
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public Pair<String, FlowElement> getNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) {
+		Pair<String, FlowElement> nextNode;
+		try {
+			Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
+			String executionId = task.getExecutionId();
+			ExecutionEntity execution = (ExecutionEntity) runtimeService.createExecutionQuery().executionId(executionId).singleResult();
+			BpmnModel bpmnModel = repositoryService.getBpmnModel(execution.getProcessDefinitionId());
+			Map<String, Object> vars = Maps.newHashMap();
+			vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
+			vars.put(FlowConstant.FORM_DATA, formData);
+			setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, currUser, true);
+			nextNode = managementService.executeCommand(new FindNextExecuteNodeCmd(execution, bpmnModel, vars));
+			//将寻找下一节点执行产生的的数据进行回滚
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+		} catch (Exception e) {
+			throw new RuntimeException("事务回滚失败！" + e.getMessage());
+		}
+		return nextNode;
+	}
 
+	/**
+	 * 未经过足够的测试，谨慎使用
+	 *
+	 * @param formData
+	 * @param flowTaskVO
+	 * @param currUser
+	 * @return
+	 * @date 2019-10-09
+	 */
+	@Override
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public Pair<String, FlowElement> previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser currUser) throws Exception {
+		try {
+			Task task = taskService.createTaskQuery().taskId(flowTaskVO.getTaskId()).singleResult();
+			String executionId = task.getExecutionId();
+			ExecutionEntity execution = (ExecutionEntity) runtimeService.createExecutionQuery().executionId(executionId).singleResult();
+			BpmnModel bpmnModel = repositoryService.getBpmnModel(execution.getProcessDefinitionId());
+			Map<String, Object> vars = Maps.newHashMap();
+			vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
+			vars.put(FlowConstant.FORM_DATA, formData);
+			setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, currUser, true);
+			return managementService.executeCommand(new FindNextExecuteNodeCmd(execution, bpmnModel, vars));
+		} finally {
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+		}
+	}
+
+	@Override
+	public void saveCurrTaskData(String procInsId, Map<String, Object> formData) {
+		Date datenow = new Date();
+		if (null != formData && formData.size() > 0) {
+			List<FlowData> flowDataList = flowDataService.findRunFlowData(procInsId);
+			Map<String, FlowData> flowDataMap = new HashMap<>();
+			for (FlowData flowData : flowDataList) {
+				flowDataMap.put(flowData.getName(), flowData);
+			}
+
+			FlowData flowData;
+			for (Map.Entry<String, Object> entry : formData.entrySet()) {
+				if (null != entry.getValue() && StringUtils.isNotBlank(entry.getValue().toString())) {
+					String key = entry.getKey();
+					if(flowDataMap.containsKey(key)) {
+						flowData = flowDataMap.get(key);
+						flowData.setText(entry.getValue().toString());
+						flowData.setUpdateBy(ShiroUtils.getSysUser().getLoginName());
+						flowData.setUpdateTime(datenow);
+						flowDataService.updateText(flowData);
+					} else {
+						flowData = new FlowData();
+						flowData.setProcInsId(procInsId);
+						flowData.setName(entry.getKey());
+						flowData.setText(entry.getValue().toString());
+						flowData.setCreateBy(ShiroUtils.getSysUser().getLoginName());
+						flowData.setCreateTime(datenow);
+						flowDataService.save(flowData);
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	public void saveToHisTaskData(String procInsId, String taskId) {
+		flowDataService.saveToHisTaskData(procInsId, taskId);
+	}
 }

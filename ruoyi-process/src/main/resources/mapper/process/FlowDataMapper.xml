@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.process.modules.flow.mapper.FlowDataMapper">
+
+    <resultMap type="FlowData" id="FlowDataResult">
+        <id property="id" column="ID_"/>
+        <result property="procInsId" column="PROC_INS_ID_"/>
+        <result property="taskId" column="TASK_ID_"/>
+        <result property="name" column="NAME_"/>
+        <result property="text" column="TEXT_"/>
+        <result property="createBy" column="CREATE_BY"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateBy" column="UPDATE_BY"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+    </resultMap>
+
+    <insert id="save" parameterType="FlowData">
+        INSERT INTO FLOW_DATA (PROC_INS_ID_, TASK_ID_, NAME_, TEXT_, CREATE_BY, CREATE_TIME)
+        VALUES (#{procInsId, jdbcType=VARCHAR}, #{taskId, jdbcType=VARCHAR}, #{name, jdbcType=VARCHAR}, #{text, jdbcType=VARCHAR}, #{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=DATE})
+    </insert>
+
+    <update id="updateText" parameterType="FlowData">
+        UPDATE FLOW_DATA SET TEXT_ = #{text}, UPDATE_BY = #{updateBy}, UPDATE_TIME = #{updateTime} WHERE ID_ = #{id}
+    </update>
+
+    <select id="findByParams" parameterType="hashMap" resultMap="FlowDataResult">
+        SELECT * FROM FLOW_DATA
+        <where>
+            <if test="procInsId != null and procInsId != ''">
+                AND PROC_INS_ID_ = #{procInsId}
+            </if>
+            <if test="taskId != null and taskId != ''">
+                AND TASK_ID_ = #{taskId}
+            </if>
+            <if test="nullTaskId != null and nullTaskId != ''">
+                AND TASK_ID_ IS NULL
+            </if>
+        </where>
+    </select>
+
+    <insert id="saveToHisTaskData">
+        INSERT INTO FLOW_DATA (PROC_INS_ID_, TASK_ID_, NAME_, TEXT_, CREATE_BY, CREATE_TIME)
+        SELECT PROC_INS_ID_, '${taskId}', NAME_, TEXT_, CREATE_BY, CREATE_TIME
+        FROM FLOW_DATA
+        WHERE PROC_INS_ID_ = #{procInsId}
+          AND TASK_ID_ IS NULL
+    </insert>
+</mapper>

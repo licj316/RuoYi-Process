@@ -707,25 +707,34 @@
             let name = ele.getAttribute("name");
             if (name) {
                 let eleVal = ele.value;
-                let eleTextVal;
-                if ("select-one" === ele.type) {
-                    eleTextVal = ele.options[ele.selectedIndex].text;
+                if (eleVal) {
+                    let eleTextVal;
+                    // 下拉选择框显示值
+                    if ("select-one" === ele.type) {
+                        eleTextVal = ele.options[ele.selectedIndex].text;
+                    }
+                    if (name.indexOf(".") != -1) {
+                        // 相同前缀的值设置为大json
+                        let nameArr = name.split(".");
+                        if (!data[nameArr[0]]) {
+                            data[nameArr[0]] = {};
+                        }
+                        data[nameArr[0]][nameArr[1]] = eleVal;
+                        if (eleTextVal) {
+                            data[nameArr[0]][nameArr[1] + 'Text'] = eleVal;
+                        }
+                    } else {
+                        if (eleVal.startWith("[") || eleVal.startWith("{")) {
+                            // 保存name中不带"."，值为json的域
+                            data[name] = eleVal;
+                        }
+                    }
                 }
-                if (name.indexOf(".") != -1) {
-                    let nameArr = name.split(".");
-                    if (!data[nameArr[0]]) {
-                        data[nameArr[0]] = {};
-                    }
-                    data[nameArr[0]][nameArr[1]] = eleVal;
-                    if (eleTextVal) {
-                        data[nameArr[0]][nameArr[1] + 'Text'] = eleVal;
-                    }
-                } else {
-                    data[name] = eleVal;
-                    if (eleTextVal) {
-                        data[name + "Text"] = ele.options[ele.selectedIndex].text;
-                    }
-                }
+            }
+        });
+        Object.keys(data).forEach(function(key){
+            if(typeof data[key] === 'object') {
+                data[key] = JSON.stringify(data[key]);
             }
         });
         return data;
