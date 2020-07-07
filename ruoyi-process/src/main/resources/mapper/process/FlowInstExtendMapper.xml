@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.process.modules.flow.mapper.FlowInstExtendMapper">
+    <resultMap type="FlowInstExtend" id="FlowInstExtendResult">
+        <id property="id" column="ID_"/>
+        <result property="procDefId" column="PROC_DEF_ID_"/>
+        <result property="procInsId" column="PROC_INS_ID_"/>
+        <result property="currTaskDefKey" column="CURR_TASK_DEF_KEY_"/>
+        <result property="currTaskName" column="CURR_TASK_NAME_"/>
+        <result property="currTaskType" column="CURR_TASK_TYPE_"/>
+        <result property="keyOne" column="KEY_ONE_"/>
+        <result property="keyTwo" column="KEY_TWO_"/>
+        <result property="keyThree" column="KEY_THREE_"/>
+        <result property="keyFour" column="KEY_FOUR_"/>
+        <result property="keyFive" column="KEY_FIVE_"/>
+        <result property="keySix" column="KEY_SIX_"/>
+        <result property="keySeven" column="KEY_SEVEN_"/>
+        <result property="createBy" column="CREATE_BY"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateBy" column="UPDATE_BY"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+    </resultMap>
+
+    <insert id="save" parameterType="FlowInstExtend">
+        INSERT INTO FLOW_INST_EXTEND (PROC_DEF_ID_, PROC_INS_ID_, CURR_TASK_DEF_KEY_, CURR_TASK_NAME_, CURR_TASK_TYPE_, KEY_ONE_, KEY_TWO_, KEY_THREE_, KEY_FOUR_, KEY_FIVE_, KEY_SIX_, KEY_SEVEN_, CREATE_BY, CREATE_TIME)
+        VALUE (#{procDefId, jdbcType=VARCHAR}, #{procInsId, jdbcType=VARCHAR}, #{currTaskDefKey, jdbcType=VARCHAR}, #{currTaskName, jdbcType=VARCHAR}, #{currTaskType, jdbcType=VARCHAR},
+        #{keyOne, jdbcType=VARCHAR}, #{keyTwo, jdbcType=VARCHAR}, #{keyThree, jdbcType=VARCHAR}, #{keyFour, jdbcType=VARCHAR},
+        #{keyFive, jdbcType=VARCHAR}, #{keySix, jdbcType=VARCHAR}, #{keySeven}, #{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=DATE});
+    </insert>
+
+    <update id="update" parameterType="FlowInstExtend">
+        UPDATE FLOW_INST_EXTEND
+        SET
+        <if test="currTaskDefKey">
+            CURR_TASK_DEF_KEY_ = #{currTaskDefKey},
+        </if>
+        <if test="currTaskDefKey">
+            CURR_TASK_NAME_ = #{currTaskName},
+        </if>
+        <if test="currTaskDefKey">
+            CURR_TASK_TYPE_ = #{currTaskType},
+        </if>
+        <if test="currTaskDefKey">
+            KEY_ONE_ = #{keyOne},
+        </if>
+        <if test="currTaskDefKey">
+            KEY_TWO_ = #{keyTwo},
+        </if>
+        <if test="currTaskDefKey">
+            KEY_THREE_ = #{keyThree},
+        </if>
+        <if test="currTaskDefKey">
+            KEY_FOUR_ = #{keyFour},
+        </if>
+        <if test="currTaskDefKey">
+            KEY_FIVE_ = #{keyFive},
+        </if>
+        <if test="currTaskDefKey">
+            KEY_SIX_ = #{keySix},
+        </if>
+        <if test="currTaskDefKey">
+            KEY_SEVEN_ = #{keySeven},
+        </if>
+        UPDATE_BY = #{updateBy},
+        UPDATE_TIME = #{updateTime}
+        WHERE ID_ = #{id}
+    </update>
+
+    <update id="updateCurrTaskInfo" parameterType="FlowInstExtend">
+        UPDATE FLOW_INST_EXTEND
+        SET CURR_TASK_DEF_KEY_ = #{currTaskDefKey},
+            CURR_TASK_NAME_ = #{currTaskName},
+            CURR_TASK_TYPE_ = #{currTaskType},
+            UPDATE_BY = #{updateBy},
+            UPDATE_TIME = #{updateTime}
+        WHERE ID_ = #{id}
+    </update>
+
+    <select id="findByParams" parameterType="hashMap" resultMap="FlowInstExtendResult">
+        SELECT * FROM FLOW_INST_EXTEND
+        <where>
+            <if test="procInsId != null and procInsId != ''">
+                AND PROC_INS_ID_ = #{procInsId}
+            </if>
+            <if test="keyOne != null and keyOne != ''">
+                AND KEY_ONE_ = #{keyOne}
+            </if>
+            <if test="keyTwo != null and keyTwo != ''">
+                AND KEY_TWO_ = #{keyTwo}
+            </if>
+            <if test="keyThree != null and keyThree != ''">
+                AND KEY_THREE_ = #{keyThree}
+            </if>
+            <if test="keyFour != null and keyFour != ''">
+                AND KEY_FOUR_ = #{keyFour}
+            </if>
+            <if test="keyFive != null and keyFive != ''">
+                AND KEY_FIVE_ = #{keyFive}
+            </if>
+            <if test="keySix != null and keySix != ''">
+                AND KEY_SIX_ = #{keySix}
+            </if>
+            <if test="keySeven != null and keySeven != ''">
+                AND KEY_SEVEN_ = #{keySeven}
+            </if>
+        </where>
+    </select>
+</mapper>

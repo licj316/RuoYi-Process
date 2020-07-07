@@ -24,11 +24,15 @@ import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.modules.flow.biz.GeneralFlowBiz;
 import com.ruoyi.process.modules.flow.domain.FlowAttachment;
 import com.ruoyi.process.modules.flow.domain.FlowAttachmentConfig;
+import com.ruoyi.process.modules.flow.domain.FlowConfigExtend;
+import com.ruoyi.process.modules.flow.domain.FlowInstExtend;
 import com.ruoyi.process.modules.flow.executor.ExternalFormExecutor;
 import com.ruoyi.process.modules.flow.mapper.FlowAttachmentConfigMapper;
 import com.ruoyi.process.modules.flow.mapper.FlowAttachmentMapper;
 import com.ruoyi.process.modules.flow.service.FlowAttachmentService;
+import com.ruoyi.process.modules.flow.service.FlowConfigExtendService;
 import com.ruoyi.process.modules.flow.service.FlowCustomQueryService;
+import com.ruoyi.process.modules.flow.service.FlowInstExtendService;
 import com.ruoyi.process.utils.DateUtil;
 import com.ruoyi.process.utils.JsContex;
 import com.ruoyi.system.domain.SysUser;
@@ -43,7 +47,11 @@ import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.common.engine.impl.identity.Authentication;
 import org.flowable.editor.constants.StencilConstants;
+import org.flowable.engine.HistoryService;
+import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
+import org.flowable.engine.history.HistoricProcessInstance;
+import org.flowable.engine.history.HistoricProcessInstanceQuery;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
 import org.nutz.ioc.Ioc;
@@ -91,6 +99,14 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 	FlowAttachmentConfigMapper flowAttachmentConfigMapper;
 	@Autowired
 	FlowAttachmentMapper flowAttachmentMapper;
+	@Autowired
+	RuntimeService runtimeService;
+	@Autowired
+	HistoryService historyService;
+	@Autowired
+	FlowConfigExtendService flowConfigExtendService;
+	@Autowired
+	FlowInstExtendService flowInstExtendService;
 
 	@Override
 	public String getFormPage(FlowTaskVO flowTaskVO) {
@@ -120,7 +136,7 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 		ProcessInstance processInstance = flowTaskService.startProcess(flowTaskVO.getProcDefKey(), primaryKeyId, variables, currUser.getUserId().toString(), currUser.getDeptId(), roleKeys);
 		// 创建流程附件列表
 		List<FlowAttachmentConfig> flowAttachmentConfigList = flowAttachmentConfigMapper.findByParams(ImmutableMap.of("procDefKey", flowTaskVO.getProcDefKey()));
-		if(flowAttachmentConfigList != null && flowAttachmentConfigList.size() > 0) {
+		if (flowAttachmentConfigList != null && flowAttachmentConfigList.size() > 0) {
 			List<FlowAttachment> flowAttachmentList = flowAttachmentConfigList.stream().map(flowAttachmentConfig -> {
 				FlowAttachment fa = new FlowAttachment();
 				fa.setProcInsId(processInstance.getId());
@@ -133,21 +149,15 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 			flowAttachmentMapper.batchSave(flowAttachmentList);
 		}
 
+		// 保存流程扩展表信息
 		List<Task> tasklist = taskService.createTaskQuery().processInstanceId(processInstance.getId()).list();
-		if(tasklist.size() > 0) {
-			Task task = tasklist.get(0);
-			task.setDescription(FlowConstant.TASK_TYPE_FIRST);
-			taskService.saveTask(task);
-		}
+		Task task = tasklist.get(0);
+		flowInstExtendService.createFlowInstExtend(processInstance, task, formData);
+
+		// 保存流程表单数据
+		flowTaskService.saveCurrTaskData(processInstance.getId(), formData);
+
 		return processInstance;
-//            return "流程已启动！流水号：" + procIns;
-//        } else {
-//            重申
-//            flowTaskVO.setReaffirm(true);
-//             完成流程任务
-//            this.userAudit(formData, flowTaskVO, currUser);
-//            return MessageFormat.format("流程已[0]", (flowTaskVO.isPass() ? "[重申] " : "[销毁] "));
-//        }
 	}
 
 	@Override
@@ -244,6 +254,15 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 		//变量别修改过了，所以从新设置下
 		vars.put(FlowConstant.FORM_DATA, formData);
 		flowTaskService.complete(flowTaskVO, vars);
+
+		// 保存流程扩展表信息
+		List<Task> tasklist = taskService.createTaskQuery().processInstanceId(flowTaskVO.getProcInsId()).list();
+		if(null != tasklist && tasklist.size() > 0) {
+			Task task = tasklist.get(0);
+			flowInstExtendService.updateTaskFields(task.getProcessInstanceId(), task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_NORMAL);
+		} else {
+			flowInstExtendService.updateTaskFields(flowTaskVO.getProcInsId(), null, null, FlowConstant.TASK_TYPE_END);
+		}
 		return null;
 	}
 

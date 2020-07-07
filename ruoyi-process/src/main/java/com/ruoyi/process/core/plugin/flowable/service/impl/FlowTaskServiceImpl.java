@@ -27,6 +27,7 @@ import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskHistoricVO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.modules.flow.domain.FlowData;
 import com.ruoyi.process.modules.flow.service.FlowDataService;
+import com.ruoyi.process.modules.flow.service.FlowInstExtendService;
 import com.ruoyi.process.modules.flow.service.FlowTypeService;
 import com.ruoyi.process.modules.flow.vo.FlowParamVO;
 import com.ruoyi.process.utils.DateUtil;
@@ -101,6 +102,8 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	ManagementService managementService;
 	@Autowired
 	FlowDataService flowDataService;
+	@Autowired
+	FlowInstExtendService flowInstExtendService;
 
 	/**
 	 * 获取待办\待簽收列表
@@ -572,8 +575,9 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	@Transactional(rollbackFor = Exception.class)
 	public void delegateTask(String taskId, String userId) {
 		Task task = getTask(taskId);
-		task.setDescription(FlowConstant.TASK_TYPE_DELEGATE);
-		taskService.saveTask(task);
+		flowInstExtendService.updateTaskFields(task.getProcessInstanceId(), task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_DELEGATE);
+//		task.setDescription(FlowConstant.TASK_TYPE_DELEGATE);
+//		taskService.saveTask(task);
 		taskService.delegateTask(taskId, userId);
 	}
 
@@ -588,8 +592,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	@Transactional(rollbackFor = Exception.class)
 	public void transferTask(String taskId, String userId, String reason) {
 		Task task = getTask(taskId);
-		task.setDescription(FlowConstant.TASK_TYPE_TRANSFER);
-		taskService.saveTask(task);
+		flowInstExtendService.updateTaskFields(task.getProcessInstanceId(), task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_TRANSFER);
 		taskService.setAssignee(taskId, userId);
 		taskService.addComment(taskId, task.getProcessInstanceId(), FlowConstant.TRANSFER_COMMENT, "[转派] " + reason);
 	}
@@ -727,15 +730,15 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 				.moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
 				.changeState();
 
-		// 标记退回后的当前流程类型为退回
-		List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
-		for (Task task : afterTaskList) {
-			task.setDescription(FlowConstant.TASK_TYPE_BACK);
-			taskService.saveTask(task);
-		}
-
 		// 保存任务历史数据
 		saveToHisTaskData(processInstanceId, taskId);
+
+		// 标记退回后的当前流程类型为退回
+		List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+		if(null != afterTaskList && afterTaskList.size() > 0) {
+			Task task = afterTaskList.get(0);
+			flowInstExtendService.updateTaskFields(processInstanceId, task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_BACK);
+		}
 		return null;
 	}
 
@@ -766,9 +769,9 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 
 		// 标记退回重提后的当前流程类型为退回重提
 		List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
-		for (Task task : afterTaskList) {
-			task.setDescription(FlowConstant.TASK_TYPE_BACK_SUBMIT);
-			taskService.saveTask(task);
+		if (null != afterTaskList && afterTaskList.size() > 0) {
+			Task task = afterTaskList.get(0);
+			flowInstExtendService.updateTaskFields(processInstanceId, task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_BACK_SUBMIT);
 		}
 
 		// 保存任务历史数据

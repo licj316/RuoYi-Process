@@ -134,4 +134,9 @@ public interface FlowConstant {
      * 转派任务类型
      */
     String TASK_TYPE_TRANSFER = "Transfer";
+
+    /**
+     * 结束
+     */
+    String TASK_TYPE_END = "End";
 }
