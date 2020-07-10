@@ -217,6 +217,9 @@
         comment: '',
         delegateStatus: '',
         backToTaskDefKey: '',
+        backToTaskAssignee: '',
+        nextTaskType: '',
+        nextTaskAssignee: '',
         addMultiInstanceAssignee: '',
         flowNextReviewerAssignee: '',
         handWritingSignatureData: '',
@@ -303,9 +306,14 @@
 
     function handleSave() {
         var params = {form: getFormData(), flow: flow};
-        // TODO 保存按钮操作
+        // 保存按钮操作
         axios.post("/general/flow/process/saveData", params).then(res => {
-
+            let data = res.data;
+            if(data.code == 0) {
+                $.modal.msg("流程数据保存成功！");
+            } else {
+                $.modal.msg("流程数据保存失败！");
+            }
         });
     }
 
@@ -404,12 +412,13 @@
 
                         if ("submitToBackStep" === nextStepNodeChecked.val()) {
                             flow.backToTaskDefKey = nextStepNodeChecked.attr("data-id");
-                            ;
                             flow.backToTaskAssignee = $("input[name='backStepAssigne']").val();
                             // 提交到退回节点
                             handleDoSubmitTOBackStep();
                         } else {
                             let nextStepAssigne = $("input[name='nextStepAssigne']:checked").val();
+                            flow.nextTaskType = nextStepNodeChecked;
+                            flow.nextTaskAssignee = 1;
                             // TODO 指定下一步审批人
                             handleDoSaveAudit();
                         }

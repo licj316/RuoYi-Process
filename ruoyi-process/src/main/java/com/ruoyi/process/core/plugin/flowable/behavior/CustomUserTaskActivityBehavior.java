@@ -62,6 +62,7 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
     @Override
     protected void handleAssignments(TaskService taskService, String assignee, String owner, List<String> candidateUsers,
 									 List<String> candidateGroups, TaskEntity task, ExpressionManager expressionManager, DelegateExecution execution, ProcessEngineConfigurationImpl processEngineConfiguration) {
+        execution.getVariables();
         if (taskExtensionDTO != null) {
             //流程发起者
             String flowSubmitter = getExpressionValue(FlowConstant.SUBMITTER, expressionManager, execution);

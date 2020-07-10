@@ -54,6 +54,14 @@ public interface ExternalFormExecutor {
     String backToStep(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount);
 
     /**
+     * 流程结束
+     * @param formData
+     * @param flowTaskVO
+     * @param sessionUserAccount
+     * @return
+     */
+    void end(Map<String, String> formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount);
+    /**
      * 加签
      *
      * @param formData

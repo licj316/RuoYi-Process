@@ -10,6 +10,7 @@ import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.modules.flow.executor.ExternalFormExecutor;
 import com.ruoyi.process.utils.DateUtil;
 import com.ruoyi.system.domain.SysUser;
+import lombok.extern.slf4j.Slf4j;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
@@ -18,6 +19,7 @@ import org.nutz.lang.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +27,7 @@ import java.util.Map;
  * @author 黄川 huchuc@vip.qq.com
  * @date: 2020/2/23
  */
+@Slf4j
 @Component("leaveExternalFormExecutor")
 public class LeaveExecutor implements ExternalFormExecutor {
 
@@ -49,8 +52,6 @@ public class LeaveExecutor implements ExternalFormExecutor {
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException("初始化流程数据出错！");
 		}
-//        Leave leave = Lang.map2Object(formData, Leave.class);
-//        leaveService.save(leave);
 		return formData;
 	}
 
@@ -74,6 +75,20 @@ public class LeaveExecutor implements ExternalFormExecutor {
 	@Override
 	public String backToStep(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
 		return null;
+	}
+
+	@Override
+	public void end(Map<String, String> formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
+		String leaveInfoStr = formData.get("leaveInfo");
+		ObjectMapper objectMapper = new ObjectMapper();
+		Leave leave;
+		try {
+			leave = objectMapper.readValue(leaveInfoStr, Leave.class);
+			leaveService.save(leave);
+		} catch (IOException e) {
+			log.error("流程结束出错!", e);
+			throw new RuntimeException("流程结束出现异常!" + e.getMessage());
+		}
 	}
 
 	@Override

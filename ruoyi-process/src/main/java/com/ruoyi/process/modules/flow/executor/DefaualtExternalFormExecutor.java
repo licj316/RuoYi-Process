@@ -42,6 +42,11 @@ public class DefaualtExternalFormExecutor implements ExternalFormExecutor {
     }
 
     @Override
+    public void end(Map<String, String> formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
+        throw new RuntimeException("你应该自己实现");
+    }
+
+    @Override
     public String addMultiInstance(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
         throw new RuntimeException("你应该自己实现");
     }

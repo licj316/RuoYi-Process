@@ -40,6 +40,7 @@ import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserRoleService;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -247,21 +248,34 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 			}
 		}
 		formData = evalJavaScriptByModifyForm(formData, flowTaskVO, dto);
+
 		String errorMsg = executor.userAudit(formData, flowTaskVO, sessionUserAccount);
 		if (errorMsg != null) {
 			return errorMsg;
+		}
+
+		// 流程结束
+		String nextTaskType = flowTaskVO.getNextTaskType();
+		if(FlowConstant.TASK_TYPE_END.equals(nextTaskType)) {
+			executor.end(formData, flowTaskVO, sessionUserAccount);
 		}
 		//变量别修改过了，所以从新设置下
 		vars.put(FlowConstant.FORM_DATA, formData);
 		flowTaskService.complete(flowTaskVO, vars);
 
+		String procInsId = flowTaskVO.getProcInsId();
 		// 保存流程扩展表信息
-		List<Task> tasklist = taskService.createTaskQuery().processInstanceId(flowTaskVO.getProcInsId()).list();
-		if(null != tasklist && tasklist.size() > 0) {
+		if (FlowConstant.TASK_TYPE_END.equals(nextTaskType)) {
+			// 流程结束更新流程扩展表的信息
+			flowInstExtendService.updateTaskFields(procInsId, null, null, FlowConstant.TASK_TYPE_END);
+		} else if (FlowConstant.TASK_TYPE_NORMAL.equals(nextTaskType)) {
+			// 流程提交后查询当前
+			List<Task> tasklist = taskService.createTaskQuery().processInstanceId(procInsId).list();
+			if(CollectionUtils.isEmpty(tasklist)) {
+				throw new RuntimeException("未查询到下一任务节点信息！");
+			}
 			Task task = tasklist.get(0);
-			flowInstExtendService.updateTaskFields(task.getProcessInstanceId(), task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_NORMAL);
-		} else {
-			flowInstExtendService.updateTaskFields(flowTaskVO.getProcInsId(), null, null, FlowConstant.TASK_TYPE_END);
+			flowInstExtendService.updateTaskFields(procInsId, task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_NORMAL);
 		}
 		return null;
 	}

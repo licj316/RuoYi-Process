@@ -90,6 +90,14 @@ public class FlowTaskVO {
      */
     String backToTaskAssignee;
     /**
+     * 下一步任务类型
+     */
+    String nextTaskType;
+    /**
+     * 下一步处理人
+     */
+    String nextTaskAssignee;
+    /**
      * 选择的加签给谁
      */
     String addMultiInstanceAssignee;
