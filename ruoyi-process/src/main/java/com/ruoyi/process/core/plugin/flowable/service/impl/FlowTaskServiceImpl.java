@@ -34,7 +34,7 @@ import com.ruoyi.process.utils.DateUtil;
 import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.flowable.bpmn.model.*;
@@ -884,10 +884,28 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	}
 
 	@Override
+	public Map<String, String> findProcessData(String procInsId) {
+		List<FlowData> flowDataList = flowDataService.findProcessData(procInsId);
+		if(CollectionUtils.isNotEmpty(flowDataList)) {
+			return flowDataList.stream().collect(Collectors.toMap(FlowData::getName, FlowData::getText));
+		}
+		return new HashMap<>();
+	}
+
+	@Override
+	public Map<String, String> findTaskData(String taskId) {
+		List<FlowData> taskDataList = flowDataService.findByTaskId(taskId);
+		if(CollectionUtils.isNotEmpty(taskDataList)) {
+			return taskDataList.stream().collect(Collectors.toMap(FlowData::getName, FlowData::getText));
+		}
+		return new HashMap<>();
+	}
+
+	@Override
 	public void saveCurrTaskData(String procInsId, Map<String, Object> formData) {
 		Date datenow = new Date();
 		if (null != formData && formData.size() > 0) {
-			List<FlowData> flowDataList = flowDataService.findRunFlowData(procInsId);
+			List<FlowData> flowDataList = flowDataService.findProcessData(procInsId);
 			Map<String, FlowData> flowDataMap = new HashMap<>();
 			for (FlowData flowData : flowDataList) {
 				flowDataMap.put(flowData.getName(), flowData);
@@ -920,5 +938,10 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	@Override
 	public void saveToHisTaskData(String procInsId, String taskId) {
 		flowDataService.saveToHisTaskData(procInsId, taskId);
+	}
+
+	@Override
+	public void deleteProcessData(String procInsId) {
+		flowDataService.deleteProcessData(procInsId);
 	}
 }

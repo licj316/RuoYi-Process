@@ -27,7 +27,7 @@
         INSERT INTO FLOW_INST_EXTEND (PROC_DEF_ID_, PROC_INS_ID_, CURR_TASK_DEF_KEY_, CURR_TASK_NAME_, CURR_TASK_TYPE_, KEY_ONE_, KEY_TWO_, KEY_THREE_, KEY_FOUR_, KEY_FIVE_, KEY_SIX_, KEY_SEVEN_, CREATE_BY, CREATE_TIME)
         VALUE (#{procDefId, jdbcType=VARCHAR}, #{procInsId, jdbcType=VARCHAR}, #{currTaskDefKey, jdbcType=VARCHAR}, #{currTaskName, jdbcType=VARCHAR}, #{currTaskType, jdbcType=VARCHAR},
         #{keyOne, jdbcType=VARCHAR}, #{keyTwo, jdbcType=VARCHAR}, #{keyThree, jdbcType=VARCHAR}, #{keyFour, jdbcType=VARCHAR},
-        #{keyFive, jdbcType=VARCHAR}, #{keySix, jdbcType=VARCHAR}, #{keySeven}, #{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=DATE});
+        #{keyFive, jdbcType=VARCHAR}, #{keySix, jdbcType=VARCHAR}, #{keySeven, jdbcType=VARCHAR}, #{createBy, jdbcType=VARCHAR}, #{createTime});
     </insert>
 
     <update id="update" parameterType="FlowInstExtend">
@@ -75,7 +75,7 @@
             CURR_TASK_TYPE_ = #{currTaskType},
             UPDATE_BY = #{updateBy},
             UPDATE_TIME = #{updateTime}
-        WHERE ID_ = #{id}
+        WHERE PROC_INS_ID_ = #{procInsId}
     </update>
 
     <select id="findByParams" parameterType="hashMap" resultMap="FlowInstExtendResult">

@@ -10,9 +10,11 @@ public interface FlowDataService {
 
 	List<FlowData> findByTaskId(String taskId);
 
-	List<FlowData> findRunFlowData(String procInsId);
+	List<FlowData> findProcessData(String procInsId);
 
 	void updateText(FlowData flowData);
 
 	void saveToHisTaskData(String procInsId, String taskId);
+
+	void deleteProcessData(String procInsId);
 }

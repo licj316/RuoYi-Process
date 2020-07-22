@@ -174,7 +174,6 @@ public class FlowUtils {
 		flowTaskVO.setExecutionId(task.getExecutionId());
 		flowTaskVO.setClaimTime(task.getClaimTime());
 		flowTaskVO.setProcDefId(task.getProcessDefinitionId());
-		flowTaskVO.setTaskType(task.getDescription());
 	}
 
 
@@ -216,14 +215,18 @@ public class FlowUtils {
 					try {
 						JsonNode jsonNode = objectMapper.readTree(formJsonStr);
 						JsonNode valNode = jsonNode.get(configKeyArr[1]);
-						if (JsonNodeType.STRING.equals(valNode.getNodeType())) {
-							keyVal = valNode.textValue();
-						} else if (JsonNodeType.NUMBER.equals(valNode.getNodeType())) {
-							keyVal = String.valueOf(valNode.longValue());
+						if(null != valNode) {
+							if (JsonNodeType.STRING.equals(valNode.getNodeType())) {
+								keyVal = valNode.textValue();
+							} else if (JsonNodeType.NUMBER.equals(valNode.getNodeType())) {
+								keyVal = String.valueOf(valNode.longValue());
+							} else {
+								throw new RuntimeException("流程关键字必须为字符串或数值类型！");
+							}
 						} else {
-							throw new RuntimeException("流程关键字必须为字符串或数值类型！");
+							keyVal = null;
 						}
-					} catch (IOException e) {
+					} catch (Exception e) {
 						log.error("解析流程关键字出错！", e);
 						throw new RuntimeException("解析流程关键字出错！");
 					}

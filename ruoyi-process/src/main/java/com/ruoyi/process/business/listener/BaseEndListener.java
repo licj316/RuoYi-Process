@@ -17,7 +17,7 @@ public abstract class BaseEndListener implements ExecutionListener {
 	@Override
 	public void notify(DelegateExecution execution) {
 		FlowDataService flowDataService = SpringUtils.getBean(FlowDataService.class);
-		List<FlowData> flowDataList = flowDataService.findRunFlowData(execution.getRootProcessInstanceId());
+		List<FlowData> flowDataList = flowDataService.findProcessData(execution.getRootProcessInstanceId());
 		Map<String, String> formData = new HashMap<>();
 		if (null != flowDataList && flowDataList.size() > 0) {
 			for (FlowData flowData : flowDataList) {

@@ -1,6 +1,7 @@
 package com.ruoyi.process.business.executor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.process.business.domain.Leave;
 import com.ruoyi.process.business.service.LeaveService;
@@ -45,6 +46,10 @@ public class LeaveExecutor implements ExternalFormExecutor {
 		subFormData.put("id", id);
 		subFormData.put("serialNumber", id);
 		subFormData.put("dateNow", dataNow);
+//		subFormData.put("leaveType", "1");
+//		subFormData.put("reason", "最近加班太多了");
+//		subFormData.put("startTime", "2020-06-03 12:00");
+//		subFormData.put("endTime", "2020-06-12 12:00");
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
 			formData.put("id", id);
@@ -83,6 +88,7 @@ public class LeaveExecutor implements ExternalFormExecutor {
 		ObjectMapper objectMapper = new ObjectMapper();
 		Leave leave;
 		try {
+			objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 			leave = objectMapper.readValue(leaveInfoStr, Leave.class);
 			leaveService.save(leave);
 		} catch (IOException e) {

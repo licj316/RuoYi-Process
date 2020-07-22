@@ -264,16 +264,24 @@
         flow.businessId = $("#flow_businessId").val();
         flow.comment = $("#flow_comment").val();
         flowEditStatus = $("#flow_edit_status").val();
-        setPageData();
-        if (flow.businessId != undefined && flow.businessId.length > 0) {
-            axios.post("/general/flow/process/loadFormData", flow).then(function (res) {
-                if (res.ok) {
-                    flowFormData = res.data;
-                    setPageData();
-                }
-            }).catch(reason => console.log(reason));
+        console.info(flowEditStatus);
+        axios.post("/general/flow/process/loadFormData", flow).then(function (res) {
+            let data = res.data;
+            if (data.code == 0) {
+                flowFormData = data.data;
+                Object.keys(flowFormData).forEach(key => {
+                    let val = flowFormData[key];
+                    console.info(val);
+                    if(val) {
+                        if (val && (val.startsWith("[") || val.startsWith("{"))) {
+                            flowFormData[key] = JSON.parse(val);
+                        }
+                    }
+                });
+                setPageData();
+            }
+        }).catch(reason => console.log(reason));
 
-        }
         axios.post('/flowTask/getUserTaskExtension', $.param({
             taskDefKey: flow.taskDefKey,
             procDefId: flow.procDefId
@@ -337,7 +345,7 @@
                     nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                     nodeHtmlArr.push('<div class="col-md-12">');
                     nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
-                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="submitToBackStep" name="nextStepNode" data-id="' + nextStepInfo.id + '"> <i></i> ' + nextStepInfo.name + '(<span style="color:red;">退回节点</span>)</label>');
+                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="BackSubmit" name="nextStepNode" data-id="' + nextStepInfo.id + '"> <i></i> ' + nextStepInfo.name + '(<span style="color:red;">退回节点</span>)</label>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
                     nodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
@@ -353,7 +361,7 @@
                     nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                     nodeHtmlArr.push('<div class="col-md-12">');
                     nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
-                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '</label>');
+                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="Normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '</label>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
                     nodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
@@ -378,7 +386,7 @@
                     nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                     nodeHtmlArr.push('    <div class="col-md-12">');
                     nodeHtmlArr.push('        <div class="radio check-box" style="padding-left: 0px;">');
-                    nodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="end" name="nextStepNode"> <i></i> 结束</label>');
+                    nodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="End" name="nextStepNode"> <i></i> 结束</label>');
                     nodeHtmlArr.push('        </div>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
@@ -409,15 +417,16 @@
 
                     if (formDataSubmit == false) {
                         let nextStepNodeChecked = $("input[name='nextStepNode']:checked");
+                        let nextStepNodeVal = nextStepNodeChecked.val();
 
-                        if ("submitToBackStep" === nextStepNodeChecked.val()) {
+                        if ("BackSubmit" === nextStepNodeVal) {
                             flow.backToTaskDefKey = nextStepNodeChecked.attr("data-id");
                             flow.backToTaskAssignee = $("input[name='backStepAssigne']").val();
                             // 提交到退回节点
                             handleDoSubmitTOBackStep();
                         } else {
                             let nextStepAssigne = $("input[name='nextStepAssigne']:checked").val();
-                            flow.nextTaskType = nextStepNodeChecked;
+                            flow.nextTaskType = nextStepNodeVal;
                             flow.nextTaskAssignee = 1;
                             // TODO 指定下一步审批人
                             handleDoSaveAudit();
@@ -730,10 +739,10 @@
                         }
                         data[nameArr[0]][nameArr[1]] = eleVal;
                         if (eleTextVal) {
-                            data[nameArr[0]][nameArr[1] + 'Text'] = eleVal;
+                            data[nameArr[0]][nameArr[1] + 'Text'] = eleTextVal;
                         }
                     } else {
-                        if (eleVal.startWith("[") || eleVal.startWith("{")) {
+                        if (eleVal.startsWith("[") || eleVal.startsWith("{")) {
                             // 保存name中不带"."，值为json的域
                             data[name] = eleVal;
                         }
@@ -750,18 +759,6 @@
     }
 
     function setPageData() {
-        console.info(flowFormData);
-        flowFormData = {
-            leaveInfo: {
-                leaveType: "1",
-                title: "我要请假",
-                reason: "最近加班太多了",
-                startTime: "2020-06-03 12:00",
-                endTime: "2020-06-12 12:00",
-                totalTime: "",
-                totalTimeText: ""
-            }
-        };
         let elementArr = document.querySelector("#flowMainContainer").querySelectorAll("[name]");
         elementArr.forEach(ele => {
             // console.info(ele);
@@ -776,16 +773,18 @@
             } else {
                 eleVal = flowFormData[eleName];
             }
-            switch (ele.type) {
-                case 'text':
-                case 'textarea':
-                    ele.value = eleVal;
-                    break;
-                case 'select-one':
-                    $(ele).val(eleVal).trigger('change');
-                    break;
-                default:
-                    ele.value = eleVal;
+            if(eleVal) {
+                switch (ele.type) {
+                    case 'text':
+                    case 'textarea':
+                        ele.value = eleVal;
+                        break;
+                    case 'select-one':
+                        $(ele).val(eleVal).trigger('change');
+                        break;
+                    default:
+                        ele.value = eleVal;
+                }
             }
         });
     }

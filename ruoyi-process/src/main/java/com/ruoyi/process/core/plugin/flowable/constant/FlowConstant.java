@@ -108,7 +108,7 @@ public interface FlowConstant {
     /**
      * 第一步任务类型
      */
-    String TASK_TYPE_FIRST = "First";
+    String TASK_TYPE_DRAFT = "Draft";
 
     /**
      * 正常任务类型

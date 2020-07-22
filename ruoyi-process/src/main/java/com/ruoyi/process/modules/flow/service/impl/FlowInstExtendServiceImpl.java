@@ -44,9 +44,9 @@ public class FlowInstExtendServiceImpl implements FlowInstExtendService {
 	public void updateTaskFields(String procInsId, String currTaskDefKey, String currTaskName, String currTaskType) {
 		FlowInstExtend flowInstExtend = new FlowInstExtend();
 		flowInstExtend.setProcInsId(procInsId);
-		flowInstExtend.setProcInsId(currTaskDefKey);
-		flowInstExtend.setProcInsId(currTaskName);
-		flowInstExtend.setProcInsId(currTaskType);
+		flowInstExtend.setCurrTaskDefKey(currTaskDefKey);
+		flowInstExtend.setCurrTaskName(currTaskName);
+		flowInstExtend.setCurrTaskType(currTaskType);
 		flowInstExtend.setCreateBy(ShiroUtils.getLoginName());
 		flowInstExtend.setCreateTime(new Date());
 		flowInstExtendMapper.updateCurrTaskInfo(flowInstExtend);
@@ -73,7 +73,6 @@ public class FlowInstExtendServiceImpl implements FlowInstExtendService {
 		if (null == flowConfigExtend) {
 			throw new RuntimeException("流程扩展配置不存在，请配置后重试！");
 		}
-		//buildFlowInstExtend(processInstance, task, formData);
 		String keyOneVal = FlowUtils.parseFlowKeyWordVal(flowConfigExtend.getKeyOne(), formData);
 		String keyTwoVal = FlowUtils.parseFlowKeyWordVal(flowConfigExtend.getKeyTwo(), formData);
 		String keyThreeVal = FlowUtils.parseFlowKeyWordVal(flowConfigExtend.getKeyThree(), formData);
@@ -87,7 +86,7 @@ public class FlowInstExtendServiceImpl implements FlowInstExtendService {
 		flowInstExtend.setProcInsId(procInsId);
 		flowInstExtend.setCurrTaskDefKey(task.getTaskDefinitionKey());
 		flowInstExtend.setCurrTaskName(task.getName());
-		flowInstExtend.setCurrTaskType(FlowConstant.TASK_TYPE_FIRST);
+		flowInstExtend.setCurrTaskType(FlowConstant.TASK_TYPE_DRAFT);
 		flowInstExtend.setKeyOne(keyOneVal);
 		flowInstExtend.setKeyTwo(keyTwoVal);
 		flowInstExtend.setKeyThree(keyThreeVal);

@@ -272,6 +272,9 @@ public interface FlowTaskService {
      */
     Pair<String, FlowElement> previewNextNode(Map formData, FlowTaskVO flowTaskVO, SysUser sessionUserAccount) throws Exception;
 
+    Map<String, String> findProcessData(String procInsId);
+
+    Map<String, String> findTaskData(String taskId);
     /**
      * 保存流程当前节点数据
      * @param procInsId
@@ -285,4 +288,10 @@ public interface FlowTaskService {
      * @param taskId
      */
     void saveToHisTaskData(String procInsId, String taskId);
+
+    /**
+     * 流程结束后删除流程实例数据
+     * @param procInsId
+     */
+    void deleteProcessData(String procInsId);
 }

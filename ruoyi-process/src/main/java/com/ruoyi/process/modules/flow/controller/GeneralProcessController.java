@@ -22,8 +22,10 @@ import com.ruoyi.process.core.plugin.flowable.util.FlowUtils;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
 import com.ruoyi.process.modules.flow.biz.GeneralFlowBiz;
 import com.ruoyi.process.modules.flow.domain.FlowData;
+import com.ruoyi.process.modules.flow.domain.FlowInstExtend;
 import com.ruoyi.process.modules.flow.service.FlowCustomQueryService;
 import com.ruoyi.process.modules.flow.service.FlowDataService;
+import com.ruoyi.process.modules.flow.service.FlowInstExtendService;
 import com.ruoyi.process.modules.flow.vo.FlowParamVO;
 import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysRoleService;
@@ -40,7 +42,9 @@ import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ActivityInstance;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
+import org.flowable.task.api.TaskInfo;
 import org.flowable.task.api.TaskQuery;
+import org.flowable.task.api.history.HistoricTaskInstance;
 import org.nutz.lang.Strings;
 import org.nutz.lang.util.NutMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +88,9 @@ public class GeneralProcessController extends BaseProcessController {
 	@Autowired
 	FlowDataService flowDataService;
 
+	@Autowired
+	FlowInstExtendService flowInstExtendService;
+
 	@GetMapping("/form")
 	public String form(HttpServletRequest request, ModelMap modelMap) {
 		String taskId = request.getParameter("taskId");
@@ -104,7 +111,15 @@ public class GeneralProcessController extends BaseProcessController {
 		SysUser currUser = getCurrUser();
 
 		if (Strings.isNotBlank(flowTaskVO.getTaskId())) {
-			FlowUtils.setFlowTaskVo(flowTaskVO, flowTaskService.getTaskOrHistoryTask(flowTaskVO.getTaskId()), String.valueOf(currUser.getUserId()));
+			Task task = flowTaskService.getTask(flowTaskVO.getTaskId());
+			if(null != task) {
+				FlowUtils.setFlowTaskVo(flowTaskVO, task, String.valueOf(currUser.getUserId()));
+				FlowInstExtend flowInstExtend = flowInstExtendService.findByProcInsId(procInsId);
+				flowTaskVO.setTaskType(flowInstExtend.getCurrTaskType());
+			} else {
+				HistoricTaskInstance historyTask = flowTaskService.getHistoryTask(flowTaskVO.getTaskId());
+				FlowUtils.setFlowTaskVo(flowTaskVO, historyTask, String.valueOf(currUser.getUserId()));
+			}
 			if (flowTaskVO.getProcInsId() != null) {
 				// 设置业务表ID
 				flowTaskVO.setBusinessId(flowProcessDefinitionService.getBusinessKeyId(flowTaskVO.getProcInsId()));
@@ -112,12 +127,6 @@ public class GeneralProcessController extends BaseProcessController {
 		} else {
 			throw new RuntimeException("任务ID不能为空！");
 		}
-//		if (Strings.isBlank(flowTaskVO.getTaskId()) && Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
-//			//没有任务ID，是采用最新版本新增流程
-//			ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey(flowTaskVO.getProcDefKey()).latestVersion().singleResult();
-//			flowTaskVO.setProcDefId(processDefinition.getId());
-//			flowTaskVO.setProcDefversion(processDefinition.getVersion());
-//		}
 		NutMap nutMap = new NutMap();
 		String formPage = generalFlowBiz.getFormPage(flowTaskVO);
 		if (Strings.isBlank(formPage)) {
@@ -126,12 +135,10 @@ public class GeneralProcessController extends BaseProcessController {
 		nutMap.put("formPage", formPage);
 		nutMap.put("flow", flowTaskVO);
 		nutMap.put("title", generalFlowBiz.getFlowName(flowTaskVO));
-		nutMap.put("formData", generalFlowBiz.loadFormData(flowTaskVO, currUser));
+//		nutMap.put("formData", generalFlowBiz.loadFormData(flowTaskVO, currUser));
 		nutMap.put("status", TaskFormStatusEnum.EDIT);
 		if (flowTaskVO.isFinishTask()) {
 			nutMap.put("status", TaskFormStatusEnum.VIEW);
-		} else if (Strings.isBlank(flowTaskVO.getTaskId())) {
-			nutMap.put("status", TaskFormStatusEnum.EDIT);
 		} else {
 			nutMap.put("status", TaskFormStatusEnum.AUDIT);
 		}
@@ -372,11 +379,19 @@ public class GeneralProcessController extends BaseProcessController {
 	public AjaxResult loadFormData(@RequestBody FlowTaskVO flowTaskVO) {
 		SysUser sessionUserAccount = getCurrUser();
 		try {
-			Object formData = generalFlowBiz.loadFormData(flowTaskVO, sessionUserAccount);
-			if (formData == null) {
+			String taskId = flowTaskVO.getTaskId();
+			Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+			Map<String, String> dataMap = null;
+			if(null != task) {
+				dataMap = generalFlowBiz.loadProcessData(flowTaskVO.getProcInsId());
+			}else {
+				dataMap = generalFlowBiz.loadTaskData(flowTaskVO.getTaskId());
+			}
+//			Object formData = generalFlowBiz.loadFormData(flowTaskVO, sessionUserAccount);
+			if (dataMap == null) {
 				return AjaxResult.error("数据不存在，可能是新增");
 			}
-			return AjaxResult.success(formData);
+			return AjaxResult.success(dataMap);
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage());
 		}

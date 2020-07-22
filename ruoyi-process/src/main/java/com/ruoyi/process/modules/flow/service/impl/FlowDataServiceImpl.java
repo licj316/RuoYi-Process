@@ -26,7 +26,7 @@ public class FlowDataServiceImpl implements FlowDataService {
 	}
 
 	@Override
-	public List<FlowData> findRunFlowData(String procInsId) {
+	public List<FlowData> findProcessData(String procInsId) {
 		ImmutableMap<String, Object> params = ImmutableMap.of("procInsId", procInsId, "nullTaskId", "true");
 		return flowDataMapper.findByParams(params);
 	}
@@ -39,5 +39,10 @@ public class FlowDataServiceImpl implements FlowDataService {
 	@Override
 	public void saveToHisTaskData(String procInsId, String taskId) {
 		flowDataMapper.saveToHisTaskData(procInsId, taskId);
+	}
+
+	@Override
+	public void deleteProcessData(String procInsId) {
+		flowDataMapper.deleteProcessData(procInsId);
 	}
 }

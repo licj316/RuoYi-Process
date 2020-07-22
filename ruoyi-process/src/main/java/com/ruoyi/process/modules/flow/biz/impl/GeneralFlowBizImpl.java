@@ -29,10 +29,7 @@ import com.ruoyi.process.modules.flow.domain.FlowInstExtend;
 import com.ruoyi.process.modules.flow.executor.ExternalFormExecutor;
 import com.ruoyi.process.modules.flow.mapper.FlowAttachmentConfigMapper;
 import com.ruoyi.process.modules.flow.mapper.FlowAttachmentMapper;
-import com.ruoyi.process.modules.flow.service.FlowAttachmentService;
-import com.ruoyi.process.modules.flow.service.FlowConfigExtendService;
-import com.ruoyi.process.modules.flow.service.FlowCustomQueryService;
-import com.ruoyi.process.modules.flow.service.FlowInstExtendService;
+import com.ruoyi.process.modules.flow.service.*;
 import com.ruoyi.process.utils.DateUtil;
 import com.ruoyi.process.utils.JsContex;
 import com.ruoyi.system.domain.SysUser;
@@ -122,14 +119,10 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 		Authentication.setAuthenticatedUserId(String.valueOf(currUser.getUserId()));
 		ExternalFormExecutor executor = getExternalFormExecutor(flowTaskVO.getProcDefId());
 		Map<String, Object> variables = Maps.newHashMap();
-		variables.put(FlowConstant.FORM_DATA, formData);
 		variables.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
 		flowTaskService.setValuedDataObject(variables, flowTaskVO.getProcDefId(), formData, currUser, false);
-//        if (Strings.isBlank(formData.getOrDefault(FlowConstant.PRIMARY_KEY, "").toString()) && Strings.isBlank(flowTaskVO.getTaskId())) {
 		flowTaskVO.setComment("[发起任务]");
 		formData = executor.start(formData, flowTaskVO, currUser);
-		//存储最新的formData
-		variables.put(FlowConstant.FORM_DATA, formData);
 		String primaryKeyId = formData.getOrDefault(FlowConstant.PRIMARY_KEY, "").toString();
 		if (Strings.isBlank(primaryKeyId)) {
 			throw new RuntimeException("业务ID不能为空");
@@ -268,6 +261,8 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 		if (FlowConstant.TASK_TYPE_END.equals(nextTaskType)) {
 			// 流程结束更新流程扩展表的信息
 			flowInstExtendService.updateTaskFields(procInsId, null, null, FlowConstant.TASK_TYPE_END);
+			// 流程结束后把流程实例的任务数据删掉
+			flowTaskService.deleteProcessData(procInsId);
 		} else if (FlowConstant.TASK_TYPE_NORMAL.equals(nextTaskType)) {
 			// 流程提交后查询当前
 			List<Task> tasklist = taskService.createTaskQuery().processInstanceId(procInsId).list();
@@ -282,7 +277,17 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 
 	@Override
 	public Object loadFormData(FlowTaskVO flowTaskVO, SysUser sessionUserAccount) {
-		return getExternalFormExecutor(flowTaskVO.getProcDefId()).loadFormData(flowTaskVO, sessionUserAccount);
+		 return getExternalFormExecutor(flowTaskVO.getProcDefId()).loadFormData(flowTaskVO, sessionUserAccount);
+	}
+
+	@Override
+	public Map<String, String> loadProcessData(String procInsId) {
+		return flowTaskService.findProcessData(procInsId);
+	}
+
+	@Override
+	public Map<String, String> loadTaskData(String taskId) {
+		return flowTaskService.findTaskData(taskId);
 	}
 
 	@Override

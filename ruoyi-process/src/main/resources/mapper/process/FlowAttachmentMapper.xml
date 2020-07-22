@@ -38,13 +38,12 @@
                SU.USER_NAME                 AS 'createByName',
                FAD.CREATE_TIME              AS 'createTime'
         FROM FLOW_ATTACHMENT FA
-        LEFT JOIN FLOW_ATTACHMENT_DETAIL FAD ON FA.ID_ = FAD.FLOW_ATTACHMENT_ID_
+        LEFT JOIN FLOW_ATTACHMENT_DETAIL FAD ON FA.ID_ = FAD.FLOW_ATTACHMENT_ID_ AND IFNULL(FAD.DEL_FLAG_, '') != '2'
         LEFT JOIN SYS_USER SU ON FAD.CREATE_BY = SU.LOGIN_NAME
         WHERE
         <if test="procInsId != null and procInsId != ''">
             FA.PROC_INS_ID_ = #{procInsId}
         </if>
-        AND FAD.DEL_FLAG_ != '2'
         ORDER BY FA.ID_, FAD.CREATE_TIME
     </select>
 </mapper>

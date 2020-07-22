@@ -18,7 +18,7 @@
 
     <insert id="save" parameterType="FlowData">
         INSERT INTO FLOW_DATA (PROC_INS_ID_, TASK_ID_, NAME_, TEXT_, CREATE_BY, CREATE_TIME)
-        VALUES (#{procInsId, jdbcType=VARCHAR}, #{taskId, jdbcType=VARCHAR}, #{name, jdbcType=VARCHAR}, #{text, jdbcType=VARCHAR}, #{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=DATE})
+        VALUES (#{procInsId, jdbcType=VARCHAR}, #{taskId, jdbcType=VARCHAR}, #{name, jdbcType=VARCHAR}, #{text, jdbcType=VARCHAR}, #{createBy, jdbcType=VARCHAR}, #{createTime})
     </insert>
 
     <update id="updateText" parameterType="FlowData">
@@ -47,4 +47,8 @@
         WHERE PROC_INS_ID_ = #{procInsId}
           AND TASK_ID_ IS NULL
     </insert>
+
+    <delete id="deleteProcessData" parameterType="string">
+        DELETE FROM FLOW_DATA WHERE PROC_INS_ID_ = #{procInsId} AND TASK_ID_ IS NULL
+    </delete>
 </mapper>

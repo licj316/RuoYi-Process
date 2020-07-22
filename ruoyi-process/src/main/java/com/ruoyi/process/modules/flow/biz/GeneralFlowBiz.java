@@ -39,6 +39,20 @@ public interface GeneralFlowBiz {
 
     Object loadFormData(FlowTaskVO flowTaskVO, SysUser sessionUserAccount);
 
+    /**
+     * 如果当前任务未结束就加载流程实例数据
+     * @param procInsId
+     * @return
+     */
+    Map<String, String> loadProcessData(String procInsId);
+
+    /**
+     * 如果当前任务已结束就加载流程实例数据
+     * @param taskId
+     * @return
+     */
+    Map<String, String> loadTaskData(String taskId);
+
     String getFlowName(FlowTaskVO flowTaskVO);
 
 

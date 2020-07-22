@@ -18,7 +18,7 @@ public abstract class BaseStartListener implements ExecutionListener {
 	public void notify(DelegateExecution execution) {
 		log.info("流程【" + execution.getProcessDefinitionId() + "】已启动！流程实例ID：" + execution.getRootProcessInstanceId());
 		FlowDataService flowDataService = SpringUtils.getBean(FlowDataService.class);
-		List<FlowData> flowDataList = flowDataService.findRunFlowData(execution.getRootProcessInstanceId());
+		List<FlowData> flowDataList = flowDataService.findProcessData(execution.getRootProcessInstanceId());
 		Map<String, String> formData = new HashMap<>();
 		if(null != flowDataList && flowDataList.size() > 0) {
 			for(FlowData flowData : flowDataList) {

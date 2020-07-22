@@ -16,4 +16,6 @@ public interface FlowDataMapper {
 	List<FlowData> findByParams(Map<String, Object> params);
 
 	void saveToHisTaskData(@Param("procInsId") String procInsId,@Param("taskId") String taskId);
+
+	void deleteProcessData(String procInsId);
 }

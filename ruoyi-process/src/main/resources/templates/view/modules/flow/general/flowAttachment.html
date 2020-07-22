@@ -59,7 +59,7 @@
                 }
                 rowspanNum = rows.length - rowspanStartIndex;
                 rowspanArr.push(new Array(rowspanStartIndex, rowspanNum));
-                console.info(rowspanArr)
+                // console.info(rowspanArr)
                 for(let i = 0; i < rowspanArr.length; i++) {
                     $.btTable.bootstrapTable('mergeCells', {
                         index: rowspanArr[i][0],
@@ -126,7 +126,7 @@
                     formatter: function (value, row, index) {
                         if (row.flowAttachmentDetailId) {
                             var actions = [];
-                            actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="showDiagram(\'' + value + '\')">' + '删除' + '</a>');
+                            actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="deleteAttachment(\'' + value + '\')">' + '删除' + '</a>');
                             return actions.join('');
                         } else {
                             return '';
@@ -145,8 +145,8 @@
             area: ['800px', '600px'],
             content: $("#fileUploadWin"),
             btn: ['确定', '取消'],
-            btn1: function (index) {
-                let res = uploadFile(flowAttachmentId);
+            btn1: async function (index) {
+                let res = await uploadFile(flowAttachmentId);
                 if (res) {
                     $.modal.msg("上传【" + attachType + "】成功！");
                 } else {
@@ -187,7 +187,7 @@
 
         let res = await axios.post('/flowAttachment/upload', param, config);
         let data = res.data;
-        if (data.code === '0') {
+        if (data.code == 0) {
             return true;
         } else {
             return false;
@@ -195,13 +195,15 @@
     }
 
     function deleteAttachment(flowAttachmentDetailId) {
-        axios.post('/flowAttachment/delete/' + flowAttachmentDetailId, {}).then(res => {
+        axios.delete('/flowAttachment/delete/' + flowAttachmentDetailId).then(res => {
+            console.info(res);
             let data = res.data;
-            if(data.code === '0') {
+            if(data.code == 0) {
                 $.modal.msg('删除成功！');
             } else {
                 $.modal.msg('删除失败！');
             }
+            $.table.refresh();
         })
     }
 </script>

@@ -7,6 +7,7 @@
 
 package com.ruoyi.process.business.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.core.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -32,11 +33,13 @@ public class Leave extends BaseEntity {
     /**
      * 请假开始日期
      */
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private Date startTime;
 
     /**
      * 请假结束日期
      */
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private Date endTime;
 
     /**
