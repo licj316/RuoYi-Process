@@ -42,7 +42,7 @@ public class FlowCustomQueryServiceImpl implements FlowCustomQueryService {
 //        List<NutMap> list = queryMapBySql("getFlowSubmitInfo", NutMap.NEW().setv("taskId", taskId));
         flowSubmitInfoList.forEach(map -> {
             String name = map.get("name").toString();
-            String value = map.get("val").toString();
+            String value = map.get("val") == null ? "" : map.get("val").toString();
             if (Objects.equals(FlowConstant.SUBMITTER, name)) {
                 dto.setUserName(value);
             }

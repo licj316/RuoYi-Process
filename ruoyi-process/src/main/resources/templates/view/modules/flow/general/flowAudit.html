@@ -31,38 +31,25 @@
         <!--        </div>-->
         <!-- 按钮区域 -->
         <div class="footer-btns">
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary " type="button"
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary" type="button"
                     onclick="handleSave()"><i class="fa fa-check"></i>&nbsp;保存
             </button>
-            <button th:if="${!#strings.equals(status, 'VIEW')}" class="btn btn-primary " type="button"
+            <button th:if="${!#strings.equals(status, 'VIEW')}" class="btn btn-primary" type="button"
                     onclick="handleSubmit()"><i class="fa fa-check"></i>&nbsp;<span id="flowAgreeButtonName">提交</span>
             </button>
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-danger " type="button"
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-danger" type="button"
                     onclick="handleReject()"><i class="fa fa-times"></i>&nbsp;<span
                     id="flowRefuseButtonName">拒绝</span></button>
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning " type="button"
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning" type="button"
                     onclick="handleBackToStep()">
                 <i class="fa fa-undo"></i>&nbsp;
                 <span id="callBackTypeText">驳回</span><!-- 自由回退 -->
             </button>
             <!-- v-if="extensionProperty.multiInstanceNode && extensionProperty.addMultiInstance" -->
-            <div th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleAddMultiInstance()"
-                 class="btn btn-warning">
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary" type="button"
+                    onclick="handleAddMultiInstance()">
                 <i class="fa fa-exchange"></i>&nbsp;加签
-            </div>
-            <!-- th:if="${extensionProperty.connectionCallBack}" -->
-            <!--            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning " type="button"-->
-            <!--                    onclick="handleConnectionCallBackSave(false)">-->
-            <!--                <i class="fa fa-exchange"></i>&nbsp;驳回-->
-            <!--            </button>-->
-            <!-- th:if="${extensionProperty.handwritingSignature}" -->
-            <!-- th:if="${flow.handWritingSignatureData==''}" -->
-            <!-- <span>查看签字</span>-->
-            <!--            <button th:if="${#strings.equals(status, 'AUDIT')}" onclick="handleWritingSignature()"-->
-            <!--                    class="btn btn-sm btn-warning" type="button">-->
-            <!--                <i class="fa fa-edit"></i>-->
-            <!--                <span id="writingSignatureBtnText">手写签字</span>-->
-            <!--            </button>-->
+            </button>
             <button onclick="handleClose()" class="btn btn-default" type="button">
                 <i class="fa fa-close"></i>关闭页面
             </button>
@@ -72,13 +59,13 @@
                 <a data-toggle="tab" href="#flowMainContainer" role="tab" th:text="${title}"></a>
             </li>
             <li role="presentation">
-                <a data-toggle="tab" href="#flowAttachmentContainer" role="tab">流程附件</a>
-            </li>
-            <li role="presentation" th:if="${flow.businessId} ne null">
-                <a data-toggle="tab" href="#informationContainer" role="tab">审批意见</a>
+                <a data-toggle="tab" href="#flowAttachmentContainer" id="flowAttachmentTab" role="tab">流程附件</a>
             </li>
             <li role="presentation">
-                <a data-toggle="tab" href="#diagramContainer" role="tab">流程图</a>
+                <a data-toggle="tab" href="#informationContainer" id="informationTab" role="tab">审批意见</a>
+            </li>
+            <li role="presentation">
+                <a data-toggle="tab" href="#diagramContainer" id="diagramTab" role="tab">流程图</a>
             </li>
         </ul>
         <div class="tab-content" style="height: 1000px;">
@@ -86,8 +73,7 @@
                 <div th:replace="${formPage} :: form"></div>
             </div>
             <div class="tab-pane" id="flowAttachmentContainer" role="tabpanel">
-                <iframe th:src="'/flowAttachment/detail?procInsId=' + ${flow.procInsId}" allowtransparency-y="yes"
-                        border="0" frameborder="no" height="1000" id="flowAttachmentList"
+                <iframe allowtransparency-y="yes" border="0" frameborder="no" height="1000" id="flowAttachmentList"
                         marginheight="0" marginwidth="0" scrolling-x="no" scrolling-y="auto" width="100%"></iframe>
             </div>
             <div class="tab-pane" id="informationContainer" role="tabpanel">
@@ -95,8 +81,8 @@
                         marginheight="0" marginwidth="0" scrolling-x="no" scrolling-y="auto" width="100%"></iframe>
             </div>
             <div class="tab-pane" id="diagramContainer" role="tabpanel" style="overflow: auto">
-                <img th:src="'/flow/process/resource/read?procDefId=' + ${flow.procDefId} + '&resType=image'"
-                     style="margin: 0 auto;display: block;">
+                <iframe allowtransparency-y="yes" border="0" frameborder="no" height="1000" id="procDiagram"
+                        marginheight="0" marginwidth="0" scrolling-x="no" scrolling-y="auto" width="100%"></iframe>
             </div>
         </div>
         <div>
@@ -182,22 +168,11 @@
                 </div>
             </div>
         </div>
-        <!-- 签字区域-->
-        <div class="signature" id="signature"></div>
-        <div class="navbar-fixed-bottom" id="signatureBtn" style="display: none">
-            <div class="footer-btns">
-                <div onclick="handleWritingSignatureOk()" class="btn btn-sm btn-primary">确定</div>
-                <div onclick="handleWritingSignatureReset()" class="btn btn-sm btn-primary">重写</div>
-                <div onclick="handleWritingSignatureChange()" class="btn btn-sm btn-primary">取消</div>
-            </div>
-        </div>
     </div>
 </div>
 <th:block th:include="include :: footer"/>
 <th:block th:include="include :: datetimepicker-js"/>
 <th:block th:include="include :: select2-js"/>
-<script th:src="'/plugins/jsignature/jSignature.min.js?_=' + ${productVersion}"></script>
-<script th:src="'/plugins/jsignature/jSignature.min.noconflict.js?_=' + ${productVersion}"></script>
 <script th:replace="${formPage} :: script"/>
 <script th:inline="javascript">
     var prefix = ctx;
@@ -216,10 +191,9 @@
         businessId: '',
         comment: '',
         delegateStatus: '',
-        backToTaskDefKey: '',
-        backToTaskAssignee: '',
         nextTaskType: '',
-        nextTaskAssignee: '',
+        nextTaskDefKey: '',
+        nextTaskAssignees: '',
         addMultiInstanceAssignee: '',
         flowNextReviewerAssignee: '',
         handWritingSignatureData: '',
@@ -248,9 +222,24 @@
     var boxMainHeight = intViewportHeight;
     var flowEditStatus;
 
-    var signatureInit = false;
-
     var flowFormData;
+
+    $(function () {
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            // console.info(e);
+            let tabName = $(e.target).attr("id");
+            if ("flowAttachmentTab" === tabName) {
+                $("#flowAttachmentContainer > iframe").attr("src", "/flowAttachment/detail?procInsId=" + flow.procInsId + "&status=" + status);
+            }
+            if ("informationTab" === tabName) {
+                $("#informationContainer > iframe").attr("src", "/flowTask/histoicFlow?procInsId=" + flow.procInsId + "&startAct=&endAct=&t=" + new Date().getTime());
+            }
+            if ("diagramTab" === tabName) {
+                $("#diagramContainer > iframe").attr("src", "/flowTask/diagramViewer?definitionId=" + flow.procDefId + "&instanceId=" + flow.procInsId);
+            }
+        });
+    });
+
 
     function handleInit() {
         flow.taskType = $("#flow_taskType").val();
@@ -271,8 +260,7 @@
                 flowFormData = data.data;
                 Object.keys(flowFormData).forEach(key => {
                     let val = flowFormData[key];
-                    console.info(val);
-                    if(val) {
+                    if (val) {
                         if (val && (val.startsWith("[") || val.startsWith("{"))) {
                             flowFormData[key] = JSON.parse(val);
                         }
@@ -304,10 +292,10 @@
         if (handleInitAfter != undefined) {
             handleInitAfter();
         }
-        if (flow.businessId != "") {
-            var url = "/flowTask/histoicFlow?procInsId=" + flow.procInsId + "&startAct=&endAct=&t=" + new Date().getTime();
-            $("#histoicFlowList").attr("src", url);
-        }
+        // if (flow.businessId != "") {
+        //     var url = "/flowTask/histoicFlow?procInsId=" + flow.procInsId + "&startAct=&endAct=&t=" + new Date().getTime();
+        //     $("#histoicFlowList").attr("src", url);
+        // }
     }
 
     handleInit();
@@ -317,7 +305,7 @@
         // 保存按钮操作
         axios.post("/general/flow/process/saveData", params).then(res => {
             let data = res.data;
-            if(data.code == 0) {
+            if (data.code == 0) {
                 $.modal.msg("流程数据保存成功！");
             } else {
                 $.modal.msg("流程数据保存失败！");
@@ -344,40 +332,45 @@
                 if ("UserTaskBack" === nextStepInfo.nodeType) {
                     nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                     nodeHtmlArr.push('<div class="col-md-12">');
-                    nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
-                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="BackSubmit" name="nextStepNode" data-id="' + nextStepInfo.id + '"> <i></i> ' + nextStepInfo.name + '(<span style="color:red;">退回节点</span>)</label>');
+                    nodeHtmlArr.push('    <div class="radio" style="padding-left: 0px;">');
+                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="BackSubmit" name="nextStepNode" data-id="' + nextStepInfo.id + '"> <i></i> ' + nextStepInfo.name + '(<span style="color:red;">退回节点</span>)(<span style="color:red;">单人处理</span>)</label>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
-                    nodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
-                    nodeHtmlArr.push('    处理人(<span style="color:red;">单人处理</span>)：');
+                    nodeHtmlArr.push('<div class="col-md-2" style="line-height: 42px;">');
+                    nodeHtmlArr.push('    处理人：');
                     nodeHtmlArr.push('</div>');
-                    nodeHtmlArr.push('<div class="col-md-9">');
-                    nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
-                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" checked="checked" value="1" name="backStepAssigne"> <i></i> 若依</label>');
-                    nodeHtmlArr.push('    </div>');
+                    nodeHtmlArr.push('<div class="col-md-10">');
+
+                    let assignees = nextStepInfo.assignees;
+                    for (let i = 0; i < assignees.length; i++) {
+                        let assignee = assignees[i];
+                        nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
+                        nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="' + assignee.user_id + '" name="backSubmitStepAssignee"> <i></i> ' + assignee.user_name + '(' + assignee.user_id + ')</label>');
+                        nodeHtmlArr.push('    </div>');
+                    }
                     nodeHtmlArr.push('</div>');
                     nodeHtmlArr.push('</div>');
                 } else if ("UserTask" === nextStepInfo.nodeType) {
                     nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                     nodeHtmlArr.push('<div class="col-md-12">');
-                    nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
-                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="Normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '</label>');
+                    nodeHtmlArr.push('    <div class="radio" style="padding-left: 0px;">');
+                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="Normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '(<span style="color:red;">单人处理</span>)</label>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
-                    nodeHtmlArr.push('<div class="col-md-3" style="line-height: 48px;">');
-                    nodeHtmlArr.push('    处理人(<span style="color:red;">单人处理</span>)：');
+                    nodeHtmlArr.push('<div class="col-md-2" style="line-height: 42px;">');
+                    nodeHtmlArr.push('    处理人：');
                     nodeHtmlArr.push('</div>');
-                    nodeHtmlArr.push('<div class="col-md-9"">');
+                    nodeHtmlArr.push('<div class="col-md-10">');
                     // TODO 需要拿到下一步处理人列表
                     // TODO 单人处理
-                    // TODO 多人全部
                     // TODO 多人任一
+                    // TODO 多人全部
                     // TODO N人处理
-                    if (!nextStepInfo.assigne) {
-                        nodeHtmlArr.push('<span style="line-height: 48px">未指定</span>');
-                    } else {
-                        nodeHtmlArr.push('    <div class="radio check-box" style="padding-left: 0px;">');
-                        nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="1" name="nextStepAssigne"> <i></i> 若依</label>');
+                    let assignees = nextStepInfo.assignees;
+                    for (let i = 0; i < assignees.length; i++) {
+                        let assignee = assignees[i];
+                        nodeHtmlArr.push('    <div class="radio" style="padding-left: 0px;">');
+                        nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="' + assignee.user_id + '" name="nextStepAssignee"> <i></i> ' + assignee.user_name + '(' + assignee.user_id + ')</label>');
                         nodeHtmlArr.push('    </div>');
                     }
                     nodeHtmlArr.push('</div>');
@@ -385,7 +378,7 @@
                 } else if ("EndNoneEvent" === nextStepInfo.nodeType) {
                     nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                     nodeHtmlArr.push('    <div class="col-md-12">');
-                    nodeHtmlArr.push('        <div class="radio check-box" style="padding-left: 0px;">');
+                    nodeHtmlArr.push('        <div class="radio" style="padding-left: 0px;">');
                     nodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="End" name="nextStepNode"> <i></i> 结束</label>');
                     nodeHtmlArr.push('        </div>');
                     nodeHtmlArr.push('    </div>');
@@ -401,6 +394,12 @@
 
             $("#nextNodeContainer").html(nodeHtmlArr.join(""));
             $("input[name='nextStepNode']")[0].checked = true;
+            if ($("input[name='backSubmitStepAssignee']")[0]) {
+                $("input[name='backSubmitStepAssignee']")[0].checked = true;
+            }
+            if ($("input[name='nextStepAssignee']")[0]) {
+                $("input[name='nextStepAssignee']")[0].checked = true;
+            }
 
             // 显示流程提交窗口
             layer.open({
@@ -418,17 +417,16 @@
                     if (formDataSubmit == false) {
                         let nextStepNodeChecked = $("input[name='nextStepNode']:checked");
                         let nextStepNodeVal = nextStepNodeChecked.val();
+                        flow.nextTaskType = nextStepNodeVal;
 
                         if ("BackSubmit" === nextStepNodeVal) {
-                            flow.backToTaskDefKey = nextStepNodeChecked.attr("data-id");
-                            flow.backToTaskAssignee = $("input[name='backStepAssigne']").val();
+                            flow.nextTaskDefKey = nextStepNodeChecked.attr("data-id");
+                            flow.nextTaskAssignees = $("input[name='backSubmitStepAssignee']:checked").val();
                             // 提交到退回节点
                             handleDoSubmitTOBackStep();
                         } else {
-                            let nextStepAssigne = $("input[name='nextStepAssigne']:checked").val();
-                            flow.nextTaskType = nextStepNodeVal;
-                            flow.nextTaskAssignee = 1;
-                            // TODO 指定下一步审批人
+                            let nextStepAssignee = $("input[name='nextStepAssignee']:checked").val();
+                            flow.nextTaskAssignees = nextStepAssignee;
                             handleDoSaveAudit();
                         }
                     } else {
@@ -457,16 +455,6 @@
         });
     }
 
-    // if (formDataSubmit == false) {
-    //     if (extensionProperty.dynamicFreeChoiceNextReviewerMode && flow.delegateStatus == '') {
-    //         handleChoiceNextReviewerUser();
-    //     } else {
-    //         handleDoSaveAudit();
-    //     }
-    // } else {
-    //     $.modal.msg('数据正在提交，请稍候...')
-    // }
-
     function handleDoSaveAudit() {
         var status = handleSaveAuditBefor == undefined || handleSaveAuditBefor();
         if (status) {
@@ -491,100 +479,77 @@
         }
     }
 
-
-    function handleChoiceNextReviewerUser() {
-        var post = {form: getFormData(), flow: flow};
-        axios.post("/general/flow/process/getNextNode", post).then(res => {
-            let data = res.data;
-            if (data.code == 0) {
-                var opt = {
-                    option: {
-                        url: "/general/flow/process/choiceNextReviewerUser?nextNodeId=" + data.data,
-                        method: "post",
-                        param: flow,
-                        key: "query",
-                        checkbox: false,
-                        openSearch: false,
-                        selectPrimaryKey: "userName",
-                        selectPrimaryValues: "",
-                        cols: [
-                            {field: 'realName', title: '姓名'},
-                            {field: 'userName', title: '用户名'},
-                            {field: 'deptName', title: '部门'},
-                        ],
-                    },
-                    title: "请选择下一步流程办理人",
-                    width: "600px",
-                    height: "600px",
-                    onOk: function (selectData) {
-                        if (selectData.length == 0) {
-                            core.warn("请选择下一步流程办理人")
-                            return false;
-                        }
-                        flow.flowNextReviewerAssignee = selectData[0].userName;
-                        handleDoSaveAudit();
-                        return true;
-                    },
-                }
-                // core.showChoseTableData(opt);
-                // TODO 渲染选择下一步审核人弹出层
-            } else {
-                //下一步不是用户节点，忽略[选择下一步审核人]的操作，直接完成任务
-                handleDoSaveAudit();
-            }
-        });
-    }
-
     // 退回
     function handleBackToStep() {
-        console.log("驳回类型", extensionProperty.callBackType);
         if (extensionProperty.callBackType == 'FREE_STEP') {
-            // 自由回退
-            let backNodeHtmlArr = [];
-            let callBackNodes = extensionProperty.callBackNodes.split(",");
-            let callBackNodesDesc = extensionProperty.callBackNodesDesc.split(",");
-            for (let i = 0; i < callBackNodes.length; i++) {
-                backNodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
-                backNodeHtmlArr.push('    <div class="col-md-12">');
-                backNodeHtmlArr.push('        <div class="radio check-box" style="padding-left: 0px;">');
-                backNodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="' + callBackNodes[i] + '" name="flowBackStepRadio"> <i></i> ' + callBackNodesDesc[i] + '</label>');
-                backNodeHtmlArr.push('        </div>');
-                backNodeHtmlArr.push('    </div>');
-                backNodeHtmlArr.push('    <div class="col-md-3" style="line-height: 48px;">');
-                backNodeHtmlArr.push('        处理人：');
-                backNodeHtmlArr.push('    </div>');
-                backNodeHtmlArr.push('    <div class="col-md-9" id="backNodeAssigneContainer" style="line-height: 48px;">');
-                backNodeHtmlArr.push('    暂无');
-                backNodeHtmlArr.push('    </div>');
-                backNodeHtmlArr.push('</div>');
-            }
-            backNodeHtmlArr.push('<p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>');
-
-            $("#backNodeContainer").html(backNodeHtmlArr.join(""));
-
-            $("input[name='flowBackStepRadio']")[0].checked = true;
-            layer.open({
-                type: 1,
-                title: "退回",
-                area: ['800px', '600px'],
-                content: $("#callBackNodes"),
-                btn: ['确定', '取消'],
-                btn1: function (index) {
-                    let checkedTaskKey = $("input[name='flowBackStepRadio']:checked").val();
-                    if (!checkedTaskKey) {
-                        $.modal.msg("请选择要退回到的节点。");
+            var params = {procInsId: flow.procInsId, callBackNodes: extensionProperty.callBackNodes};
+            axios.post("/general/flow/process/getBackNode", params).then(res => {
+                let data = res.data;
+                if (data.code == 0) {
+                    // 自由回退
+                    let backNodeHtmlArr = [];
+                    console.info(data);
+                    let callBackNodes = extensionProperty.callBackNodes.split(",");
+                    let callBackNodesDesc = extensionProperty.callBackNodesDesc.split(",");
+                    for (let i = 0; i < callBackNodes.length; i++) {
+                        let backNodeAssignees = data.data[callBackNodes[i]];
+                        console.info(backNodeAssignees);
+                        backNodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
+                        backNodeHtmlArr.push('    <div class="col-md-12">');
+                        backNodeHtmlArr.push('        <div class="radio" style="padding-left: 0px;">');
+                        backNodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="' + callBackNodes[i] + '" name="backStepNode"> <i></i> ' + callBackNodesDesc[i] + '</label>');
+                        backNodeHtmlArr.push('        </div>');
+                        backNodeHtmlArr.push('    </div>');
+                        backNodeHtmlArr.push('    <div class="col-md-2" style="line-height: 42px;">');
+                        backNodeHtmlArr.push('        处理人：');
+                        backNodeHtmlArr.push('    </div>');
+                        backNodeHtmlArr.push('    <div class="col-md-10" id="backNodeAssigneContainer">');
+                        for (let i = 0; i < backNodeAssignees.length; i++) {
+                            let assignee = backNodeAssignees[i];
+                            backNodeHtmlArr.push('    <div class="radio" style="padding-left: 0px;">');
+                            backNodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="' + assignee.user_id + '" name="backStepAssignee"> <i></i> ' + assignee.user_name + '(' + assignee.user_id + ')</label>');
+                            backNodeHtmlArr.push('    </div>');
+                        }
+                        backNodeHtmlArr.push('    </div>');
+                        backNodeHtmlArr.push('</div>');
                     }
-                    flow.backToTaskDefKey = 'fillForm';
-                    flow.comment = $("#flowBackComment").val();
-                    if (!flow.comment) {
-                        $.modal.alert("请填写回退审批意见。");
+                    // 处理布局问题
+                    backNodeHtmlArr.push('<p style="margin: 0 0 0px;line-height: 0px;">&nbsp;</p>');
+                    $("#backNodeContainer").html(backNodeHtmlArr.join(""));
+                    $("input[name='backStepNode']")[0].checked = true;
+
+                    if($("input[name='backStepAssignee']")[0]) {
+                        $("input[name='backStepAssignee']")[0].checked = true;
                     }
 
-                    handleDoBackToStep();
-                    layer.close(index);
-                },
-                success: function (layero) {
-                    layer.setTop(layero);
+                    layer.open({
+                        type: 1,
+                        title: "退回",
+                        area: ['800px', '600px'],
+                        content: $("#callBackNodes"),
+                        btn: ['确定', '取消'],
+                        btn1: function (index) {
+                            let checkedBackNodeDefKey = $("input[name='backStepNode']:checked").val();
+                            if (!checkedBackNodeDefKey) {
+                                $.modal.msg("请选择要退回到的节点。");
+                            }
+                            flow.nextTaskType = "Back";
+                            flow.nextTaskDefKey = checkedBackNodeDefKey;
+                            flow.nextTaskAssignees = $("input[name='backStepAssignee']:checked").val();
+                            flow.comment = $("#flowBackComment").val();
+                            if (!flow.comment) {
+                                $.modal.alert("请填写回退审批意见。");
+                            }
+
+                            handleDoBackToStep();
+                            layer.close(index);
+                        },
+                        success: function (layero) {
+                            layer.setTop(layero);
+                        }
+                    });
+                } else {
+                    $.modal.msg("获取退回节点信息失败");
                 }
             });
         } else {
@@ -707,17 +672,6 @@
         }
     }
 
-    function handleWritingSignature() {
-        if (this.signatureInit) {
-            signature.show();
-        } else {
-            signature = $("#signature").jSignature();
-            signature.addClass("open");
-            this.signatureInit = true;
-        }
-        $("#signatureBtn").show();
-    }
-
     function getFormData() {
         let elementArr = document.querySelector("#flowMainContainer").querySelectorAll("[name]");
         let data = {};
@@ -750,8 +704,8 @@
                 }
             }
         });
-        Object.keys(data).forEach(function(key){
-            if(typeof data[key] === 'object') {
+        Object.keys(data).forEach(function (key) {
+            if (typeof data[key] === 'object') {
                 data[key] = JSON.stringify(data[key]);
             }
         });
@@ -773,7 +727,7 @@
             } else {
                 eleVal = flowFormData[eleName];
             }
-            if(eleVal) {
+            if (eleVal) {
                 switch (ele.type) {
                     case 'text':
                     case 'textarea':

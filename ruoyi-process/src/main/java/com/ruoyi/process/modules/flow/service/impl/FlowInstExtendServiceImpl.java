@@ -64,12 +64,12 @@ public class FlowInstExtendServiceImpl implements FlowInstExtendService {
 
 	@Override
 	public FlowInstExtend createFlowInstExtend(ProcessInstance processInstance, Task task, Map<String, Object> formData) {
-		return createFlowInstExtend(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), task, formData);
+		return createFlowInstExtend(processInstance.getProcessDefinitionKey(), processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), task, formData);
 	}
 
 	@Override
-	public FlowInstExtend createFlowInstExtend(String procDefId, String procInsId, Task task, Map<String, Object> formData) {
-		FlowConfigExtend flowConfigExtend = flowConfigExtendService.findByProcDefId(procDefId);
+	public FlowInstExtend createFlowInstExtend(String procDefKey,String procDefId, String procInsId, Task task, Map<String, Object> formData) {
+		FlowConfigExtend flowConfigExtend = flowConfigExtendService.findByProcDefKey(procDefKey);
 		if (null == flowConfigExtend) {
 			throw new RuntimeException("流程扩展配置不存在，请配置后重试！");
 		}
@@ -82,6 +82,7 @@ public class FlowInstExtendServiceImpl implements FlowInstExtendService {
 		String keySevenVal = FlowUtils.parseFlowKeyWordVal(flowConfigExtend.getKeySeven(), formData);
 
 		FlowInstExtend flowInstExtend = new FlowInstExtend();
+		flowInstExtend.setProcDefKey(procDefKey);
 		flowInstExtend.setProcDefId(procDefId);
 		flowInstExtend.setProcInsId(procInsId);
 		flowInstExtend.setCurrTaskDefKey(task.getTaskDefinitionKey());

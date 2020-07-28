@@ -8,6 +8,9 @@
 package com.ruoyi.process.modules.flow.controller;
 
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.framework.util.ShiroUtils;
@@ -26,15 +29,20 @@ import com.ruoyi.process.modules.flow.domain.FlowInstExtend;
 import com.ruoyi.process.modules.flow.service.FlowCustomQueryService;
 import com.ruoyi.process.modules.flow.service.FlowDataService;
 import com.ruoyi.process.modules.flow.service.FlowInstExtendService;
+import com.ruoyi.process.modules.flow.service.impl.FlowCustomQueryServiceImpl;
 import com.ruoyi.process.modules.flow.vo.FlowParamVO;
+import com.ruoyi.system.domain.SysDept;
 import com.ruoyi.system.domain.SysUser;
+import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.editor.constants.StencilConstants;
+import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
@@ -78,7 +86,11 @@ public class GeneralProcessController extends BaseProcessController {
 	@Autowired
 	RepositoryService repositoryService;
 	@Autowired
+	HistoryService historyService;
+	@Autowired
 	ISysUserService sysUserService;
+	@Autowired
+	ISysDeptService sysDeptService;
 	@Autowired
 	ISysRoleService sysRoleService;
 
@@ -163,7 +175,7 @@ public class GeneralProcessController extends BaseProcessController {
 			Map<String, Object> resMap = new HashMap<>();
 
 			if (FlowConstant.TASK_TYPE_BACK.equals(flowTaskVO.getTaskType())) {
-				// 获取退回节点
+				// 获取上一步退回节点
 				List<ActivityInstance> activityInstanceList = runtimeService.createActivityInstanceQuery().processInstanceId(flowTaskVO.getProcInsId()).finished().orderByActivityInstanceStartTime().desc().list();
 				if (activityInstanceList.size() > 0) {
 					ActivityInstance prevActivityInstance = activityInstanceList.get(0);
@@ -172,6 +184,9 @@ public class GeneralProcessController extends BaseProcessController {
 						resMap.put("id", prevActivityInstance.getActivityId());
 						resMap.put("name", prevActivityInstance.getActivityName());
 						resMap.put("assignee", prevActivityInstance.getAssignee());
+						SysUser sysUser = sysUserService.selectUserById(Long.valueOf(prevActivityInstance.getAssignee()));
+						SysDept sysDept = sysDeptService.selectDeptById(sysUser.getDeptId());
+						resMap.put("assignees", ImmutableList.of(ImmutableMap.of("user_id", sysUser.getUserId(),"user_name", sysUser.getUserName(), "dept_name", sysDept.getDeptName())));
 						resList.add(resMap);
 					}
 				}
@@ -189,18 +204,56 @@ public class GeneralProcessController extends BaseProcessController {
 				resMap.put("assignee", userTask.getAssignee());
 				resMap.put("candidateGroups", userTask.getCandidateGroups());
 				resMap.put("candidateUsers", userTask.getCandidateUsers());
-				// TODO 需要拿到下一步处理人列表
-				// UserTaskExtensionDTO userTaskExtension = FlowUtils.getUserTaskExtension(userTask);
-				// TaskReviewerScopeEnum taskReviewerScope = userTaskExtension.getTaskReviewerScope();
+				// 需要拿到下一步处理人列表
+				UserTaskExtensionDTO userTaskExtension = FlowUtils.getUserTaskExtension(userTask);
+				FlowSubmitInfoDTO flowSubmitInfo = flowCustomQueryService.getFlowSubmitInfo(flowTaskVO.getTaskId());
+				List<Map<String, Object>> assigneeList = generalFlowBiz.listUserTaskNodeAllReviewerUser(userTaskExtension, flowSubmitInfo);
+				resMap.put("assignees", assigneeList);
 			} else {
 				resMap.put("nodeType", nextNodePair.getLeft());
 			}
 			resList.add(resMap);
 
-			if (resMap.size() > 0) {
+			if (resList.size() > 0) {
 				return AjaxResult.success("操作成功", resList);
 			}
 			return AjaxResult.error("下一步不是用户节点");
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("事务无法打开！");
+		}
+	}
+
+	/**
+	 * 取得流程下一节点
+	 *
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/getBackNode")
+	@ResponseBody
+	public AjaxResult getBackNode(@RequestBody Map<String, String> params) {
+		try {
+			String procInsId = params.get("procInsId");
+			String callBackNodes = params.get("callBackNodes");
+			String[] callBackNodeArr = callBackNodes.split(",");
+			ArrayList<String> backNodeDefKeyList = Lists.newArrayList(callBackNodeArr);
+
+			Map<String, Object> resMap = new HashMap<>();
+			List<HistoricTaskInstance> hisTaskList = historyService.createHistoricTaskInstanceQuery().processInstanceId(procInsId).orderByHistoricTaskInstanceStartTime().desc().list();
+			int size = hisTaskList.size();
+			for (int i = 0; i < size; i++) {
+				HistoricTaskInstance historicTaskInstance = hisTaskList.get(i);
+				String hisTaskDefKey = historicTaskInstance.getTaskDefinitionKey();
+				if(backNodeDefKeyList.contains(hisTaskDefKey) && !resMap.containsKey(hisTaskDefKey)) {
+					resMap.put(hisTaskDefKey, flowCustomQueryService.listUserTaskNodeAllReviewerUser(ImmutableList.of(historicTaskInstance.getAssignee())));
+				}
+			}
+
+			if (resMap.size() > 0) {
+				return AjaxResult.success("操作成功", resMap);
+			}
+			return AjaxResult.error("获取驳回节点信息失败!");
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("事务无法打开！");
@@ -266,7 +319,7 @@ public class GeneralProcessController extends BaseProcessController {
 			if (Strings.isNotBlank(message)) {
 				return AjaxResult.error(message);
 			}
-			return AjaxResult.success("回退成功");
+			return AjaxResult.success("已提交到下一步。");
 		} else {
 			return AjaxResult.error("参数异常");
 		}

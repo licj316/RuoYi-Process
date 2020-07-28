@@ -273,6 +273,7 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 			flowInstExtendService.updateTaskFields(procInsId, task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_NORMAL);
 		}
 		return null;
+//		throw new RuntimeException("ceshi");
 	}
 
 	@Override

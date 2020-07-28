@@ -56,6 +56,7 @@ import org.flowable.task.api.TaskQuery;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.task.api.history.HistoricTaskInstanceQuery;
 import org.flowable.variable.api.history.HistoricVariableInstance;
+import org.flowable.variable.service.VariableService;
 import org.nutz.el.El;
 import org.nutz.lang.Lang;
 import org.nutz.lang.Streams;
@@ -491,17 +492,28 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	 * @return 流程实例ID
 	 */
 	@Override
-	public ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userName, Long deptId, Set<String> roleKeys) {
+	public ProcessInstance startProcess(String procDefKey, String businessId, Map<String, Object> vars, String userId, Long deptId, Set<String> roleKeys) {
 		// 设置流程变量
 		if (vars == null) {
 			vars = Maps.newHashMap();
 		}
 		//设置流程发起人-可以在后面流程中驳回重新办理
-		vars.put(FlowConstant.SUBMITTER, userName);
+		vars.put(FlowConstant.SUBMITTER, userId);
 		vars.put(FlowConstant.SUBMITTER_DEPT_ID, deptId);
 		vars.put(FlowConstant.SUBMITTER_ROLE_CODES, roleKeys);
+
+		Map<String, Object> transientVars = new HashMap<>();
+		transientVars.put(FlowConstant.NEXT_TASK_TYPE, FlowConstant.TASK_TYPE_DRAFT);
+		transientVars.put(FlowConstant.NEXT_TASK_DEF_KEY, null);
+		transientVars.put(FlowConstant.NEXT_TASK_ASSIGNEES, userId);
+
 		// 启动流程
-		return runtimeService.startProcessInstanceByKey(procDefKey, businessId, vars);
+		return runtimeService.createProcessInstanceBuilder()
+				.processDefinitionKey(procDefKey)
+				.businessKey(businessId)
+				.variables(vars)
+				.transientVariables(transientVars)
+				.start();
 	}
 
 	/**
@@ -642,8 +654,12 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 			// 完成任务委托
 			taskService.resolveTask(taskId, vars);
 		} else {
+			Map<String, Object> transientVars = new HashMap<>();
+			transientVars.put(FlowConstant.NEXT_TASK_TYPE, flowTaskVO.getNextTaskType());
+			transientVars.put(FlowConstant.NEXT_TASK_DEF_KEY, flowTaskVO.getNextTaskDefKey());
+			transientVars.put(FlowConstant.NEXT_TASK_ASSIGNEES, flowTaskVO.getNextTaskAssignees());
 			// 完成提交任务
-			taskService.complete(taskId, vars);
+			taskService.complete(taskId, vars, transientVars);
 			// 保存到任务历史数据
 			saveToHisTaskData(procInsId, taskId);
 		}
@@ -696,7 +712,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	public String backToStep(FlowTaskVO flowTaskVO, String userId) {
 		String taskId = flowTaskVO.getTaskId();
 		String comment = flowTaskVO.getComment();
-		String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
+		String backToTaskDefKey = flowTaskVO.getNextTaskDefKey();
 		UserTaskExtensionDTO extensionPropertyDTO = flowProcessDefinitionService.getUserTaskExtension(flowTaskVO.getTaskDefKey(), flowTaskVO.getProcDefId());
 		if (extensionPropertyDTO != null) {
 			if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.NONE) {
@@ -724,10 +740,14 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 		List<String> currentActivityIds = new ArrayList<>();
 		tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
 		//执行驳回操作
-		// TODO 驳回应指定为提交人员
+		Map<String, Object> transientVars = new HashMap<>();
+		transientVars.put(FlowConstant.NEXT_TASK_TYPE, flowTaskVO.getNextTaskType());
+		transientVars.put(FlowConstant.NEXT_TASK_DEF_KEY, flowTaskVO.getNextTaskDefKey());
+		transientVars.put(FlowConstant.NEXT_TASK_ASSIGNEES, flowTaskVO.getNextTaskAssignees());
 		runtimeService.createChangeActivityStateBuilder()
 				.processInstanceId(processInstanceId)
 				.moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
+				.processVariables(transientVars)
 				.changeState();
 
 		// 保存任务历史数据
@@ -735,7 +755,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 
 		// 标记退回后的当前流程类型为退回
 		List<Task> afterTaskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
-		if(null != afterTaskList && afterTaskList.size() > 0) {
+		if (null != afterTaskList && afterTaskList.size() > 0) {
 			Task task = afterTaskList.get(0);
 			flowInstExtendService.updateTaskFields(processInstanceId, task.getTaskDefinitionKey(), task.getName(), FlowConstant.TASK_TYPE_BACK);
 		}
@@ -747,8 +767,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	public String submitToBackStep(FlowTaskVO flowTaskVO, String userId) {
 		String taskId = flowTaskVO.getTaskId();
 		String comment = flowTaskVO.getComment();
-		String backToTaskDefKey = flowTaskVO.getBackToTaskDefKey();
-		String backToTaskAssignee = flowTaskVO.getBackToTaskAssignee();
+		String backToTaskDefKey = flowTaskVO.getNextTaskDefKey();
 		Task currTask = taskService.createTaskQuery().taskId(taskId).singleResult();
 		String processInstanceId = currTask.getProcessInstanceId();
 
@@ -761,10 +780,15 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 		List<String> currentActivityIds = new ArrayList<>();
 		tasks.forEach(t -> currentActivityIds.add(t.getTaskDefinitionKey()));
 		//执行驳回后重新提交操作
-		// TODO 驳回应指定为提交人员
+		Map<String, Object> transientVars = new HashMap<>();
+		transientVars.put(FlowConstant.NEXT_TASK_TYPE, flowTaskVO.getNextTaskType());
+		transientVars.put(FlowConstant.NEXT_TASK_DEF_KEY, flowTaskVO.getNextTaskDefKey());
+		transientVars.put(FlowConstant.NEXT_TASK_ASSIGNEES, flowTaskVO.getNextTaskAssignees());
+
 		runtimeService.createChangeActivityStateBuilder()
 				.processInstanceId(processInstanceId)
 				.moveActivityIdsToSingleActivityId(currentActivityIds, backToTaskDefKey)
+				.processVariables(transientVars)
 				.changeState();
 
 		// 标记退回重提后的当前流程类型为退回重提
@@ -886,7 +910,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	@Override
 	public Map<String, String> findProcessData(String procInsId) {
 		List<FlowData> flowDataList = flowDataService.findProcessData(procInsId);
-		if(CollectionUtils.isNotEmpty(flowDataList)) {
+		if (CollectionUtils.isNotEmpty(flowDataList)) {
 			return flowDataList.stream().collect(Collectors.toMap(FlowData::getName, FlowData::getText));
 		}
 		return new HashMap<>();
@@ -895,7 +919,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	@Override
 	public Map<String, String> findTaskData(String taskId) {
 		List<FlowData> taskDataList = flowDataService.findByTaskId(taskId);
-		if(CollectionUtils.isNotEmpty(taskDataList)) {
+		if (CollectionUtils.isNotEmpty(taskDataList)) {
 			return taskDataList.stream().collect(Collectors.toMap(FlowData::getName, FlowData::getText));
 		}
 		return new HashMap<>();
@@ -915,7 +939,7 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 			for (Map.Entry<String, Object> entry : formData.entrySet()) {
 				if (null != entry.getValue() && StringUtils.isNotBlank(entry.getValue().toString())) {
 					String key = entry.getKey();
-					if(flowDataMap.containsKey(key)) {
+					if (flowDataMap.containsKey(key)) {
 						flowData = flowDataMap.get(key);
 						flowData.setText(entry.getValue().toString());
 						flowData.setUpdateBy(ShiroUtils.getSysUser().getLoginName());

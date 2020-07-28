@@ -17,6 +17,8 @@ public class FlowInstExtend extends BaseEntity {
 	public String id;
 	@Comment("流程定义ID")
 	public String procDefId;
+	@Comment("流程定义KEY")
+	public String procDefKey;
 	@Comment("流程实例ID")
 	public String procInsId;
 	@Comment("当前任务key")

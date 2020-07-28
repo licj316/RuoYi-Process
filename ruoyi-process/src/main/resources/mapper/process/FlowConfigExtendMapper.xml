@@ -5,7 +5,7 @@
 <mapper namespace="com.ruoyi.process.modules.flow.mapper.FlowConfigExtendMapper">
     <resultMap type="FlowConfigExtend" id="FlowConfigExtendResult">
         <id property="id" column="ID_"/>
-        <result property="procDefId" column="PROC_DEF_ID_"/>
+        <result property="procDefKey" column="PROC_DEF_KEY_"/>
         <result property="keyOne" column="KEY_ONE_"/>
         <result property="keyTwo" column="KEY_TWO_"/>
         <result property="keyThree" column="KEY_THREE_"/>
@@ -20,9 +20,9 @@
     </resultMap>
 
     <insert id="save" parameterType="FlowConfigExtend">
-        INSERT INTO FLOW_CONFIG_EXTEND (PROC_DEF_ID_, KEY_ONE_, KEY_TWO_, KEY_THREE_, KEY_FOUR_, KEY_FIVE_, KEY_SIX_, KEY_SEVEN_, CREATE_BY, CREATE_TIME,
+        INSERT INTO FLOW_CONFIG_EXTEND (PROC_DEF_KEY_, KEY_ONE_, KEY_TWO_, KEY_THREE_, KEY_FOUR_, KEY_FIVE_, KEY_SIX_, KEY_SEVEN_, CREATE_BY, CREATE_TIME,
                                 UPDATE_BY, UPDATE_TIME)
-        VALUE (#{procDefId, jdbcType=VARCHAR}, #{keyOne, jdbcType=VARCHAR}, #{keyTwo, jdbcType=VARCHAR}, #{keyThree, jdbcType=VARCHAR}, #{keyFour, jdbcType=VARCHAR},
+        VALUE (#{procDefKey, jdbcType=VARCHAR}, #{keyOne, jdbcType=VARCHAR}, #{keyTwo, jdbcType=VARCHAR}, #{keyThree, jdbcType=VARCHAR}, #{keyFour, jdbcType=VARCHAR},
         #{keyFive, jdbcType=VARCHAR}, #{keySix, jdbcType=VARCHAR}, #{keySeven}, #{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=DATE});
     </insert>
 
@@ -37,14 +37,14 @@
                 KEY_SEVEN_ = #{keySeven},
                 UPDATE_BY = #{updateBy},
                 UPDATE_TIME = #{updateTime}
-        WHERE PROC_DEF_ID = #{procDefId}
+        WHERE PROC_DEF_KEY_ = #{procDefId}
     </update>
 
     <select id="findByParams" parameterType="hashMap" resultMap="FlowConfigExtendResult">
         SELECT * FROM FLOW_CONFIG_EXTEND
         <where>
-            <if test="procDefId != null and procDefId != ''">
-                AND PROC_DEF_ID_ = #{procDefId}
+            <if test="procDefKey != null and procDefKey != ''">
+                AND PROC_DEF_KEY_ = #{procDefKey}
             </if>
         </where>
     </select>

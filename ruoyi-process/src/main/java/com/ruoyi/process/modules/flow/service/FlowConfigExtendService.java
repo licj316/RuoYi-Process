@@ -8,6 +8,6 @@ public interface FlowConfigExtendService {
 
 	void update(FlowConfigExtend flowConfigExtend);
 
-	FlowConfigExtend findByProcDefId(String procDefId);
+	FlowConfigExtend findByProcDefKey(String procDefKey);
 
 }

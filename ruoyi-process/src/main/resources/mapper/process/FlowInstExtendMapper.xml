@@ -5,6 +5,7 @@
 <mapper namespace="com.ruoyi.process.modules.flow.mapper.FlowInstExtendMapper">
     <resultMap type="FlowInstExtend" id="FlowInstExtendResult">
         <id property="id" column="ID_"/>
+        <result property="procDefKey" column="PROC_DEF_KEY_"/>
         <result property="procDefId" column="PROC_DEF_ID_"/>
         <result property="procInsId" column="PROC_INS_ID_"/>
         <result property="currTaskDefKey" column="CURR_TASK_DEF_KEY_"/>
@@ -24,8 +25,8 @@
     </resultMap>
 
     <insert id="save" parameterType="FlowInstExtend">
-        INSERT INTO FLOW_INST_EXTEND (PROC_DEF_ID_, PROC_INS_ID_, CURR_TASK_DEF_KEY_, CURR_TASK_NAME_, CURR_TASK_TYPE_, KEY_ONE_, KEY_TWO_, KEY_THREE_, KEY_FOUR_, KEY_FIVE_, KEY_SIX_, KEY_SEVEN_, CREATE_BY, CREATE_TIME)
-        VALUE (#{procDefId, jdbcType=VARCHAR}, #{procInsId, jdbcType=VARCHAR}, #{currTaskDefKey, jdbcType=VARCHAR}, #{currTaskName, jdbcType=VARCHAR}, #{currTaskType, jdbcType=VARCHAR},
+        INSERT INTO FLOW_INST_EXTEND (PROC_DEF_KEY_, PROC_DEF_ID_, PROC_INS_ID_, CURR_TASK_DEF_KEY_, CURR_TASK_NAME_, CURR_TASK_TYPE_, KEY_ONE_, KEY_TWO_, KEY_THREE_, KEY_FOUR_, KEY_FIVE_, KEY_SIX_, KEY_SEVEN_, CREATE_BY, CREATE_TIME)
+        VALUE (#{procDefKey, jdbcType=VARCHAR}, #{procDefId, jdbcType=VARCHAR}, #{procInsId, jdbcType=VARCHAR}, #{currTaskDefKey, jdbcType=VARCHAR}, #{currTaskName, jdbcType=VARCHAR}, #{currTaskType, jdbcType=VARCHAR},
         #{keyOne, jdbcType=VARCHAR}, #{keyTwo, jdbcType=VARCHAR}, #{keyThree, jdbcType=VARCHAR}, #{keyFour, jdbcType=VARCHAR},
         #{keyFive, jdbcType=VARCHAR}, #{keySix, jdbcType=VARCHAR}, #{keySeven, jdbcType=VARCHAR}, #{createBy, jdbcType=VARCHAR}, #{createTime});
     </insert>

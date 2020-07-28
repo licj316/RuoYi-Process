@@ -94,9 +94,13 @@ public class FlowTaskVO {
      */
     String nextTaskType;
     /**
+     * 下一步任务defKey
+     */
+    String nextTaskDefKey;
+    /**
      * 下一步处理人
      */
-    String nextTaskAssignee;
+    String nextTaskAssignees;
     /**
      * 选择的加签给谁
      */

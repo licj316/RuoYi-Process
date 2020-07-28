@@ -18,6 +18,6 @@ public interface FlowInstExtendService {
 
 	FlowInstExtend createFlowInstExtend(ProcessInstance processInstance, Task task, Map<String, Object> formData);
 
-	FlowInstExtend createFlowInstExtend(String procDefId, String procInsId, Task task, Map<String, Object> formData);
+	FlowInstExtend createFlowInstExtend(String procDefKey, String procDefId, String procInsId, Task task, Map<String, Object> formData);
 
 }

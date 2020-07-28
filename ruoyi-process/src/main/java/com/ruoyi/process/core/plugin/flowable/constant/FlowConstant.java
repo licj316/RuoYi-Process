@@ -30,6 +30,19 @@ public interface FlowConstant {
      */
     String NEXT_REVIEWER = "FLOW_NEXT_REVIEWER";
     /**
+     * 下一步任务类型【正常、退回、退回再提交】
+     */
+    String NEXT_TASK_TYPE = "NEXT_TASK_TYPE";
+    /**
+     * 下一步任务defKey
+     */
+    String NEXT_TASK_DEF_KEY = "NEXT_TASK_DEF_KEY";
+    /**
+     * 下一步任务人员
+     */
+    String NEXT_TASK_ASSIGNEES = "NEXT_TASK_ASSIGNEES";
+
+    /**
      * 流程标题
      */
     String PROCESS_TITLE = "processTitle";
@@ -80,6 +93,7 @@ public interface FlowConstant {
      */
     String ADD_MULTIINSTANCE_ASSIGNEES_VAR = "sys_add_multiinstance_assignees_var";
 
+    /****************************** 审批意见类型 start ************************/
     /**
      * 添加退回审批意见
      */
@@ -105,6 +119,9 @@ public interface FlowConstant {
      */
     String MEETING_COMMENT = "MeetingComment";
 
+    /****************************** 审批意见类型 end ************************/
+
+    /****************************** 下一步任务类型 start ************************/
     /**
      * 第一步任务类型
      */
@@ -139,4 +156,5 @@ public interface FlowConstant {
      * 结束
      */
     String TASK_TYPE_END = "End";
+    /****************************** 下一步任务类型 end ************************/
 }

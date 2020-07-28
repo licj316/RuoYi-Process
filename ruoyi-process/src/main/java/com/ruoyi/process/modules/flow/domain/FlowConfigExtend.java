@@ -15,8 +15,8 @@ public class FlowConfigExtend extends BaseEntity {
 
 	@Comment("id")
 	public String id;
-	@Comment("流程定义ID")
-	public String procDefId;
+	@Comment("流程定义KEY")
+	public String procDefKey;
 	@Comment("关键字一")
 	public String keyOne;
 	@Comment("关键字二")
