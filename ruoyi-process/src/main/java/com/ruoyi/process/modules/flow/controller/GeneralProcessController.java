@@ -147,7 +147,6 @@ public class GeneralProcessController extends BaseProcessController {
 		nutMap.put("formPage", formPage);
 		nutMap.put("flow", flowTaskVO);
 		nutMap.put("title", generalFlowBiz.getFlowName(flowTaskVO));
-//		nutMap.put("formData", generalFlowBiz.loadFormData(flowTaskVO, currUser));
 		nutMap.put("status", TaskFormStatusEnum.EDIT);
 		if (flowTaskVO.isFinishTask()) {
 			nutMap.put("status", TaskFormStatusEnum.VIEW);
