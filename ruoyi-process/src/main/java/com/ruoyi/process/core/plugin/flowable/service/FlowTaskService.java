@@ -32,12 +32,10 @@ public interface FlowTaskService {
     /**
      * 获取待办、待签收列表
      *
-     * @param flowTaskVO
-     * @param userId
-     * @param sessionRoleKeys
+     * @param params
      * @return
      */
-    List<FlowTaskVO> todoList(FlowTaskVO flowTaskVO, String userId, Set<String> sessionRoleKeys, boolean needFormData);
+    List<Map<String, Object>> todoList(Map<String, Object> params);
 
     /**
      * 获取已发任务
@@ -45,17 +43,15 @@ public interface FlowTaskService {
      * @param userName
      * @return
      */
-    List<FlowTaskVO> hasSentList(String userName);
+    List<Map<String, Object>> hasSentList(Map<String, Object> params);
 
     /**
      * 获取已办任务
      *
-     * @param vo
-     * @param flowTaskVO
-     * @param userName
+     * @param params
      * @return
      */
-    List<FlowTaskVO> historicList(FlowTaskVO flowTaskVO, String userName);
+    List<Map<String, Object>> historicList(Map<String, Object> params);
 
     /**
      * 获取流转历史列表

@@ -67,5 +67,5 @@ public interface SysUserRoleMapper
      * @param roleKeyList
      * @return
      */
-    List<SysUser> selectUserListByRoleKeyList(List<String> roleKeyList);
+    List<SysUser> selectUserListByRoleIdList(List<Long> roleKeyList);
 }

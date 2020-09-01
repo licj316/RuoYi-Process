@@ -13,6 +13,7 @@ import com.ruoyi.process.core.plugin.flowable.enums.SignPassType;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskReviewerScopeEnum;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author huchuc@vip.qq.com
@@ -22,18 +23,15 @@ public class UserTaskExtensionDTO {
     /**
      * userTask 原始信息
      */
-    String userTaskFormKey;
-    String userTaskName;
     String userTaskId;
+    String userTaskName;
+    String userTaskFormKey;
     String userTaskDocumentation;
     /**
-     * 是否允许批复意见
+     * 是否允许审批意见
      */
-    boolean replyOpinion;
-    /**
-     * 是否允许手写签字
-     */
-    boolean handwritingSignature;
+    boolean approvalOpinion;
+
     /**
      * 同意按钮文字显示
      */
@@ -42,23 +40,11 @@ public class UserTaskExtensionDTO {
      * 拒绝按钮文字显示
      */
     String refuseButtonName;
-    /**
-     * 批复意见框提示文字
-     */
-    String replyOpinionName;
-    /**
-     * 连线回退（驳回）
-     */
-    boolean connectionCallBack;
-    /**
-     * 回退类型
-     */
-    CallBackTypeEnum callBackType;
-    /**
-     * 可回退节点
-     */
-    String callBackNodes;
-    String callBackNodesDesc;
+//    /**
+//     * 批复意见框提示文字
+//     */
+//    String replyOpinionName;
+
     /**
      * 是否是多实例节点
      */
@@ -68,99 +54,50 @@ public class UserTaskExtensionDTO {
      */
     boolean addMultiInstance;
     /**
-     * 是否允许减签
-     */
-    boolean delMultiInstance;
-    /**
-     * 减签后触发父实例完成判断
-     */
-    boolean delMultiInstanceExecutionIsCompleted;
-    /**
-     * 创建当前任务之前，执行表单数据动态赋值（动态代码逻辑）-应该是一段动态js，或者动态是绑定策略。
-     * 不能返回给前台
-     */
-    String beforeCreateCurrentTaskFormDataDynamicAssignment;
-    /**
-     * 创建当前任务之后，执行表单数据动态赋值（动态代码逻辑）-应该是一段动态js，或者动态是绑定策略。
-     * 不能返回给前台
-     */
-    String afterCreateCurrentTaskFormDataDynamicAssignment;
-    /**
-     * 完成当前任务后立即执行表单数据动态赋值（动态代码逻辑）-应该是一段动态js，或者动态是绑定策略。
-     * 不能返回给前台
-     */
-    String formDataDynamicAssignment;
-    /**
-     * 指定当前用户步骤任务审核人范围
+     * 当前用户步骤任务审核人类型
      */
     TaskReviewerScopeEnum taskReviewerScope;
     /**
-     * 自由选择下一步审核人(下一步流程要确保能通过流程条件正确跳转至用户任务节点)
+     * 当前用户步骤审核人类型取值范围
      */
-    boolean dynamicFreeChoiceNextReviewerMode;
+    List<Map<String, String>> taskReviewerValue;
     /**
-     * 指定的下一步审核人范围-用户可以在其中任选一个或多选
+     * 页面需要显示的按钮
      */
-    List<CandidateUsersDTO> nextReviewerCandidateUsers;
+    List<String> taskButtons;
     /**
-     * 分配给指定用户
-     * TaskReviewerScopeEnum.SINGLE_USER 时生效
+     * 可回退节点
      */
-    String assignee;
-    /**
-     * 候选用户角色组
-     * TaskReviewerScopeEnum.USER_ROLE_GROUPS 时生效
-     */
-    List<CandidateGroupsDTO> candidateGroups;
-    /**
-     * 多个候选用户
-     * TaskReviewerScopeEnum.MULTIPLE_USERS 时生效
-     */
-    List<CandidateUsersDTO> candidateUsers;
-    /**
-     * JavaIocBean人员选择器
-     */
-    String iocFlowAssignment;
-    /**
-     * 会签类型
-     */
-    MultiInstanceLoopCharacteristicsType multiInstanceLoopCharacteristics;
-    /**
-     * 通过类型
-     */
-    SignPassType signType;
-    /**
-     * 同意通过比例
-     */
-    Integer signScale;
-    /**
-     * 总实例数量
-     */
-    Integer signNrOfInstances;
-    /**
-     * 会签人全部参与处理
-     */
-    Boolean signAll;
+    List<String> callBackNodes;
+
+//    /**
+//     * 会签类型
+//     */
+//    MultiInstanceLoopCharacteristicsType multiInstanceLoopCharacteristics;
+//    /**
+//     * 通过类型
+//     */
+//    SignPassType signType;
+//    /**
+//     * 同意通过比例
+//     */
+//    Integer signScale;
+//    /**
+//     * 总实例数量
+//     */
+//    Integer signNrOfInstances;
+//    /**
+//     * 会签人全部参与处理
+//     */
+//    Boolean signAll;
 
 
-    public static UserTaskExtensionDTO NEW() {
-        return new Builder().callBackType(CallBackTypeEnum.NONE).addMultiInstance(false).build();
+    public String getUserTaskId() {
+        return userTaskId;
     }
 
-    public String getAgreeButtonName() {
-        return agreeButtonName == null ? "同意" : agreeButtonName;
-    }
-
-    public String getRefuseButtonName() {
-        return refuseButtonName == null ? "拒绝" : refuseButtonName;
-    }
-
-    public String getUserTaskFormKey() {
-        return userTaskFormKey;
-    }
-
-    public void setUserTaskFormKey(String userTaskFormKey) {
-        this.userTaskFormKey = userTaskFormKey;
+    public void setUserTaskId(String userTaskId) {
+        this.userTaskId = userTaskId;
     }
 
     public String getUserTaskName() {
@@ -171,12 +108,12 @@ public class UserTaskExtensionDTO {
         this.userTaskName = userTaskName;
     }
 
-    public String getUserTaskId() {
-        return userTaskId;
+    public String getUserTaskFormKey() {
+        return userTaskFormKey;
     }
 
-    public void setUserTaskId(String userTaskId) {
-        this.userTaskId = userTaskId;
+    public void setUserTaskFormKey(String userTaskFormKey) {
+        this.userTaskFormKey = userTaskFormKey;
     }
 
     public String getUserTaskDocumentation() {
@@ -187,68 +124,28 @@ public class UserTaskExtensionDTO {
         this.userTaskDocumentation = userTaskDocumentation;
     }
 
-    public boolean isReplyOpinion() {
-        return replyOpinion;
+    public boolean isApprovalOpinion() {
+        return approvalOpinion;
     }
 
-    public void setReplyOpinion(boolean replyOpinion) {
-        this.replyOpinion = replyOpinion;
+    public void setApprovalOpinion(boolean approvalOpinion) {
+        this.approvalOpinion = approvalOpinion;
     }
 
-    public boolean isHandwritingSignature() {
-        return handwritingSignature;
-    }
-
-    public void setHandwritingSignature(boolean handwritingSignature) {
-        this.handwritingSignature = handwritingSignature;
+    public String getAgreeButtonName() {
+        return agreeButtonName;
     }
 
     public void setAgreeButtonName(String agreeButtonName) {
         this.agreeButtonName = agreeButtonName;
     }
 
+    public String getRefuseButtonName() {
+        return refuseButtonName;
+    }
+
     public void setRefuseButtonName(String refuseButtonName) {
         this.refuseButtonName = refuseButtonName;
-    }
-
-    public String getReplyOpinionName() {
-        return replyOpinionName;
-    }
-
-    public void setReplyOpinionName(String replyOpinionName) {
-        this.replyOpinionName = replyOpinionName;
-    }
-
-    public boolean isConnectionCallBack() {
-        return connectionCallBack;
-    }
-
-    public void setConnectionCallBack(boolean connectionCallBack) {
-        this.connectionCallBack = connectionCallBack;
-    }
-
-    public CallBackTypeEnum getCallBackType() {
-        return callBackType;
-    }
-
-    public void setCallBackType(CallBackTypeEnum callBackType) {
-        this.callBackType = callBackType;
-    }
-
-    public String getCallBackNodes() {
-        return callBackNodes;
-    }
-
-    public void setCallBackNodes(String callBackNodes) {
-        this.callBackNodes = callBackNodes;
-    }
-
-    public String getCallBackNodesDesc() {
-        return callBackNodesDesc;
-    }
-
-    public void setCallBackNodesDesc(String callBackNodesDesc) {
-        this.callBackNodesDesc = callBackNodesDesc;
     }
 
     public boolean isMultiInstanceNode() {
@@ -267,46 +164,6 @@ public class UserTaskExtensionDTO {
         this.addMultiInstance = addMultiInstance;
     }
 
-    public boolean isDelMultiInstance() {
-        return delMultiInstance;
-    }
-
-    public void setDelMultiInstance(boolean delMultiInstance) {
-        this.delMultiInstance = delMultiInstance;
-    }
-
-    public boolean isDelMultiInstanceExecutionIsCompleted() {
-        return delMultiInstanceExecutionIsCompleted;
-    }
-
-    public void setDelMultiInstanceExecutionIsCompleted(boolean delMultiInstanceExecutionIsCompleted) {
-        this.delMultiInstanceExecutionIsCompleted = delMultiInstanceExecutionIsCompleted;
-    }
-
-    public String getBeforeCreateCurrentTaskFormDataDynamicAssignment() {
-        return beforeCreateCurrentTaskFormDataDynamicAssignment;
-    }
-
-    public void setBeforeCreateCurrentTaskFormDataDynamicAssignment(String beforeCreateCurrentTaskFormDataDynamicAssignment) {
-        this.beforeCreateCurrentTaskFormDataDynamicAssignment = beforeCreateCurrentTaskFormDataDynamicAssignment;
-    }
-
-    public String getAfterCreateCurrentTaskFormDataDynamicAssignment() {
-        return afterCreateCurrentTaskFormDataDynamicAssignment;
-    }
-
-    public void setAfterCreateCurrentTaskFormDataDynamicAssignment(String afterCreateCurrentTaskFormDataDynamicAssignment) {
-        this.afterCreateCurrentTaskFormDataDynamicAssignment = afterCreateCurrentTaskFormDataDynamicAssignment;
-    }
-
-    public String getFormDataDynamicAssignment() {
-        return formDataDynamicAssignment;
-    }
-
-    public void setFormDataDynamicAssignment(String formDataDynamicAssignment) {
-        this.formDataDynamicAssignment = formDataDynamicAssignment;
-    }
-
     public TaskReviewerScopeEnum getTaskReviewerScope() {
         return taskReviewerScope;
     }
@@ -315,128 +172,48 @@ public class UserTaskExtensionDTO {
         this.taskReviewerScope = taskReviewerScope;
     }
 
-    public boolean isDynamicFreeChoiceNextReviewerMode() {
-        return dynamicFreeChoiceNextReviewerMode;
+    public List<Map<String, String>> getTaskReviewerValue() {
+        return taskReviewerValue;
     }
 
-    public void setDynamicFreeChoiceNextReviewerMode(boolean dynamicFreeChoiceNextReviewerMode) {
-        this.dynamicFreeChoiceNextReviewerMode = dynamicFreeChoiceNextReviewerMode;
+    public void setTaskReviewerValue(List<Map<String, String>> taskReviewerValue) {
+        this.taskReviewerValue = taskReviewerValue;
     }
 
-    public List<CandidateUsersDTO> getNextReviewerCandidateUsers() {
-        return nextReviewerCandidateUsers;
+    public List<String> getTaskButtons() {
+        return taskButtons;
     }
 
-    public void setNextReviewerCandidateUsers(List<CandidateUsersDTO> nextReviewerCandidateUsers) {
-        this.nextReviewerCandidateUsers = nextReviewerCandidateUsers;
+    public void setTaskButtons(List<String> taskButtons) {
+        this.taskButtons = taskButtons;
     }
 
-    public String getAssignee() {
-        return assignee;
+    public List<String> getCallBackNodes() {
+        return callBackNodes;
     }
 
-    public void setAssignee(String assignee) {
-        this.assignee = assignee;
+    public void setCallBackNodes(List<String> callBackNodes) {
+        this.callBackNodes = callBackNodes;
     }
 
-    public List<CandidateGroupsDTO> getCandidateGroups() {
-        return candidateGroups;
+    public static UserTaskExtensionDTO NEW() {
+        return new Builder().addMultiInstance(false).build();
     }
-
-    public void setCandidateGroups(List<CandidateGroupsDTO> candidateGroups) {
-        this.candidateGroups = candidateGroups;
-    }
-
-    public List<CandidateUsersDTO> getCandidateUsers() {
-        return candidateUsers;
-    }
-
-    public void setCandidateUsers(List<CandidateUsersDTO> candidateUsers) {
-        this.candidateUsers = candidateUsers;
-    }
-
-    public String getIocFlowAssignment() {
-        return iocFlowAssignment;
-    }
-
-    public void setIocFlowAssignment(String iocFlowAssignment) {
-        this.iocFlowAssignment = iocFlowAssignment;
-    }
-
-    public MultiInstanceLoopCharacteristicsType getMultiInstanceLoopCharacteristics() {
-        return multiInstanceLoopCharacteristics;
-    }
-
-    public void setMultiInstanceLoopCharacteristics(MultiInstanceLoopCharacteristicsType multiInstanceLoopCharacteristics) {
-        this.multiInstanceLoopCharacteristics = multiInstanceLoopCharacteristics;
-    }
-
-    public SignPassType getSignType() {
-        return signType;
-    }
-
-    public void setSignType(SignPassType signType) {
-        this.signType = signType;
-    }
-
-    public Integer getSignScale() {
-        return signScale;
-    }
-
-    public void setSignScale(Integer signScale) {
-        this.signScale = signScale;
-    }
-
-    public Integer getSignNrOfInstances() {
-        return signNrOfInstances;
-    }
-
-    public void setSignNrOfInstances(Integer signNrOfInstances) {
-        this.signNrOfInstances = signNrOfInstances;
-    }
-
-    public Boolean getSignAll() {
-        return signAll;
-    }
-
-    public void setSignAll(Boolean signAll) {
-        this.signAll = signAll;
-    }
-
 
     public static final class Builder {
-        String userTaskFormKey;
-        String userTaskName;
         String userTaskId;
+        String userTaskName;
+        String userTaskFormKey;
         String userTaskDocumentation;
-        boolean replyOpinion;
-        boolean handwritingSignature;
+        boolean approvalOpinion;
         String agreeButtonName;
         String refuseButtonName;
-        String replyOpinionName;
-        boolean connectionCallBack;
-        CallBackTypeEnum callBackType;
-        String callBackNodes;
-        String callBackNodesDesc;
         boolean multiInstanceNode;
         boolean addMultiInstance;
-        boolean delMultiInstance;
-        boolean delMultiInstanceExecutionIsCompleted;
-        String beforeCreateCurrentTaskFormDataDynamicAssignment;
-        String afterCreateCurrentTaskFormDataDynamicAssignment;
-        String formDataDynamicAssignment;
         TaskReviewerScopeEnum taskReviewerScope;
-        boolean dynamicFreeChoiceNextReviewerMode;
-        List<CandidateUsersDTO> nextReviewerCandidateUsers;
-        String assignee;
-        List<CandidateGroupsDTO> candidateGroups;
-        List<CandidateUsersDTO> candidateUsers;
-        String iocFlowAssignment;
-        MultiInstanceLoopCharacteristicsType multiInstanceLoopCharacteristics;
-        SignPassType signType;
-        Integer signScale;
-        Integer signNrOfInstances;
-        Boolean signAll;
+        List<Map<String, String>> taskReviewerValue;
+        List<String> taskButtons;
+        List<String> callBackNodes;
 
         private Builder() {
         }
@@ -445,8 +222,8 @@ public class UserTaskExtensionDTO {
             return new Builder();
         }
 
-        public Builder userTaskFormKey(String userTaskFormKey) {
-            this.userTaskFormKey = userTaskFormKey;
+        public Builder userTaskId(String userTaskId) {
+            this.userTaskId = userTaskId;
             return this;
         }
 
@@ -455,8 +232,8 @@ public class UserTaskExtensionDTO {
             return this;
         }
 
-        public Builder userTaskId(String userTaskId) {
-            this.userTaskId = userTaskId;
+        public Builder userTaskFormKey(String userTaskFormKey) {
+            this.userTaskFormKey = userTaskFormKey;
             return this;
         }
 
@@ -465,13 +242,8 @@ public class UserTaskExtensionDTO {
             return this;
         }
 
-        public Builder replyOpinion(boolean replyOpinion) {
-            this.replyOpinion = replyOpinion;
-            return this;
-        }
-
-        public Builder handwritingSignature(boolean handwritingSignature) {
-            this.handwritingSignature = handwritingSignature;
+        public Builder approvalOpinion(boolean approvalOpinion) {
+            this.approvalOpinion = approvalOpinion;
             return this;
         }
 
@@ -485,31 +257,6 @@ public class UserTaskExtensionDTO {
             return this;
         }
 
-        public Builder replyOpinionName(String replyOpinionName) {
-            this.replyOpinionName = replyOpinionName;
-            return this;
-        }
-
-        public Builder connectionCallBack(boolean connectionCallBack) {
-            this.connectionCallBack = connectionCallBack;
-            return this;
-        }
-
-        public Builder callBackType(CallBackTypeEnum callBackType) {
-            this.callBackType = callBackType;
-            return this;
-        }
-
-        public Builder callBackNodes(String callBackNodes) {
-            this.callBackNodes = callBackNodes;
-            return this;
-        }
-
-        public Builder callBackNodesDesc(String callBackNodesDesc) {
-            this.callBackNodesDesc = callBackNodesDesc;
-            return this;
-        }
-
         public Builder multiInstanceNode(boolean multiInstanceNode) {
             this.multiInstanceNode = multiInstanceNode;
             return this;
@@ -520,125 +267,41 @@ public class UserTaskExtensionDTO {
             return this;
         }
 
-        public Builder delMultiInstance(boolean delMultiInstance) {
-            this.delMultiInstance = delMultiInstance;
-            return this;
-        }
-
-        public Builder delMultiInstanceExecutionIsCompleted(boolean delMultiInstanceExecutionIsCompleted) {
-            this.delMultiInstanceExecutionIsCompleted = delMultiInstanceExecutionIsCompleted;
-            return this;
-        }
-
-        public Builder beforeCreateCurrentTaskFormDataDynamicAssignment(String beforeCreateCurrentTaskFormDataDynamicAssignment) {
-            this.beforeCreateCurrentTaskFormDataDynamicAssignment = beforeCreateCurrentTaskFormDataDynamicAssignment;
-            return this;
-        }
-
-        public Builder afterCreateCurrentTaskFormDataDynamicAssignment(String afterCreateCurrentTaskFormDataDynamicAssignment) {
-            this.afterCreateCurrentTaskFormDataDynamicAssignment = afterCreateCurrentTaskFormDataDynamicAssignment;
-            return this;
-        }
-
-        public Builder formDataDynamicAssignment(String formDataDynamicAssignment) {
-            this.formDataDynamicAssignment = formDataDynamicAssignment;
-            return this;
-        }
-
         public Builder taskReviewerScope(TaskReviewerScopeEnum taskReviewerScope) {
             this.taskReviewerScope = taskReviewerScope;
             return this;
         }
 
-        public Builder dynamicFreeChoiceNextReviewerMode(boolean dynamicFreeChoiceNextReviewerMode) {
-            this.dynamicFreeChoiceNextReviewerMode = dynamicFreeChoiceNextReviewerMode;
+        public Builder taskReviewerValue(List<Map<String, String>> taskReviewerValue) {
+            this.taskReviewerValue = taskReviewerValue;
             return this;
         }
 
-        public Builder nextReviewerCandidateUsers(List<CandidateUsersDTO> nextReviewerCandidateUsers) {
-            this.nextReviewerCandidateUsers = nextReviewerCandidateUsers;
+        public Builder taskButtons(List<String> taskButtons) {
+            this.taskButtons = taskButtons;
             return this;
         }
 
-        public Builder assignee(String assignee) {
-            this.assignee = assignee;
-            return this;
-        }
-
-        public Builder candidateGroups(List<CandidateGroupsDTO> candidateGroups) {
-            this.candidateGroups = candidateGroups;
-            return this;
-        }
-
-        public Builder candidateUsers(List<CandidateUsersDTO> candidateUsers) {
-            this.candidateUsers = candidateUsers;
-            return this;
-        }
-
-        public Builder iocFlowAssignment(String iocFlowAssignment) {
-            this.iocFlowAssignment = iocFlowAssignment;
-            return this;
-        }
-
-        public Builder multiInstanceLoopCharacteristics(MultiInstanceLoopCharacteristicsType multiInstanceLoopCharacteristics) {
-            this.multiInstanceLoopCharacteristics = multiInstanceLoopCharacteristics;
-            return this;
-        }
-
-        public Builder signType(SignPassType signType) {
-            this.signType = signType;
-            return this;
-        }
-
-        public Builder signScale(Integer signScale) {
-            this.signScale = signScale;
-            return this;
-        }
-
-        public Builder signNrOfInstances(Integer signNrOfInstances) {
-            this.signNrOfInstances = signNrOfInstances;
-            return this;
-        }
-
-        public Builder signAll(Boolean signAll) {
-            this.signAll = signAll;
+        public Builder callBackNodes(List<String> callBackNodes) {
+            this.callBackNodes = callBackNodes;
             return this;
         }
 
         public UserTaskExtensionDTO build() {
             UserTaskExtensionDTO userTaskExtensionDTO = new UserTaskExtensionDTO();
-            userTaskExtensionDTO.setUserTaskFormKey(userTaskFormKey);
-            userTaskExtensionDTO.setUserTaskName(userTaskName);
             userTaskExtensionDTO.setUserTaskId(userTaskId);
+            userTaskExtensionDTO.setUserTaskName(userTaskName);
+            userTaskExtensionDTO.setUserTaskFormKey(userTaskFormKey);
             userTaskExtensionDTO.setUserTaskDocumentation(userTaskDocumentation);
-            userTaskExtensionDTO.setReplyOpinion(replyOpinion);
-            userTaskExtensionDTO.setHandwritingSignature(handwritingSignature);
+            userTaskExtensionDTO.setApprovalOpinion(approvalOpinion);
             userTaskExtensionDTO.setAgreeButtonName(agreeButtonName);
             userTaskExtensionDTO.setRefuseButtonName(refuseButtonName);
-            userTaskExtensionDTO.setReplyOpinionName(replyOpinionName);
-            userTaskExtensionDTO.setConnectionCallBack(connectionCallBack);
-            userTaskExtensionDTO.setCallBackType(callBackType);
-            userTaskExtensionDTO.setCallBackNodes(callBackNodes);
-            userTaskExtensionDTO.setCallBackNodesDesc(callBackNodesDesc);
             userTaskExtensionDTO.setMultiInstanceNode(multiInstanceNode);
             userTaskExtensionDTO.setAddMultiInstance(addMultiInstance);
-            userTaskExtensionDTO.setDelMultiInstance(delMultiInstance);
-            userTaskExtensionDTO.setDelMultiInstanceExecutionIsCompleted(delMultiInstanceExecutionIsCompleted);
-            userTaskExtensionDTO.setBeforeCreateCurrentTaskFormDataDynamicAssignment(beforeCreateCurrentTaskFormDataDynamicAssignment);
-            userTaskExtensionDTO.setAfterCreateCurrentTaskFormDataDynamicAssignment(afterCreateCurrentTaskFormDataDynamicAssignment);
-            userTaskExtensionDTO.setFormDataDynamicAssignment(formDataDynamicAssignment);
             userTaskExtensionDTO.setTaskReviewerScope(taskReviewerScope);
-            userTaskExtensionDTO.setDynamicFreeChoiceNextReviewerMode(dynamicFreeChoiceNextReviewerMode);
-            userTaskExtensionDTO.setNextReviewerCandidateUsers(nextReviewerCandidateUsers);
-            userTaskExtensionDTO.setAssignee(assignee);
-            userTaskExtensionDTO.setCandidateGroups(candidateGroups);
-            userTaskExtensionDTO.setCandidateUsers(candidateUsers);
-            userTaskExtensionDTO.setIocFlowAssignment(iocFlowAssignment);
-            userTaskExtensionDTO.setMultiInstanceLoopCharacteristics(multiInstanceLoopCharacteristics);
-            userTaskExtensionDTO.setSignType(signType);
-            userTaskExtensionDTO.setSignScale(signScale);
-            userTaskExtensionDTO.setSignNrOfInstances(signNrOfInstances);
-            userTaskExtensionDTO.setSignAll(signAll);
+            userTaskExtensionDTO.setTaskReviewerValue(taskReviewerValue);
+            userTaskExtensionDTO.setTaskButtons(taskButtons);
+            userTaskExtensionDTO.setCallBackNodes(callBackNodes);
             return userTaskExtensionDTO;
         }
     }

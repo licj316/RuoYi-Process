@@ -62,21 +62,23 @@ public class CustomUserTaskValidator extends UserTaskValidator {
             addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "请指定当前用户步骤任务审核人范围");
             return;
         }
-        if (dto.getTaskReviewerScope() == TaskReviewerScopeEnum.SINGLE_USER && Strings.isBlank(dto.getAssignee())) {
-            addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "指定用户不能为空");
-            return;
-        }
-        if (dto.getTaskReviewerScope() == TaskReviewerScopeEnum.MULTIPLE_USERS && CollectionUtils.isEmpty(dto.getCandidateUsers())) {
-            addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "候选用户不能为空");
-            return;
-        }
-        if (dto.getTaskReviewerScope() == TaskReviewerScopeEnum.USER_ROLE_GROUPS && CollectionUtils.isEmpty(dto.getCandidateGroups())) {
-            addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "候选用户角色组不能为空");
-            return;
-        }
-        if (dto.getTaskReviewerScope() == TaskReviewerScopeEnum.JAVA_BEAN_ASSIGNMENT && Strings.isBlank(dto.getIocFlowAssignment())) {
-            addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "JavaIocBean人员选择器不能为空");
-            return;
-        }
+        // TODO 增加字段校验
+
+//        if (dto.getTaskReviewerScope() == TaskReviewerScopeEnum.SINGLE_USER && Strings.isBlank(dto.getAssignee())) {
+//            addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "指定用户不能为空");
+//            return;
+//        }
+//        if (dto.getTaskReviewerScope() == TaskReviewerScopeEnum.MULTIPLE_USERS && CollectionUtils.isEmpty(dto.getCandidateUsers())) {
+//            addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "候选用户不能为空");
+//            return;
+//        }
+//        if (dto.getTaskReviewerScope() == TaskReviewerScopeEnum.USER_ROLE_GROUPS && CollectionUtils.isEmpty(dto.getCandidateGroups())) {
+//            addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "候选用户角色组不能为空");
+//            return;
+//        }
+//        if (dto.getTaskReviewerScope() == TaskReviewerScopeEnum.JAVA_BEAN_ASSIGNMENT && Strings.isBlank(dto.getIocFlowAssignment())) {
+//            addError(errors, Problems.USER_TASK_LISTENER_IMPLEMENTATION_MISSING, process, userTask, "JavaIocBean人员选择器不能为空");
+//            return;
+//        }
     }
 }

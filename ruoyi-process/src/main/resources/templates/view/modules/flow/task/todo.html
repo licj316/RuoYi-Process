@@ -18,16 +18,18 @@
     $(function () {
         var options = {
             url: prefix + "/todoData",
-            sortName: "createTime",
-            sortOrder: "desc",
+            // sortName: "createTime",
+            // sortOrder: "desc",
             modalName: "参数",
             columns: [
                 {
                     checkbox: true
                 },
                 {
-                    field: 'numbers',
-                    title: '序号'
+                    title: '序号',
+                    formatter: function (value, row, index) {
+                        return $.table.serialNumber(index);
+                    }
                 },
                 {
                     field: 'categoryName',
@@ -42,7 +44,7 @@
                     title: '流程标识'
                 },
                 {
-                    field: 'procDefname',
+                    field: 'procDefName',
                     title: '流程名称'
                 },
                 {
@@ -50,7 +52,7 @@
                     title: '当前环节'
                 },
                 {
-                    field: 'procDefversion',
+                    field: 'procDefVersion',
                     title: '流程版本'
                 },
                 {
@@ -83,7 +85,7 @@
                             actions.push(' <a class="btn btn-info btn-xs" onclick="handleDel(\'' + row.procInsId + '\')"><i class="fa fa-plus"></i>删除</a>');
                         }
                         actions.push(' <a class="btn btn-info btn-xs" ' +
-                            'onclick="handleDiagramViewer(\'' + row.processFinished + '\',\'' + row.procDefId + '\',\'' + row.procInsId + '\')"><i class="fa fa-plus"></i>跟踪</a>')
+                            'onclick="handleDiagramViewer(\'' + row.procDefId + '\',\'' + row.procInsId + '\')"><i class="fa fa-plus"></i>跟踪</a>')
                         return actions.join('');
                     }
                 }
@@ -169,7 +171,7 @@
     // 办理
     function handleHandle(taskId, taskName, taskDefKey, procInsId, procDefId, status) {
         var param = '?taskId=' + taskId + '&taskName=' + encodeURIComponent(taskName) + '&taskDefKey=' + taskDefKey
-            + '&procInsId=' + procInsId + '&procDefId=' + procDefId + '&status=' + status;
+            + '&procInsId=' + procInsId + '&procDefId=' + procDefId;
         var url = '/general/flow/process/form' + param;
         $.modal.openTab("任务办理 [" + taskName + "]", url);
         handleSearchTable();
@@ -179,7 +181,7 @@
         $.table.refresh();
     }
 
-    function handleDiagramViewer(processFinished, procDefId, procInsId) {
+    function handleDiagramViewer(procDefId, procInsId) {
         $.modal.open("流程图查看", "/flowTask/diagramViewer?definitionId=" + procDefId + "&instanceId=" + procInsId);
     }
 </script>

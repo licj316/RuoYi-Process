@@ -71,19 +71,20 @@ public class CustomMultiInstanceBehaviorHelper {
         if (Objects.nonNull(taskExtensionDTO)) {
             List<String> assigneesCollection = new ArrayList<>();
             TaskReviewerScopeEnum taskReviewerScope = taskExtensionDTO.getTaskReviewerScope();
-            switch (taskReviewerScope) {
-                case MULTIPLE_USERS:
-                    assigneesCollection = Optional.ofNullable(taskExtensionDTO.getCandidateUsers()).orElse(new ArrayList<>(0)).stream().map(CandidateUsersDTO::getUserId).collect(Collectors.toList());
-                    break;
-                case USER_ROLE_GROUPS:
-                    for (int i = 0; i < taskExtensionDTO.getSignNrOfInstances(); i++) {
-                        //使用时需要拆分出来
-                        assigneesCollection.add(Optional.ofNullable(taskExtensionDTO.getCandidateGroups()).orElse(new ArrayList<>()).stream().map(CandidateGroupsDTO::getRoleKey).collect(Collectors.joining(",")));
-                    }
-                    break;
-                default:
-                    break;
-            }
+            // TODO 暂不考虑会签
+//            switch (taskReviewerScope) {
+//                case MULTIPLE_USERS:
+//                    assigneesCollection = Optional.ofNullable(taskExtensionDTO.getCandidateUsers()).orElse(new ArrayList<>(0)).stream().map(CandidateUsersDTO::getUserId).collect(Collectors.toList());
+//                    break;
+//                case USER_ROLE_GROUPS:
+//                    for (int i = 0; i < taskExtensionDTO.getSignNrOfInstances(); i++) {
+//                        //使用时需要拆分出来
+//                        assigneesCollection.add(Optional.ofNullable(taskExtensionDTO.getCandidateGroups()).orElse(new ArrayList<>()).stream().map(CandidateGroupsDTO::getRoleKey).collect(Collectors.joining(",")));
+//                    }
+//                    break;
+//                default:
+//                    break;
+//            }
             if (CollectionUtils.isEmpty(assigneesCollection)) {
                 throw new RuntimeException("[" + userTask.getName() + "]未设置审批人员");
             }

@@ -29,7 +29,7 @@ import java.util.Objects;
  */
 public class CustomBpmnJsonConverter extends BpmnJsonConverter {
 
-    public static final String EXTERNAL_FORM_EXECUTOR = "externalformexecutor";
+    public static final String EXTERNAL_FORM_EXECUTOR = "externalFormExecutor";
     public static final String DATA_OBJECTS_EXPRESSION = "expression";
     private static final String[] PROPERTY_KEYS = new String[]{EXTERNAL_FORM_EXECUTOR};
 

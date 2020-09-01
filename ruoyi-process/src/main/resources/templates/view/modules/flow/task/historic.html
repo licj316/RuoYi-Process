@@ -18,16 +18,18 @@
     $(function () {
         var options = {
             url: prefix + "/historicData",
-            sortName: "createTime",
-            sortOrder: "desc",
+            // sortName: "createTime",
+            // sortOrder: "desc",
             modalName: "参数",
             columns: [
                 {
                     checkbox: true
                 },
                 {
-                    field: 'numbers',
-                    title: '序号'
+                    title: '序号',
+                    formatter: function (value, row, index) {
+                        return $.table.serialNumber(index);
+                    }
                 }, {
                     field: 'categoryName',
                     title: '流程分类'
@@ -37,7 +39,7 @@
                     title: '标题'
                 },
                 {
-                    field: 'procDefname',
+                    field: 'procDefName',
                     title: '流程名称'
                 },
                 {
@@ -48,14 +50,14 @@
                     field: 'processFinished',
                     title: '流程状态',
                     formatter: function (value, row, index) {
-                        return value ? "<span style='color: #0080ff'>已结束</span>" : "<span>未结束</span>";
+                        return "<span style='color: #0080ff'>" + value + "</span>";
                     }
                 },
                 {
-                    field: 'version',
+                    field: 'procDefVersion',
                     title: '流程版本',
                     formatter: function (value, row, index) {
-                        return 'V:' + row.procDefversion;
+                        return 'V:' + row.procDefVersion;
                     }
                 },
                 {
@@ -63,7 +65,7 @@
                     title: '步骤开始时间'
                 },
                 {
-                    field: 'endDate',
+                    field: 'endTime',
                     title: '步骤完成时间'
                 },
                 {

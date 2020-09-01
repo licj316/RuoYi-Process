@@ -81,26 +81,27 @@ public class CustomCreateUserTaskInterceptor implements CreateUserTaskIntercepto
     }
 
     private void execute(Context ctx) {
-        UserTaskExtensionDTO dto = flowProcessDefinitionService.getUserTaskExtension(ctx.getTaskDefinitionKey(), ctx.getProcessDefinitionId());
-        ExternalFormExecutor externalFormExecutor = flowProcessDefinitionService.getExternalFormExecutor(ctx.getProcessDefinitionId());
-        if (ctx.isBefore()) {
-            if (Strings.isNotBlank(dto.getBeforeCreateCurrentTaskFormDataDynamicAssignment())) {
-                Map formData = externalFormExecutor.loadFormData(ctx.getProcessInstanceBusinessKey());
-                this.beforeEvalJs(formData, dto);
-                externalFormExecutor.insertOrUpdateFormData(formData);
-            }
-            //创建用户任务前执行
-            externalFormExecutor.beforeCreateUserTask(ctx.getExecution(), ctx.getUserTask(), dto, ctx.getProcessInstanceBusinessKey());
-        }
-        if (ctx.isAfter()) {
-            if (Strings.isNotBlank(dto.getAfterCreateCurrentTaskFormDataDynamicAssignment())) {
-                Map formData = externalFormExecutor.loadFormData(ctx.getProcessInstanceBusinessKey());
-                this.afterEvalJs(formData, dto, ctx.getTaskEntity());
-                externalFormExecutor.insertOrUpdateFormData(formData);
-            }
-            //创建用户任务前执行
-            externalFormExecutor.afterCreateUserTask(ctx.getExecution(), ctx.getUserTask(), dto, ctx.getProcessInstanceBusinessKey(), ctx.getTaskEntity());
-        }
+        // TODO 暂时不需要
+//        UserTaskExtensionDTO dto = flowProcessDefinitionService.getUserTaskExtension(ctx.getTaskDefinitionKey(), ctx.getProcessDefinitionId());
+//        ExternalFormExecutor externalFormExecutor = flowProcessDefinitionService.getExternalFormExecutor(ctx.getProcessDefinitionId());
+//        if (ctx.isBefore()) {
+//            if (Strings.isNotBlank(dto.getBeforeCreateCurrentTaskFormDataDynamicAssignment())) {
+//                Map formData = externalFormExecutor.loadFormData(ctx.getProcessInstanceBusinessKey());
+//                this.beforeEvalJs(formData, dto);
+//                externalFormExecutor.insertOrUpdateFormData(formData);
+//            }
+//            //创建用户任务前执行
+//            externalFormExecutor.beforeCreateUserTask(ctx.getExecution(), ctx.getUserTask(), dto, ctx.getProcessInstanceBusinessKey());
+//        }
+//        if (ctx.isAfter()) {
+//            if (Strings.isNotBlank(dto.getAfterCreateCurrentTaskFormDataDynamicAssignment())) {
+//                Map formData = externalFormExecutor.loadFormData(ctx.getProcessInstanceBusinessKey());
+//                this.afterEvalJs(formData, dto, ctx.getTaskEntity());
+//                externalFormExecutor.insertOrUpdateFormData(formData);
+//            }
+//            //创建用户任务前执行
+//            externalFormExecutor.afterCreateUserTask(ctx.getExecution(), ctx.getUserTask(), dto, ctx.getProcessInstanceBusinessKey(), ctx.getTaskEntity());
+//        }
     }
 
     /**
@@ -109,16 +110,17 @@ public class CustomCreateUserTaskInterceptor implements CreateUserTaskIntercepto
      * @return
      */
     private Map beforeEvalJs(Map formData, UserTaskExtensionDTO dto) {
-        StringBuffer jsCode = new StringBuffer("function runBeforeCreateCurrentTaskFormDataDynamicAssignment(formData,dto){ " + dto.getBeforeCreateCurrentTaskFormDataDynamicAssignment() + "  return formData; }");
-        try {
-            JsContex.get().compile(jsCode.toString());
-            JsContex.get().eval(jsCode.toString());
-            Object result = JsContex.get().invokeFunction("runBeforeCreateCurrentTaskFormDataDynamicAssignment", formData, dto);
-            formData = (Map) result;
-        } catch (Exception e) {
-            log.error("解析动态JS错误", e);
-            throw new RuntimeException("解析动态JS错误");
-        }
+        // TODO 暂时不需要
+//        StringBuffer jsCode = new StringBuffer("function runBeforeCreateCurrentTaskFormDataDynamicAssignment(formData,dto){ " + dto.getBeforeCreateCurrentTaskFormDataDynamicAssignment() + "  return formData; }");
+//        try {
+//            JsContex.get().compile(jsCode.toString());
+//            JsContex.get().eval(jsCode.toString());
+//            Object result = JsContex.get().invokeFunction("runBeforeCreateCurrentTaskFormDataDynamicAssignment", formData, dto);
+//            formData = (Map) result;
+//        } catch (Exception e) {
+//            log.error("解析动态JS错误", e);
+//            throw new RuntimeException("解析动态JS错误");
+//        }
         return formData;
     }
 
@@ -128,16 +130,17 @@ public class CustomCreateUserTaskInterceptor implements CreateUserTaskIntercepto
      * @return
      */
     private Map afterEvalJs(Map formData, UserTaskExtensionDTO dto, TaskEntity taskEntity) {
-        StringBuffer jsCode = new StringBuffer("function runAfterCreateCurrentTaskFormDataDynamicAssignment(formData,dto,task){ " + dto.getAfterCreateCurrentTaskFormDataDynamicAssignment() + "  return formData; }");
-        try {
-            JsContex.get().compile(jsCode.toString());
-            JsContex.get().eval(jsCode.toString());
-            Object result = JsContex.get().invokeFunction("runAfterCreateCurrentTaskFormDataDynamicAssignment", formData, dto, taskEntity);
-            formData = (Map) result;
-        } catch (Exception e) {
-            log.error("解析动态JS错误", e);
-            throw new RuntimeException("解析动态JS错误");
-        }
+        // TODO 暂时不需要
+//        StringBuffer jsCode = new StringBuffer("function runAfterCreateCurrentTaskFormDataDynamicAssignment(formData,dto,task){ " + dto.getAfterCreateCurrentTaskFormDataDynamicAssignment() + "  return formData; }");
+//        try {
+//            JsContex.get().compile(jsCode.toString());
+//            JsContex.get().eval(jsCode.toString());
+//            Object result = JsContex.get().invokeFunction("runAfterCreateCurrentTaskFormDataDynamicAssignment", formData, dto, taskEntity);
+//            formData = (Map) result;
+//        } catch (Exception e) {
+//            log.error("解析动态JS错误", e);
+//            throw new RuntimeException("解析动态JS错误");
+//        }
         return formData;
     }
 

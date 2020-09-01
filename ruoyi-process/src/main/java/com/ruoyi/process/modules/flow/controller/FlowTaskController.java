@@ -83,14 +83,11 @@ public class FlowTaskController extends BaseProcessController{
 
     @PostMapping("/todoData")
 	@ResponseBody
-    public TableDataInfo todoData(HttpServletRequest request) {
-        FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
-        SysUser currUser = getCurrUser();
-        List<SysRole> roles = currUser.getRoles();
-//        List<SysRole> userRoleList = getUserRoleList(currUser.getUserId());
-        Set<String> roleKeySet = roles.stream().map(sysRole -> sysRole.getRoleKey()).collect(Collectors.toSet());
-        //联查变量的情况下，分页功能失效
-        return getDataTable(flowTaskService.todoList(flowTaskVO, currUser.getUserId().toString(), roleKeySet, false));
+    public TableDataInfo todoData(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+        startPage();
+        params.put("currUserId", getCurrUserId());
+        List<Map<String, Object>> list = flowTaskService.todoList(params);
+        return getDataTable(list);
     }
 
     @RequestMapping("/diagramViewer")
@@ -104,18 +101,27 @@ public class FlowTaskController extends BaseProcessController{
 
     @RequestMapping("/historicData")
 	@ResponseBody
-    public TableDataInfo historicDataList(HttpServletRequest request, HttpServletResponse response) {
-        FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
-        List<FlowTaskVO> flowTaskVOList = flowTaskService.historicList(flowTaskVO, getCurrUser().getUserId().toString());
-        return getDataTable(flowTaskVOList);
+    public TableDataInfo historicDataList(@RequestParam Map<String, Object> params, HttpServletRequest request, HttpServletResponse response) {
+//        FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
+//        List<FlowTaskVO> flowTaskVOList = flowTaskService.historicList(flowTaskVO, getCurrUser().getUserId().toString());
+//        return getDataTable(flowTaskVOList);
+        startPage();
+        params.put("currUserId", getCurrUserId());
+        List<Map<String, Object>> list = flowTaskService.historicList(params);
+        return getDataTable(list);
     }
 
     @RequestMapping("/hasSentData")
 	@ResponseBody
-    public TableDataInfo hasSentDataList(HttpServletRequest request, HttpServletResponse response) {
-        FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
-        List<FlowTaskVO> flowTaskVOList = flowTaskService.hasSentList(String.valueOf(getCurrUser().getUserId()));
-        return getDataTable(flowTaskVOList);
+    public TableDataInfo hasSentDataList(@RequestParam Map<String, Object> params, HttpServletRequest request, HttpServletResponse response) {
+//        FlowTaskVO flowTaskVO = buildFlowTaskVO(request);
+//        List<FlowTaskVO> flowTaskVOList = flowTaskService.hasSentList(String.valueOf(getCurrUser().getUserId()));
+//        return getDataTable(flowTaskVOList);
+
+        startPage();
+        params.put("currUserId", getCurrUserId());
+        List<Map<String, Object>> list = flowTaskService.hasSentList(params);
+        return getDataTable(list);
     }
 
     /**

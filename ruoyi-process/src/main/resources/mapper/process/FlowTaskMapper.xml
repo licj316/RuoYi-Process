@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.process.core.plugin.flowable.mapper.FlowTaskMapper">
+
+    <select id="findTodoList" parameterType="hashMap" resultType="hashMap">
+        SELECT FT.NAME             AS 'categoryName',
+               FIE.CURR_TASK_NAME_ AS 'taskTitle',
+               ARP.KEY_            AS 'procDefKey',
+               ARP.NAME_           AS 'procDefName',
+               FIE.CURR_TASK_NAME_ AS 'taskName',
+               ARP.VERSION_        AS 'procDefVersion',
+               ART.CREATE_TIME_    AS 'createTime',
+               ART.ID_             AS 'taskId',
+               ART.TASK_DEF_KEY_   AS 'taskDefKey',
+               ART.DELEGATION_     AS 'delegateStatus',
+               FIE.PROC_DEF_ID_    AS 'procDefId',
+               ART.PROC_INST_ID_   AS 'procInsId',
+               ART.ASSIGNEE_       AS 'assignee',
+               ART.EXECUTION_ID_   AS 'executionId',
+               ART.CLAIM_TIME_     AS 'claimTime'
+        FROM ACT_RU_TASK ART
+        LEFT JOIN FLOW_INST_EXTEND FIE ON ART.PROC_INST_ID_ = FIE.PROC_INS_ID_
+        LEFT JOIN ACT_RE_PROCDEF ARP ON ART.PROC_DEF_ID_ = ARP.ID_
+        LEFT JOIN ACT_RE_DEPLOYMENT ARD ON ARP.DEPLOYMENT_ID_ = ARD.ID_
+        LEFT JOIN FLOW_TYPE FT ON ARD.CATEGORY_ = FT.ID
+        WHERE ART.ASSIGNEE_ = #{currUserId}
+        ORDER BY ART.CREATE_TIME_ DESC
+    </select>
+
+    <select id="findHasSentList" parameterType="hashMap" resultType="hashMap">
+        SELECT FT.NAME                                                   AS 'categoryName',
+               FIE.KEY_ONE_                                              AS 'taskTitle',
+               ARP.KEY_                                                  AS 'procDefKey',
+               ARP.NAME_                                                 AS 'procDefName',
+               ARP.VERSION_                                              AS 'procDefVersion',
+               CASE WHEN AHP.END_TIME_ IS NULL THEN '审批中' ELSE '已完成' END AS 'processFinished',
+               AHP.START_TIME_                                           AS 'createTime',
+               AHP.ID_                                                   AS 'procInsId',
+               AHP.PROC_DEF_ID_                                          AS 'procDefId'
+        FROM ACT_HI_PROCINST AHP
+        LEFT JOIN ACT_RE_PROCDEF ARP ON AHP.PROC_DEF_ID_ = ARP.ID_
+        LEFT JOIN ACT_RE_DEPLOYMENT ARD ON ARP.DEPLOYMENT_ID_ = ARD.ID_
+        LEFT JOIN FLOW_INST_EXTEND FIE ON AHP.PROC_INST_ID_ = FIE.PROC_INS_ID_
+        LEFT JOIN FLOW_TYPE FT ON ARD.CATEGORY_ = FT.ID
+        WHERE AHP.START_USER_ID_ = #{currUserId}
+        ORDER BY AHP.START_TIME_ DESC
+    </select>
+
+    <select id="findHistoricList" parameterType="hashMap" resultType="hashMap">
+        SELECT FT.NAME           AS 'categoryName',
+               AHT.NAME_         AS 'taskTitle',
+               ARP.NAME_         AS 'procDefName',
+               AHT.NAME_         AS 'taskName',
+               AHP.END_TIME_     AS 'processFinished',
+               ARP.VERSION_      AS 'procDefVersion',
+               AHT.START_TIME_   AS 'createTime',
+               AHT.END_TIME_     AS 'endTime',
+               AHT.ID_           AS 'taskId',
+               AHT.PROC_INST_ID_ AS 'procInsId',
+               AHP.PROC_DEF_ID_  AS 'procDefId'
+        FROM ACT_HI_TASKINST AHT
+        LEFT JOIN ACT_HI_PROCINST AHP ON AHT.PROC_INST_ID_ = AHP.PROC_INST_ID_
+        LEFT JOIN ACT_RE_PROCDEF ARP ON AHT.PROC_DEF_ID_ = ARP.ID_
+        LEFT JOIN ACT_RE_DEPLOYMENT ARD ON ARP.DEPLOYMENT_ID_ = ARD.ID_
+        LEFT JOIN FLOW_TYPE FT ON ARD.CATEGORY_ = FT.ID
+        WHERE AHT.ASSIGNEE_ = #{currUserId}
+        ORDER BY AHT.START_TIME_ DESC
+    </select>
+
+</mapper>

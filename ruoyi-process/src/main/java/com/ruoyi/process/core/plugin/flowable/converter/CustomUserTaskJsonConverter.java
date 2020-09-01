@@ -35,9 +35,9 @@ public class CustomUserTaskJsonConverter extends UserTaskJsonConverter {
     /**
      * 扩展属性设置
      */
-    public static final String USER_TASK_EXPANSION = "usertaskexpansion";
+    public static final String USER_TASK_EXPANSION = "userTaskExtension";
     public static final String EXPANSION_PROPERTIES = "expansionProperties";
-    public static final String USER_TASK_EXTENSION_ELEMENT_NAME = "user-task-expansion";
+    public static final String USER_TASK_EXTENSION_ELEMENT_NAME = "userTaskExtension";
 
     public static void customFillTypes(Map<String, Class<? extends BaseBpmnJsonConverter>> convertersToBpmnMap, Map<Class<? extends BaseElement>, Class<? extends BaseBpmnJsonConverter>> convertersToJsonMap) {
         fillJsonTypes(convertersToBpmnMap);

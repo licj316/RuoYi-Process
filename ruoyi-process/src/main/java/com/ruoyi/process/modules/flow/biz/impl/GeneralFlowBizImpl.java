@@ -206,9 +206,6 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 			if (flowTaskVO.getReaffirm()) {
 				prefix = flowTaskVO.isPass() ? "[重申] " : "[销毁] ";
 			}
-			if (dto.isConnectionCallBack() && flowTaskVO.getTurnDown() == true) {
-				prefix = "[驳回] ";
-			}
 			flowTaskVO.setComment(prefix + flowTaskVO.getComment());
 		} else {
 			flowTaskVO.setComment(flowTaskVO.getBusinessComment());
@@ -217,29 +214,6 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 		vars.put(FlowConstant.AUDIT_PASS, flowTaskVO.isPass());
 		vars.put(FlowConstant.FORM_DATA, formData);
 		flowTaskService.setValuedDataObject(vars, flowTaskVO.getProcDefId(), formData, sessionUserAccount, true);
-		if (dto.isConnectionCallBack()) {
-			vars.put(FlowConstant.TURN_DOWN, flowTaskVO.getTurnDown());
-		}
-		if (dto.isDynamicFreeChoiceNextReviewerMode() && flowTaskVO.getDelegateStatus() == null) {
-			boolean needCheckFlowNextReviewerAssignee = false;
-			try {
-				//此方法前不要操作数据库，该方法会回滚数据库的
-				Pair<String, FlowElement> nextNodePair = flowTaskService.getNextNode(formData, flowTaskVO, sessionUserAccount);
-				if (nextNodePair != null && StencilConstants.STENCIL_TASK_USER.equals(nextNodePair.getLeft())) {
-					//下一节点存在，需要选择审核人
-					needCheckFlowNextReviewerAssignee = true;
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new RuntimeException("事务无法打开！");
-			}
-			if (needCheckFlowNextReviewerAssignee && Strings.isBlank(flowTaskVO.getFlowNextReviewerAssignee())) {
-				return "请选择下一步流程审核人！";
-			}
-			if (Strings.isNotBlank(flowTaskVO.getFlowNextReviewerAssignee())) {
-				vars.put(FlowConstant.NEXT_REVIEWER, flowTaskVO.getFlowNextReviewerAssignee());
-			}
-		}
 		formData = evalJavaScriptByModifyForm(formData, flowTaskVO, dto);
 
 		String errorMsg = executor.userAudit(formData, flowTaskVO, sessionUserAccount);
@@ -298,23 +272,28 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 
 	@Override
 	public List<Map<String, Object>> listUserTaskNodeAllReviewerUser(UserTaskExtensionDTO taskExtensionDTO, FlowSubmitInfoDTO flowSubmitInfoDTO) {
-		List<String> candidateUserNames = new ArrayList<>();
+		List<Long> candidateUserNames = new ArrayList<>();
 		String flowSubmitterUserName = flowSubmitInfoDTO.getUserName();
 		String flowSubmitterDeptId = flowSubmitInfoDTO.getDeptId();
+		TaskReviewerScopeEnum taskReviewerScope = taskExtensionDTO.getTaskReviewerScope();
+		List<Map<String, String>> taskReviewerValue = taskExtensionDTO.getTaskReviewerValue();
+
+		// TODO 获取下一步审批人列表
+
 		switch (taskExtensionDTO.getTaskReviewerScope()) {
 			case SINGLE_USER:
-				candidateUserNames.add(taskExtensionDTO.getAssignee());
+				candidateUserNames.add(Long.valueOf(taskReviewerValue.get(0).get("id")));
 				break;
 			case FLOW_SUBMITTER:
-				candidateUserNames.add(flowSubmitterUserName);
+				candidateUserNames.add(Long.valueOf(flowSubmitterUserName));
 				break;
 			case MULTIPLE_USERS:
-				candidateUserNames = taskExtensionDTO.getCandidateUsers().stream().map(CandidateUsersDTO::getUserId).collect(Collectors.toList());
+				candidateUserNames = taskReviewerValue.stream().map(tmpMap -> Long.valueOf(tmpMap.get("id"))).collect(Collectors.toList());
 				break;
 			case USER_ROLE_GROUPS:
-				List<String> roleKeys = taskExtensionDTO.getCandidateGroups().stream().map(CandidateGroupsDTO::getRoleKey).collect(Collectors.toList());
-				List<SysUser> sysUserList = sysUserRoleService.selectUserListByRoleKeyList(roleKeys);
-				candidateUserNames = sysUserList.stream().map(sysUser -> sysUser.getLoginName()).distinct().collect(Collectors.toList());
+				List<Long> roleIds = taskReviewerValue.stream().map(tmpMap -> Long.valueOf(tmpMap.get("id"))).collect(Collectors.toList());
+				List<SysUser> sysUserList = sysUserRoleService.selectUserListByRoleIdList(roleIds);
+				candidateUserNames = sysUserList.stream().map(sysUser -> sysUser.getUserId()).distinct().collect(Collectors.toList());
 				break;
 			case DEPARTMENT_HEAD:
 			case DEPARTMENT_LEADER:
@@ -354,18 +333,19 @@ public class GeneralFlowBizImpl implements GeneralFlowBiz {
 	 * @return
 	 */
 	private Map evalJavaScriptByModifyForm(Map formData, FlowTaskVO flowTaskVO, UserTaskExtensionDTO dto) {
-		if (Strings.isNotBlank(dto.getFormDataDynamicAssignment())) {
-			StringBuffer jsCode = new StringBuffer("function modifyForm(formData,auditPass,flowTask){ " + dto.getFormDataDynamicAssignment() + "  return formData; }");
-			try {
-				JsContex.get().compile(jsCode.toString());
-				JsContex.get().eval(jsCode.toString());
-				Object result = JsContex.get().invokeFunction("modifyForm", formData, flowTaskVO.isPass(), flowTaskVO);
-				formData = (Map) result;
-			} catch (Exception e) {
-				log.error("解析动态JS错误", e);
-				throw new RuntimeException("解析动态JS错误");
-			}
-		}
+		// TODO 考虑此功能不需要
+//		if (Strings.isNotBlank(dto.getFormDataDynamicAssignment())) {
+//			StringBuffer jsCode = new StringBuffer("function modifyForm(formData,auditPass,flowTask){ " + dto.getFormDataDynamicAssignment() + "  return formData; }");
+//			try {
+//				JsContex.get().compile(jsCode.toString());
+//				JsContex.get().eval(jsCode.toString());
+//				Object result = JsContex.get().invokeFunction("modifyForm", formData, flowTaskVO.isPass(), flowTaskVO);
+//				formData = (Map) result;
+//			} catch (Exception e) {
+//				log.error("解析动态JS错误", e);
+//				throw new RuntimeException("解析动态JS错误");
+//			}
+//		}
 		return formData;
 	}
 }

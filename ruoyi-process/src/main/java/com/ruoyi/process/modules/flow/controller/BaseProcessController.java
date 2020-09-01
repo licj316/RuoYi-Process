@@ -18,6 +18,10 @@ public class BaseProcessController extends BaseController {
 		return ShiroUtils.getSysUser();
 	}
 
+	protected Long getCurrUserId() {
+		return ShiroUtils.getUserId();
+	}
+
 	protected List<SysRole> getUserRoleList(Long userId) {
 		return sysRoleService.selectRolesByUserId(userId);
 	}

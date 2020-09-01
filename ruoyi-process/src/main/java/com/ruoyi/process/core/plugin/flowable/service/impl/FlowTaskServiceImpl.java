@@ -1,26 +1,16 @@
-/*
- * Copyright (c) 2019- 2019 threefish(https://gitee.com/threefish https://github.com/threefish) All Rights Reserved.
- * 本项目完全开源，商用完全免费。但请勿侵犯作者合法权益，如申请软著等。
- * 最后修改时间：2019/10/07 18:26:07
- * 源 码 地 址：https://gitee.com/threefish/NutzFw
- */
-
 package com.ruoyi.process.core.plugin.flowable.service.impl;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
 import com.ruoyi.framework.util.ShiroUtils;
 import com.ruoyi.process.core.plugin.flowable.cmd.FindNextExecuteNodeCmd;
 import com.ruoyi.process.core.plugin.flowable.constant.FlowConstant;
 import com.ruoyi.process.core.plugin.flowable.converter.CustomBpmnJsonConverter;
-import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
-import com.ruoyi.process.core.plugin.flowable.enums.CallBackTypeEnum;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskStatusEnum;
+import com.ruoyi.process.core.plugin.flowable.mapper.FlowTaskMapper;
 import com.ruoyi.process.core.plugin.flowable.service.FlowCacheService;
 import com.ruoyi.process.core.plugin.flowable.service.FlowProcessDefinitionService;
 import com.ruoyi.process.core.plugin.flowable.service.FlowTaskService;
-import com.ruoyi.process.core.plugin.flowable.util.FlowUtils;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowAttachmentVO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowCommentVO;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskHistoricVO;
@@ -29,7 +19,6 @@ import com.ruoyi.process.modules.flow.domain.FlowData;
 import com.ruoyi.process.modules.flow.service.FlowDataService;
 import com.ruoyi.process.modules.flow.service.FlowInstExtendService;
 import com.ruoyi.process.modules.flow.service.FlowTypeService;
-import com.ruoyi.process.modules.flow.vo.FlowParamVO;
 import com.ruoyi.process.utils.DateUtil;
 import com.ruoyi.system.domain.SysUser;
 import com.ruoyi.system.service.ISysUserService;
@@ -56,13 +45,11 @@ import org.flowable.task.api.TaskQuery;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.task.api.history.HistoricTaskInstanceQuery;
 import org.flowable.variable.api.history.HistoricVariableInstance;
-import org.flowable.variable.service.VariableService;
 import org.nutz.el.El;
 import org.nutz.lang.Lang;
 import org.nutz.lang.Streams;
 import org.nutz.lang.Strings;
 import org.nutz.lang.stream.StringInputStream;
-import org.nutz.trans.Trans;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -74,10 +61,6 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author 黄川 huchuc@vip.qq.com
- * @date: 2019/4/11
- */
 @Service("flowTaskService")
 @Slf4j
 public class FlowTaskServiceImpl implements FlowTaskService {
@@ -106,21 +89,24 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	@Autowired
 	FlowInstExtendService flowInstExtendService;
 
+	@Autowired
+	FlowTaskMapper flowTaskMapper;
+
 	/**
 	 * 获取待办\待簽收列表
 	 *
 	 * @return
 	 */
 	@Override
-	public List<FlowTaskVO> todoList(FlowTaskVO flowTaskVO, String userId, Set<String> roleKeys, boolean needFormData) {
+	public List<Map<String, Object>> todoList(Map<String, Object> params) {
 		//  单人或用户组待签收/待办理
-		TaskQuery todoTaskQuery = buildQuery(flowTaskVO);
-		FlowUtils.buildTodoQuery(todoTaskQuery, userId, Lists.newArrayList(roleKeys));
-		todoTaskQuery.orderByTaskCreateTime().desc();
-//        layuiTableDataListVO.setCount(todoTaskQuery.count());
-		List<Task> listPage = todoTaskQuery.listPage(0, 1000);
-		List<FlowTaskVO> list = taskQueryFlow(listPage, needFormData);
-		return list;
+//		TaskQuery todoTaskQuery = buildQuery(flowTaskVO);
+//		FlowUtils.buildTodoQuery(todoTaskQuery, userId, Lists.newArrayList(roleKeys));
+//		todoTaskQuery.orderByTaskCreateTime().desc();
+////        layuiTableDataListVO.setCount(todoTaskQuery.count());
+//		List<Task> listPage = todoTaskQuery.listPage(0, 1000);
+//		List<FlowTaskVO> list = taskQueryFlow(listPage, needFormData);
+		return flowTaskMapper.findTodoList(params);
 	}
 
 
@@ -182,39 +168,8 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	 * @return
 	 */
 	@Override
-	public List<FlowTaskVO> hasSentList(String userId) {
-		HistoricProcessInstanceQuery historyProQuery = historyService.createHistoricProcessInstanceQuery().startedBy(userId).orderByProcessInstanceStartTime().desc();
-		// 查询总数
-//        vo.setCount(historyProQuery.count());
-		// TODO 分页待处理
-		// 查询列表
-		List<HistoricProcessInstance> hispList = historyProQuery.listPage(0, 1000);
-		//处理分页问题
-		List<FlowTaskVO> actList = Lists.newArrayList();
-		for (HistoricProcessInstance hisprocIns : hispList) {
-			FlowTaskVO flow = new FlowTaskVO();
-			ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(hisprocIns.getProcessDefinitionId());
-			Deployment deployment = flowCacheService.getDeploymentCache(pd.getDeploymentId());
-			flow.setCategory(deployment.getCategory());
-			flow.setCategoryName(flowTypeService.fetchCategoryName(Long.valueOf(deployment.getCategory())));
-			flow.setProcDefId(pd.getId());
-			flow.setProcDefname(pd.getName());
-			flow.setProcDefKey(pd.getKey());
-			flow.setProcDefversion(pd.getVersion());
-			flow.setProcInsId(hisprocIns.getId());
-			HistoricVariableInstance historicVariableInstance = historyService.createHistoricVariableInstanceQuery().processInstanceId(hisprocIns.getId()).variableName(FlowConstant.PROCESS_TITLE).singleResult();
-			flow.setCreateTime(hisprocIns.getStartTime());
-			flow.setEndTime(hisprocIns.getEndTime());
-			flow.setTaskTitle(Objects.nonNull(historicVariableInstance.getValue()) ? historicVariableInstance.getValue().toString() : null);
-			flow.setBusinessId(hisprocIns.getBusinessKey());
-			flow.setHisActInsActName(hisprocIns.getName());
-			flow.setProcInsId(hisprocIns.getId());
-			flow.setHisProcInsId(hisprocIns.getId());
-			flow.setProcessFinished(hisprocIns.getEndActivityId() != null);
-			flow.setStatus(TaskStatusEnum.FINISH);
-			actList.add(flow);
-		}
-		return actList;
+	public List<Map<String, Object>> hasSentList(Map<String, Object> params) {
+		return flowTaskMapper.findHasSentList(params);
 	}
 
 	/**
@@ -223,62 +178,63 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	 * @return
 	 */
 	@Override
-	public List<FlowTaskVO> historicList(FlowTaskVO flowTaskVO, String userId) {
-		HistoricTaskInstanceQuery histTaskQuery = historyService.createHistoricTaskInstanceQuery().taskAssignee(userId).finished()
-				.includeProcessVariables().orderByHistoricTaskInstanceEndTime().desc();
-		// 设置查询条件
-		if (Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
-			histTaskQuery.processDefinitionKey(flowTaskVO.getProcDefKey());
-		}
-		if (flowTaskVO.getBeginDate() != null) {
-			histTaskQuery.taskCompletedAfter(flowTaskVO.getBeginDate());
-		}
-		if (flowTaskVO.getEndDate() != null) {
-			histTaskQuery.taskCompletedBefore(flowTaskVO.getEndDate());
-		}
-		// TODO 分页待处理
-		// 查询列表
-		List<HistoricTaskInstance> histList = histTaskQuery.listPage(0, 1000);
-		//处理分页问题
-		List<FlowTaskVO> actList = Lists.newArrayList();
-		for (HistoricTaskInstance histTask : histList) {
-			String categoryName = "未分类";
-			String flowTitle = Strings.sNull(histTask.getProcessVariables().get(FlowConstant.PROCESS_TITLE));
-			ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(histTask.getProcessDefinitionId());
-			String category;
-			if (Strings.isBlank(histTask.getCategory())) {
-				Deployment deployment = flowCacheService.getDeploymentCache(pd.getDeploymentId());
-				category = deployment.getCategory();
-			} else {
-				category = histTask.getCategory();
-			}
-			if (!FlowConstant.DEFAULT_CATEGORY.equals(category)) {
-				categoryName = flowTypeService.fetchCategoryName(Long.valueOf(category));
-			}
-			HistoricProcessInstance historicTaskInstance = getHistoryProcIns(histTask.getProcessInstanceId());
-			FlowTaskVO flow = FlowTaskVO.builder()
-					.categoryName(categoryName)
-					.category(category)
-					.taskTitle(flowTitle)
-					.delegateUserName(histTask.getOwner())
-					.taskId(histTask.getId())
-					.taskDefKey(histTask.getTaskDefinitionKey())
-					.taskName(histTask.getName())
-					.assignee(histTask.getAssignee())
-					.createTime(histTask.getCreateTime())
-					.endDate(histTask.getEndTime())
-					.procDefId(pd.getId())
-					.procDefname(pd.getName())
-					.procDefKey(pd.getKey())
-					.procDefversion(pd.getVersion())
-					.procInsId(histTask.getProcessInstanceId())
-					.hisProcInsId(histTask.getProcessInstanceId())
-					.processFinished(historicTaskInstance.getEndActivityId() != null)
-					.status(TaskStatusEnum.FINISH)
-					.build();
-			actList.add(flow);
-		}
-		return actList;
+	public List<Map<String, Object>> historicList(Map<String, Object> params) {
+		return flowTaskMapper.findHistoricList(params);
+//		HistoricTaskInstanceQuery histTaskQuery = historyService.createHistoricTaskInstanceQuery().taskAssignee(userId).finished()
+//				.includeProcessVariables().orderByHistoricTaskInstanceEndTime().desc();
+//		// 设置查询条件
+//		if (Strings.isNotBlank(flowTaskVO.getProcDefKey())) {
+//			histTaskQuery.processDefinitionKey(flowTaskVO.getProcDefKey());
+//		}
+//		if (flowTaskVO.getBeginDate() != null) {
+//			histTaskQuery.taskCompletedAfter(flowTaskVO.getBeginDate());
+//		}
+//		if (flowTaskVO.getEndDate() != null) {
+//			histTaskQuery.taskCompletedBefore(flowTaskVO.getEndDate());
+//		}
+//		// TODO 分页待处理
+//		// 查询列表
+//		List<HistoricTaskInstance> histList = histTaskQuery.listPage(0, 1000);
+//		//处理分页问题
+//		List<FlowTaskVO> actList = Lists.newArrayList();
+//		for (HistoricTaskInstance histTask : histList) {
+//			String categoryName = "未分类";
+//			String flowTitle = Strings.sNull(histTask.getProcessVariables().get(FlowConstant.PROCESS_TITLE));
+//			ProcessDefinition pd = flowCacheService.getProcessDefinitionCache(histTask.getProcessDefinitionId());
+//			String category;
+//			if (Strings.isBlank(histTask.getCategory())) {
+//				Deployment deployment = flowCacheService.getDeploymentCache(pd.getDeploymentId());
+//				category = deployment.getCategory();
+//			} else {
+//				category = histTask.getCategory();
+//			}
+//			if (!FlowConstant.DEFAULT_CATEGORY.equals(category)) {
+//				categoryName = flowTypeService.fetchCategoryName(Long.valueOf(category));
+//			}
+//			HistoricProcessInstance historicTaskInstance = getHistoryProcIns(histTask.getProcessInstanceId());
+//			FlowTaskVO flow = FlowTaskVO.builder()
+//					.categoryName(categoryName)
+//					.category(category)
+//					.taskTitle(flowTitle)
+//					.delegateUserName(histTask.getOwner())
+//					.taskId(histTask.getId())
+//					.taskDefKey(histTask.getTaskDefinitionKey())
+//					.taskName(histTask.getName())
+//					.assignee(histTask.getAssignee())
+//					.createTime(histTask.getCreateTime())
+//					.endDate(histTask.getEndTime())
+//					.procDefId(pd.getId())
+//					.procDefname(pd.getName())
+//					.procDefKey(pd.getKey())
+//					.procDefversion(pd.getVersion())
+//					.procInsId(histTask.getProcessInstanceId())
+//					.hisProcInsId(histTask.getProcessInstanceId())
+//					.processFinished(historicTaskInstance.getEndActivityId() != null)
+//					.status(TaskStatusEnum.FINISH)
+//					.build();
+//			actList.add(flow);
+//		}
+//		return actList;
 	}
 
 	/**
@@ -713,22 +669,23 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 		String taskId = flowTaskVO.getTaskId();
 		String comment = flowTaskVO.getComment();
 		String backToTaskDefKey = flowTaskVO.getNextTaskDefKey();
-		UserTaskExtensionDTO extensionPropertyDTO = flowProcessDefinitionService.getUserTaskExtension(flowTaskVO.getTaskDefKey(), flowTaskVO.getProcDefId());
-		if (extensionPropertyDTO != null) {
-			if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.NONE) {
-				return "当前流程不允许回退";
-			} else if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.PREVIOUS_STEP) {
-				backToTaskDefKey = extensionPropertyDTO.getCallBackNodes();
-				if (Strings.isEmpty(backToTaskDefKey)) {
-					return "请设置当前流程应该回退的上一步骤！";
-				}
-			} else if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.FREE_STEP) {
-				List<String> nodes = Arrays.asList(extensionPropertyDTO.getCallBackNodes().split(","));
-				if (Strings.isEmpty(backToTaskDefKey) || !nodes.contains(backToTaskDefKey)) {
-					return "请设置当前流程应该回退的步骤！";
-				}
-			}
-		}
+		// TODO 流程连线退回暂且注释
+//		UserTaskExtensionDTO extensionPropertyDTO = flowProcessDefinitionService.getUserTaskExtension(flowTaskVO.getTaskDefKey(), flowTaskVO.getProcDefId());
+//		if (extensionPropertyDTO != null) {
+//			if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.NONE) {
+//				return "当前流程不允许回退";
+//			} else if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.PREVIOUS_STEP) {
+//				backToTaskDefKey = extensionPropertyDTO.getCallBackNodes();
+//				if (Strings.isEmpty(backToTaskDefKey)) {
+//					return "请设置当前流程应该回退的上一步骤！";
+//				}
+//			} else if (extensionPropertyDTO.getCallBackType() == CallBackTypeEnum.FREE_STEP) {
+//				List<String> nodes = Arrays.asList(extensionPropertyDTO.getCallBackNodes().split(","));
+//				if (Strings.isEmpty(backToTaskDefKey) || !nodes.contains(backToTaskDefKey)) {
+//					return "请设置当前流程应该回退的步骤！";
+//				}
+//			}
+//		}
 		Task currTask = taskService.createTaskQuery().taskId(taskId).singleResult();
 		String processInstanceId = currTask.getProcessInstanceId();
 		//保存任务信息
@@ -806,9 +763,9 @@ public class FlowTaskServiceImpl implements FlowTaskService {
 	@Override
 	public void setValuedDataObject(Map<String, Object> variables, String processDefinitionId, Object form, SysUser userAccount, boolean update) {
 		List<ValuedDataObject> ValuedDataObjects = repositoryService.getBpmnModel(processDefinitionId).getMainProcess().getDataObjects();
-		if (!ValuedDataObjects.stream().filter(va -> FlowConstant.PROCESS_TITLE.equals(va.getId())).findAny().isPresent()) {
-			throw Lang.makeThrow("流程应该设置标题模版数据对象，ID为 %s", FlowConstant.PROCESS_TITLE);
-		}
+//		if (!ValuedDataObjects.stream().filter(va -> FlowConstant.PROCESS_TITLE.equals(va.getId())).findAny().isPresent()) {
+//			throw Lang.makeThrow("流程应该设置标题模版数据对象，ID为 %s", FlowConstant.PROCESS_TITLE);
+//		}
 		ValuedDataObjects.stream().forEach(valued -> {
 			List<ExtensionElement> extensionElements = valued.getExtensionElements().get(CustomBpmnJsonConverter.DATA_OBJECTS_EXPRESSION);
 			if (CollectionUtils.isNotEmpty(extensionElements)) {

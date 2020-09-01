@@ -22,5 +22,5 @@ public interface FlowCustomQueryService {
 
     FlowSubmitInfoDTO getFlowSubmitInfo(String taskId);
 
-    List<Map<String, Object>> listUserTaskNodeAllReviewerUser(List<String> candidateUserNames);
+    List<Map<String, Object>> listUserTaskNodeAllReviewerUser(List<Long> candidateUserIds);
 }

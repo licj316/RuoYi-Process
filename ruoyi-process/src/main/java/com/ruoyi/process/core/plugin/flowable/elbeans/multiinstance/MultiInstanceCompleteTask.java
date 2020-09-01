@@ -61,15 +61,16 @@ public class MultiInstanceCompleteTask implements Serializable, IocElBeans {
             throw new RuntimeException("多实例实例数不应为0！");
         }
         UserTaskExtensionDTO extension = getUserTaskExtension(execution);
-        if (extension.getSignType() == SignPassType.SCALE) {
-            return this.doScale(execution, completedInstance, instancesAll, extension.getSignScale(), extension.getSignAll());
-        }
-        if (extension.getSignType() == SignPassType.ONE_VOTE_ADOPT) {
-            return this.doOneVoteAdopt(execution, completedInstance, instancesAll);
-        }
-        if (extension.getSignType() == SignPassType.ONE_VOTE_VETO) {
-            return this.doOneVoteVeto(execution, completedInstance, instancesAll);
-        }
+        // TODO 会签代码暂时注释掉
+//        if (extension.getSignType() == SignPassType.SCALE) {
+//            return this.doScale(execution, completedInstance, instancesAll, extension.getSignScale(), extension.getSignAll());
+//        }
+//        if (extension.getSignType() == SignPassType.ONE_VOTE_ADOPT) {
+//            return this.doOneVoteAdopt(execution, completedInstance, instancesAll);
+//        }
+//        if (extension.getSignType() == SignPassType.ONE_VOTE_VETO) {
+//            return this.doOneVoteVeto(execution, completedInstance, instancesAll);
+//        }
         throw new RuntimeException("未设置多实例通过制度！");
     }
 

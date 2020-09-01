@@ -54,12 +54,11 @@ public class FlowCustomQueryServiceImpl implements FlowCustomQueryService {
     }
 
     @Override
-    public List<Map<String, Object>> listUserTaskNodeAllReviewerUser(List<String> candidateUserNames) {
-        if (CollectionUtils.isEmpty(candidateUserNames)) {
+    public List<Map<String, Object>> listUserTaskNodeAllReviewerUser(List<Long> candidateUserIds) {
+        if (CollectionUtils.isEmpty(candidateUserIds)) {
             return Lists.newArrayList();
         }
-        List<Long> userIdList = candidateUserNames.stream().map(s -> Long.valueOf(s)).collect(Collectors.toList());
-        return flowCustomerQueryMapper.listUserTaskNodeAllReviewerUser(userIdList);
+        return flowCustomerQueryMapper.listUserTaskNodeAllReviewerUser(candidateUserIds);
 //        return queryMapBySql("listUserTaskNodeAllReviewerUser", NutMap.NEW(), Cnd.where("userName", "in", candidateUserNames));
     }
 }

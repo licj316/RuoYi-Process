@@ -481,33 +481,37 @@
 
     // 退回
     function handleBackToStep() {
-        if (extensionProperty.callBackType == 'FREE_STEP') {
-            var params = {procInsId: flow.procInsId, callBackNodes: extensionProperty.callBackNodes};
+        // if (extensionProperty.callBackType == 'FREE_STEP') {
+            var params = {procInsId: flow.procInsId, callBackNodes: extensionProperty.callBackNodes.join(',')};
             axios.post("/general/flow/process/getBackNode", params).then(res => {
+                debugger;
                 let data = res.data;
                 if (data.code == 0) {
                     // 自由回退
                     let backNodeHtmlArr = [];
                     console.info(data);
-                    let callBackNodes = extensionProperty.callBackNodes.split(",");
-                    let callBackNodesDesc = extensionProperty.callBackNodesDesc.split(",");
-                    for (let i = 0; i < callBackNodes.length; i++) {
-                        let backNodeAssignees = data.data[callBackNodes[i]];
+                    let callBackNodeArr = data.data;
+                    // let callBackNodes = extensionProperty.callBackNodes;
+                    // let callBackNodesDesc = extensionProperty.callBackNodesDesc.split(",");
+                    for (let i = 0; i < callBackNodeArr.length; i++) {
+                        let callBackNodeObj = callBackNodeArr[i];
+                        let backNodeAssignees = callBackNodeObj.assignees;
                         console.info(backNodeAssignees);
                         backNodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                         backNodeHtmlArr.push('    <div class="col-md-12">');
                         backNodeHtmlArr.push('        <div class="radio" style="padding-left: 0px;">');
-                        backNodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="' + callBackNodes[i] + '" name="backStepNode"> <i></i> ' + callBackNodesDesc[i] + '</label>');
+                        backNodeHtmlArr.push('            <label style="line-height: 22px;"><input type="radio" value="' + callBackNodeObj.taskDefKey + '" name="backStepNode"> <i></i> ' + callBackNodeObj.taskName + '</label>');
                         backNodeHtmlArr.push('        </div>');
                         backNodeHtmlArr.push('    </div>');
                         backNodeHtmlArr.push('    <div class="col-md-2" style="line-height: 42px;">');
                         backNodeHtmlArr.push('        处理人：');
                         backNodeHtmlArr.push('    </div>');
                         backNodeHtmlArr.push('    <div class="col-md-10" id="backNodeAssigneContainer">');
-                        for (let i = 0; i < backNodeAssignees.length; i++) {
-                            let assignee = backNodeAssignees[i];
+                        for (let idx = 0; idx < backNodeAssignees.length; idx++) {
+                            let checkedAssignee = idx == 0 ? 'checked' : '';
+                            let assignee = backNodeAssignees[idx];
                             backNodeHtmlArr.push('    <div class="radio" style="padding-left: 0px;">');
-                            backNodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="' + assignee.user_id + '" name="backStepAssignee"> <i></i> ' + assignee.user_name + '(' + assignee.user_id + ')</label>');
+                            backNodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="' + assignee.user_id + '" name="backStepAssignee' + callBackNodeObj.taskDefKey + '" ' + checkedAssignee + '> <i></i> ' + assignee.user_name + '(' + assignee.user_id + ')</label>');
                             backNodeHtmlArr.push('    </div>');
                         }
                         backNodeHtmlArr.push('    </div>');
@@ -518,9 +522,9 @@
                     $("#backNodeContainer").html(backNodeHtmlArr.join(""));
                     $("input[name='backStepNode']")[0].checked = true;
 
-                    if($("input[name='backStepAssignee']")[0]) {
-                        $("input[name='backStepAssignee']")[0].checked = true;
-                    }
+                    // if($("input[name='backStepAssignee']")[0]) {
+                    //     $("input[name='backStepAssignee']")[0].checked = true;
+                    // }
 
                     layer.open({
                         type: 1,
@@ -535,7 +539,7 @@
                             }
                             flow.nextTaskType = "Back";
                             flow.nextTaskDefKey = checkedBackNodeDefKey;
-                            flow.nextTaskAssignees = $("input[name='backStepAssignee']:checked").val();
+                            flow.nextTaskAssignees = $("input[name='backStepAssignee" + checkedBackNodeDefKey + "']:checked").val();
                             flow.comment = $("#flowBackComment").val();
                             if (!flow.comment) {
                                 $.modal.alert("请填写回退审批意见。");
@@ -552,10 +556,10 @@
                     $.modal.msg("获取退回节点信息失败");
                 }
             });
-        } else {
-            // 划线回退
-            handleDoBackToStep()
-        }
+        // } else {
+        //     // 划线回退
+        //     handleDoBackToStep()
+        // }
     }
 
     function handleDoBackToStep() {

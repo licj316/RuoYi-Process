@@ -15,7 +15,7 @@ public class ISysUserRoleServiceImpl implements ISysUserRoleService {
 	SysUserRoleMapper sysUserRoleMapper;
 
 	@Override
-	public List<SysUser> selectUserListByRoleKeyList(List<String> roleKeyList) {
-		return sysUserRoleMapper.selectUserListByRoleKeyList(roleKeyList);
+	public List<SysUser> selectUserListByRoleIdList(List<Long> roleIdList) {
+		return sysUserRoleMapper.selectUserListByRoleIdList(roleIdList);
 	}
 }

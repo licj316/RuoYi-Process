@@ -42,12 +42,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </foreach> 
 	</delete>
 
-	<select id="selectUserListByRoleKeyList" resultType="SysUser">
+	<select id="selectUserListByRoleIdList" parameterType="list" resultMap="com.ruoyi.system.mapper.SysUserMapper.SysUserResult">
 	    SELECT SU.*
 		FROM sys_user SU
 		LEFT JOIN sys_user_role SUR ON SU.user_id = SUR.user_id
 		LEFT JOIN sys_role SR ON SUR.role_id = SR.role_id
-		WHERE SR.role_key IN ('admin', 'common')
-		group by login_name;
+		WHERE SR.role_id IN
+		<foreach collection="list" item="roleid" separator="," open="(" close=")">
+			#{roleid}
+		</foreach>
 	</select>
 </mapper> 
