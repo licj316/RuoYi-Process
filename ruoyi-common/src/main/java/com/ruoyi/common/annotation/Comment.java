@@ -1,1 +1,1 @@
-package com.ruoyi.common.annotation;import java.lang.annotation.ElementType;import java.lang.annotation.Target;@Target(ElementType.FIELD)public @interface Comment {	public String value() default "";}
+package com.ruoyi.common.annotation;import java.lang.annotation.*;@Retention(RetentionPolicy.RUNTIME)@Target({ElementType.TYPE, ElementType.FIELD})@Documentedpublic @interface Comment {	public String value() default "";}
