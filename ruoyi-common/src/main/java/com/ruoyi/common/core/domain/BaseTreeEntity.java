@@ -27,10 +27,10 @@ import java.util.List;
 public class BaseTreeEntity extends BaseEntity implements Serializable {
 
 	@Comment("主键")
-	protected String id;
+	protected Long id;
 
 	@Comment("上级节点")
-	protected String pid;
+	protected Long pid;
 
 	@Comment("上级节点名称")
 	protected String pName;

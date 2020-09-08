@@ -56,8 +56,8 @@ public class ProcessDesignController {
     }
 
     @RequestMapping(value = "/model/list", method = RequestMethod.GET)
-    public List<Model> listModel() {
-        List<Model> listModel = processDesignService.listModel();
+    public List<Model> listModel(@RequestParam(value = "flowTypeId", required = false) Long flowTypeId) {
+        List<Model> listModel = processDesignService.listModel(flowTypeId);
         return listModel;
     }
 

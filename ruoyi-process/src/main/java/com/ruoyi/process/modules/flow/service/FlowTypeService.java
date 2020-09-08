@@ -23,11 +23,11 @@ public interface FlowTypeService {
 
     String fetchCategoryName(Long categoryId);
 
-    int deleteById(String id);
+    int deleteById(Long id);
 
-    int count(Map<String, String> params);
+    int count(Map<String, Object> params);
 
-    FlowType save(FlowType flowType);
+    int save(FlowType flowType);
 
     int update(FlowType flowType);
 }

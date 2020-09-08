@@ -9,7 +9,7 @@
         <result property="name" column="name"/>
         <result property="virtualNode" column="virtual_node"/>
         <result property="pid" column="pid"/>
-        <result property="pName" column="p_name"/>
+        <result property="pName" column="pname"/>
         <result property="shortNo" column="short_no"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
@@ -22,13 +22,32 @@
     </select>
 
     <select id="findAllOrderByShortNoAsc" resultType="FlowType">
-        SELECT * FROM FLOW_TYPE WHERE ID = #{id};
+        SELECT * FROM FLOW_TYPE
     </select>
 
     <insert id="save" parameterType="FlowType">
+        INSERT FLOW_TYPE (NAME, PID, PNAME, SHORT_NO, CREATE_TIME, CREATE_BY)
+        VALUES (#{name}, #{pid}, #{pName}, #{shortNo}, #{createTime}, #{createBy});
     </insert>
 
     <update id="update" parameterType="FlowType">
+        UPDATE FLOW_TYPE SET
+        <if test="pid != null and pid != ''">
+            pid = #{pid},
+        </if>
+        <if test="pName != null and pName != ''">
+            PNAME = #{pName},
+        </if>
+        <if test="shortNo != null and shortNo != ''">
+            SHORT_NO = #{shortNo},
+        </if>
+        <if test="updateBy != null and updateBy != ''">
+            updateBy = #{updateBy},
+        </if>
+        <if test="updateTime != null and updateTime != ''">
+            UPDATE_TIME = #{updateTime},
+        </if>
+        WHERE ID = #{id}
     </update>
 
     <delete id="deleteById" parameterType="string">

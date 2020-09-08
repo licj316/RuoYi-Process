@@ -42,18 +42,18 @@ public class FlowTypeServiceImpl implements FlowTypeService {
     }
 
     @Override
-    public int deleteById(String id) {
+    public int deleteById(Long id) {
+        return flowTypeMapper.deleteById(id);
+    }
+
+    @Override
+    public int count(Map<String, Object> params) {
         return 0;
     }
 
     @Override
-    public int count(Map<String, String> params) {
-        return 0;
-    }
-
-    @Override
-    public FlowType save(FlowType flowType) {
-        return null;
+    public int save(FlowType flowType) {
+        return flowTypeMapper.save(flowType);
     }
 
     @Override

@@ -18,7 +18,7 @@ public interface ProcessDesignService {
     
     void createModel(String key,String name, String category, String descp) throws UnsupportedEncodingException;
     
-    List<Model> listModel();
+    List<Model> listModel(Long flowTypeId);
     
     void deleteModel(String modelId);
     

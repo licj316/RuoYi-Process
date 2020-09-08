@@ -8,8 +8,8 @@
 package com.ruoyi.common.utils;
 
 
-
 import com.ruoyi.common.core.domain.BaseTreeEntity;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,12 +28,12 @@ public class TreeUtil {
      * @param parentId
      * @return
      */
-    public static List<BaseTreeEntity> createTree(List<? extends BaseTreeEntity> entities, String parentId) {
+    public static List<BaseTreeEntity> createTree(List<? extends BaseTreeEntity> entities, Long parentId) {
         List<BaseTreeEntity> childList = new ArrayList<>();
         for (BaseTreeEntity c : entities) {
-            String id = c.getId();
-            String pid = c.getPid();
-            if (parentId.equals(pid)) {
+            Long id = c.getId();
+            Long pid = c.getPid();
+            if ((pid == null && parentId == null) || pid.equals(parentId)) {
                 List<? extends BaseTreeEntity> childs = createTree(entities, id);
                 c.setChildren(childs);
                 childList.add(c);
@@ -61,5 +61,10 @@ public class TreeUtil {
             shortMenu.add(c);
         }
         return shortMenu;
+    }
+
+    public static void main(String[] args) {
+        String aaa = null;
+        System.out.println(Long.parseLong(aaa));
     }
 }

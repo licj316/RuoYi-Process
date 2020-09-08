@@ -16,6 +16,7 @@ import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.DeploymentBuilder;
 import org.flowable.engine.repository.Model;
+import org.flowable.engine.repository.ModelQuery;
 import org.flowable.ui.common.util.XmlUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -93,8 +94,12 @@ public class ProcessDesignServiceImpl implements ProcessDesignService,ModelDataJ
      * @return
      */
     @Override
-    public List<Model> listModel() {
-        return repositoryService.createModelQuery().list();
+    public List<Model> listModel(Long flowTypeId) {
+        ModelQuery modelQuery = repositoryService.createModelQuery();
+        if(null != flowTypeId) {
+            modelQuery.modelCategory(String.valueOf(flowTypeId));
+        }
+        return modelQuery.list();
     }
 
     /**

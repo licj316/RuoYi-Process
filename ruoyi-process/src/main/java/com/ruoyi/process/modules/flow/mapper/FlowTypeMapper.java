@@ -12,15 +12,11 @@ public interface FlowTypeMapper {
 
 	List<FlowType> findAllOrderByShortNoAsc();
 
-	// TODO
-	FlowType save(FlowType flowType);
+	int save(FlowType flowType);
 
-	// TODO
 	int update(FlowType flowType);
 
-	int deleteById(String id);
+	int deleteById(Long id);
 
 	int count(Map<String, String> params);
-
-
 }
