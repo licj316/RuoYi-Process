@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.process.core.plugin.flowable.mapper.FlowModelMapper">
+
+    <select id="listPage" parameterType="hashMap" resultType="hashMap">
+        SELECT ARM.ID_               AS "id",
+               ARM.CATEGORY_         AS "category",
+               FT.NAME               AS "categoryName",
+               ARM.KEY_              AS "key",
+               ARM.NAME_             AS "name",
+               ARM.CREATE_TIME_      AS "createTime",
+               ARM.LAST_UPDATE_TIME_ AS "lastUpdateTime",
+               ARM.VERSION_          AS "version",
+               ARM.DEPLOYMENT_ID_    AS "deploymentId"
+        FROM ACT_RE_MODEL ARM
+        LEFT JOIN FLOW_TYPE FT
+                  ON ARM.CATEGORY_ = FT.ID
+        <where>
+            <if test="category != null and category != ''">
+                AND ARM.CATEGORY_ = #{category}
+            </if>
+        </where>
+        ORDER BY ARM.ID_ ASC
+    </select>
+
+</mapper>

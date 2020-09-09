@@ -33,7 +33,7 @@ public class TreeUtil {
         for (BaseTreeEntity c : entities) {
             Long id = c.getId();
             Long pid = c.getPid();
-            if ((pid == null && parentId == null) || pid.equals(parentId)) {
+            if ((pid == null && parentId == null) || (pid != null && pid.equals(parentId))) {
                 List<? extends BaseTreeEntity> childs = createTree(entities, id);
                 c.setChildren(childs);
                 childList.add(c);

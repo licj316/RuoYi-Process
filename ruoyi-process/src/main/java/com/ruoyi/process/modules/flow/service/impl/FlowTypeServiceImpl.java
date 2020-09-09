@@ -48,7 +48,7 @@ public class FlowTypeServiceImpl implements FlowTypeService {
 
     @Override
     public int count(Map<String, Object> params) {
-        return 0;
+        return flowTypeMapper.count(params);
     }
 
     @Override
@@ -58,6 +58,6 @@ public class FlowTypeServiceImpl implements FlowTypeService {
 
     @Override
     public int update(FlowType flowType) {
-        return 0;
+        return flowTypeMapper.update(flowType);
     }
 }

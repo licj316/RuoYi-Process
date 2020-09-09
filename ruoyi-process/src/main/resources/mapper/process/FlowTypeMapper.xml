@@ -41,24 +41,23 @@
         <if test="shortNo != null and shortNo != ''">
             SHORT_NO = #{shortNo},
         </if>
-        <if test="updateBy != null and updateBy != ''">
-            updateBy = #{updateBy},
-        </if>
-        <if test="updateTime != null and updateTime != ''">
-            UPDATE_TIME = #{updateTime},
-        </if>
+        UPDATE_BY = #{updateBy},
+        UPDATE_TIME = #{updateTime},
         WHERE ID = #{id}
     </update>
 
-    <delete id="deleteById" parameterType="string">
+    <delete id="deleteById" parameterType="long">
         DELETE FROM FLOW_TYPE WHERE ID = #{id}
     </delete>
 
-    <select id="count" parameterType="hashMap">
+    <select id="count" parameterType="hashMap" resultType="int">
         SELECT COUNT(1) FROM FLOW_TYPE
         <where>
             <if test="pid != null and pid != ''">
                 pid = #{pid}
+            </if>
+            <if test="name != null and name != ''">
+                name = #{name}
             </if>
         </where>
     </select>

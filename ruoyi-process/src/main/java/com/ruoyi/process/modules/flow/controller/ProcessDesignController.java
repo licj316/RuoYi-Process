@@ -3,6 +3,7 @@ package com.ruoyi.process.modules.flow.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.process.core.plugin.flowable.service.ProcessDesignService;
 import org.apache.commons.io.IOUtils;
 import org.flowable.engine.HistoryService;
@@ -56,9 +57,11 @@ public class ProcessDesignController {
     }
 
     @RequestMapping(value = "/model/list", method = RequestMethod.GET)
-    public List<Model> listModel(@RequestParam(value = "flowTypeId", required = false) Long flowTypeId) {
-        List<Model> listModel = processDesignService.listModel(flowTypeId);
-        return listModel;
+    public AjaxResult listModel(@RequestParam(value = "flowTypeId", required = false) Long flowTypeId) {
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("category", flowTypeId);
+        List<Map<String, Object>> listModel = processDesignService.listModelPage(params);
+        return AjaxResult.success(listModel);
     }
 
 

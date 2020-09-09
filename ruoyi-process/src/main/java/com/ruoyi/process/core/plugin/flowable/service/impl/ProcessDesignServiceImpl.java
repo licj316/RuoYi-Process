@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoyi.process.core.plugin.flowable.converter.CustomerBpmnXMLConverter;
+import com.ruoyi.process.core.plugin.flowable.mapper.FlowModelMapper;
 import com.ruoyi.process.core.plugin.flowable.service.ProcessDesignService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author yiyoung
@@ -43,6 +45,9 @@ public class ProcessDesignServiceImpl implements ProcessDesignService,ModelDataJ
     private RepositoryService repositoryService;
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private FlowModelMapper flowModelMapper;
 
     /**
      * 保存模型
@@ -85,7 +90,6 @@ public class ProcessDesignServiceImpl implements ProcessDesignService,ModelDataJ
 //        editorNode.put("stencilset", stencilSetNode);
 
         repositoryService.addModelEditorSource(id, "".getBytes());
-        return;
     }
 
     /**
@@ -94,12 +98,14 @@ public class ProcessDesignServiceImpl implements ProcessDesignService,ModelDataJ
      * @return
      */
     @Override
-    public List<Model> listModel(Long flowTypeId) {
-        ModelQuery modelQuery = repositoryService.createModelQuery();
-        if(null != flowTypeId) {
-            modelQuery.modelCategory(String.valueOf(flowTypeId));
-        }
-        return modelQuery.list();
+    public List<Map<String, Object>> listModelPage(Map<String, Object> params) {
+//        ModelQuery modelQuery = repositoryService.createModelQuery();
+//        if(null != flowTypeId) {
+//            modelQuery.modelCategory(String.valueOf(flowTypeId));
+//        }
+//        return modelQuery.list();
+
+        return flowModelMapper.listPage(params);
     }
 
     /**
