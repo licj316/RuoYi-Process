@@ -17,6 +17,7 @@ import com.ruoyi.process.core.plugin.flowable.constant.FlowConstant;
 import com.ruoyi.process.modules.flow.domain.FlowType;
 import com.ruoyi.process.modules.flow.service.FlowTypeService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.ModelQuery;
 import org.nutz.lang.Strings;
@@ -130,6 +131,17 @@ public class FlowTypeController extends BaseProcessController {
                 flowTypeService.save(flowType);
             }
             return AjaxResult.success("保存成功");
+        }
+    }
+
+    @PostMapping("/sort")
+    @ResponseBody
+    public AjaxResult sort(@RequestBody List<Map<String, Object>> paramList) {
+        if(CollectionUtils.isEmpty(paramList)) {
+            return AjaxResult.error("排序列表长度需大于0!");
+        } else {
+            flowTypeService.sort(paramList);
+            return AjaxResult.success("操作成功", paramList);
         }
     }
 }

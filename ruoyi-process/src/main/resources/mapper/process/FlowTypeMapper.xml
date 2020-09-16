@@ -21,8 +21,8 @@
         SELECT * FROM FLOW_TYPE WHERE ID = #{id};
     </select>
 
-    <select id="findAllOrderByShortNoAsc" resultType="FlowType">
-        SELECT * FROM FLOW_TYPE
+    <select id="findAllOrderByShortNoAsc" resultMap="FlowTypeResult">
+        SELECT * FROM FLOW_TYPE ORDER BY SHORT_NO ASC
     </select>
 
     <insert id="save" parameterType="FlowType">
@@ -38,11 +38,14 @@
         <if test="pName != null and pName != ''">
             PNAME = #{pName},
         </if>
+        <if test="name != null and name != ''">
+            NAME = #{name},
+        </if>
         <if test="shortNo != null and shortNo != ''">
             SHORT_NO = #{shortNo},
         </if>
         UPDATE_BY = #{updateBy},
-        UPDATE_TIME = #{updateTime},
+        UPDATE_TIME = #{updateTime}
         WHERE ID = #{id}
     </update>
 
@@ -54,14 +57,47 @@
         SELECT COUNT(1) FROM FLOW_TYPE
         <where>
             <if test="pid != null and pid != ''">
-                pid = #{pid}
+                PID = #{pid}
+            </if>
+            <if test="id != null and id != ''">
+                ID = #{id}
             </if>
             <if test="name != null and name != ''">
-                name = #{name}
+                NAME = #{name}
             </if>
         </where>
     </select>
 
+    <update id="sort" parameterType="list">
+        UPDATE FLOW_TYPE
+        <trim prefix="SET" suffixOverrides=",">
+            <trim prefix="PID = CASE" suffix="end,">
+                <foreach collection="list" item="item" index="index">
+                    <if test="item.pid!=null">
+                        WHEN ID=#{item.id} THEN #{item.pid}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="PNAME = case" suffix="end,">
+                <foreach collection="list" item="item" index="index">
+                    <if test="item.pname!=null">
+                        when ID=#{item.id} then #{item.pname}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="SHORT_NO = case" suffix="end,">
+                <foreach collection="list" item="item" index="index">
+                    <if test="item.shortNo!=null">
+                        when ID=#{item.id} then #{item.shortNo}
+                    </if>
+                </foreach>
+            </trim>
+        </trim>
+        WHERE ID IN
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item.id,jdbcType=BIGINT}
+        </foreach>
+    </update>
 
 </mapper>
 

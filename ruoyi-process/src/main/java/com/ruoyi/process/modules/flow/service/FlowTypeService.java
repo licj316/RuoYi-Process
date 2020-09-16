@@ -30,4 +30,6 @@ public interface FlowTypeService {
     int save(FlowType flowType);
 
     int update(FlowType flowType);
+
+    int sort(List<Map<String, Object>> sortList);
 }

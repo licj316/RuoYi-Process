@@ -60,4 +60,9 @@ public class FlowTypeServiceImpl implements FlowTypeService {
     public int update(FlowType flowType) {
         return flowTypeMapper.update(flowType);
     }
+
+    @Override
+    public int sort(List<Map<String, Object>> sortList) {
+        return flowTypeMapper.sort(sortList);
+    }
 }

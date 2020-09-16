@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.process.core.plugin.flowable.service.ProcessDesignService;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
@@ -64,6 +65,21 @@ public class ProcessDesignController {
         return AjaxResult.success(listModel);
     }
 
+    @PutMapping(value = "/model/edit")
+    public AjaxResult listModel(@RequestBody Map<String, Object> params) {
+        String modelId = Objects.toString(params.get("modelId"), "");
+        String category = Objects.toString(params.get("category"), "");
+
+        if(StringUtils.isBlank(modelId)) {
+            AjaxResult.error("modelId不允许为空！");
+        }
+        Model model = repositoryService.createModelQuery().modelId(modelId).singleResult();
+        if(StringUtils.isNotBlank(category)) {
+            model.setCategory(category);
+        }
+        repositoryService.saveModel(model);
+        return AjaxResult.success("操作成功！");
+    }
 
     @ResponseBody
     @GetMapping(value = "/deleteModel")

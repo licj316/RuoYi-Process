@@ -1,10 +1,3 @@
-/*
- * Copyright (c) 2019- 2019 threefish(https://gitee.com/threefish https://github.com/threefish) All Rights Reserved.
- * 本项目完全开源，商用完全免费。但请勿侵犯作者合法权益，如申请软著等。
- * 最后修改时间：2019/10/07 18:26:07
- * 源 码 地 址：https://gitee.com/threefish/NutzFw
- */
-
 package com.ruoyi.process.core.plugin.flowable.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,7 +7,6 @@ import com.ruoyi.process.core.plugin.flowable.converter.CustomUserTaskJsonConver
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskStatusEnum;
 import com.ruoyi.process.core.plugin.flowable.vo.FlowTaskVO;
-import com.ruoyi.process.modules.flow.domain.FlowInstExtend;
 import com.ruoyi.system.domain.SysRole;
 import com.ruoyi.system.domain.SysUser;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +19,6 @@ import org.flowable.editor.constants.ModelDataJsonConstants;
 import org.flowable.editor.language.json.converter.BpmnJsonConverter;
 import org.flowable.engine.impl.bpmn.behavior.MultiInstanceActivityBehavior;
 import org.flowable.engine.repository.Model;
-import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.idm.engine.impl.persistence.entity.GroupEntity;
 import org.flowable.idm.engine.impl.persistence.entity.GroupEntityImpl;
 import org.flowable.idm.engine.impl.persistence.entity.UserEntity;
@@ -41,7 +32,6 @@ import org.nutz.json.JsonFormat;
 import org.nutz.lang.Strings;
 import org.nutz.lang.util.NutMap;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

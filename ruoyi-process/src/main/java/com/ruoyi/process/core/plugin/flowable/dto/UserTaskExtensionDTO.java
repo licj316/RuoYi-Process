@@ -70,26 +70,26 @@ public class UserTaskExtensionDTO {
      */
     List<String> callBackNodes;
 
-//    /**
-//     * 会签类型
-//     */
-//    MultiInstanceLoopCharacteristicsType multiInstanceLoopCharacteristics;
-//    /**
-//     * 通过类型
-//     */
-//    SignPassType signType;
-//    /**
-//     * 同意通过比例
-//     */
-//    Integer signScale;
-//    /**
-//     * 总实例数量
-//     */
-//    Integer signNrOfInstances;
-//    /**
-//     * 会签人全部参与处理
-//     */
-//    Boolean signAll;
+    /**
+     * 会签类型
+     */
+    MultiInstanceLoopCharacteristicsType multiInstanceLoopCharacteristics;
+    /**
+     * 通过类型
+     */
+    SignPassType signType;
+    /**
+     * 同意通过比例
+     */
+    Integer signScale;
+    /**
+     * 总实例数量
+     */
+    Integer signNrOfInstances;
+    /**
+     * 会签人全部参与处理
+     */
+    Boolean signAll;
 
 
     public String getUserTaskId() {
@@ -194,6 +194,46 @@ public class UserTaskExtensionDTO {
 
     public void setCallBackNodes(List<String> callBackNodes) {
         this.callBackNodes = callBackNodes;
+    }
+
+    public MultiInstanceLoopCharacteristicsType getMultiInstanceLoopCharacteristics() {
+        return multiInstanceLoopCharacteristics;
+    }
+
+    public void setMultiInstanceLoopCharacteristics(MultiInstanceLoopCharacteristicsType multiInstanceLoopCharacteristics) {
+        this.multiInstanceLoopCharacteristics = multiInstanceLoopCharacteristics;
+    }
+
+    public SignPassType getSignType() {
+        return signType;
+    }
+
+    public void setSignType(SignPassType signType) {
+        this.signType = signType;
+    }
+
+    public Integer getSignScale() {
+        return signScale;
+    }
+
+    public void setSignScale(Integer signScale) {
+        this.signScale = signScale;
+    }
+
+    public Integer getSignNrOfInstances() {
+        return signNrOfInstances;
+    }
+
+    public void setSignNrOfInstances(Integer signNrOfInstances) {
+        this.signNrOfInstances = signNrOfInstances;
+    }
+
+    public Boolean getSignAll() {
+        return signAll;
+    }
+
+    public void setSignAll(Boolean signAll) {
+        this.signAll = signAll;
     }
 
     public static UserTaskExtensionDTO NEW() {

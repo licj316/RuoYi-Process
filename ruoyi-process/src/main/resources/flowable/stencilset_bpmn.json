@@ -17,10 +17,10 @@
       ]
     },
     {
-      "name": "usertaskexpansionpackage",
+      "name": "usertaskextensionpackage",
       "properties": [
         {
-          "id": "usertaskexpansion",
+          "id": "usertaskextension",
           "type": "Complex",
           "title": "扩展属性",
           "value": "",

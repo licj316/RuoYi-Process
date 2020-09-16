@@ -19,4 +19,6 @@ public interface FlowTypeMapper {
 	int deleteById(Long id);
 
 	int count(Map<String, Object> params);
+
+	int sort(List<Map<String, Object>> sortList);
 }

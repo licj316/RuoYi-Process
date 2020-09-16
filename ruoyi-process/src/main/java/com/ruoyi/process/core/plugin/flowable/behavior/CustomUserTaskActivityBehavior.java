@@ -54,11 +54,11 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
             userTask.setAssignee(null);
             //会签节点设置变量
             // TODO 暂不考虑会签
-//            if (taskExtensionDTO.getMultiInstanceLoopCharacteristics() != MultiInstanceLoopCharacteristicsType.None) {
-//                userTask.setAssignee("${" + FlowConstant.MULTIINSTANCE_ASSIGNEES_VAR + "}");
-//                //添加完成多实例事件监听器
-//                FlowUtils.addCompleteMultiInstanceTaskListener(userTask.getTaskListeners());
-//            }
+            if (taskExtensionDTO.getMultiInstanceLoopCharacteristics() != MultiInstanceLoopCharacteristicsType.None) {
+                userTask.setAssignee("${" + FlowConstant.MULTIINSTANCE_ASSIGNEES_VAR + "}");
+                //添加完成多实例事件监听器
+                FlowUtils.addCompleteMultiInstanceTaskListener(userTask.getTaskListeners());
+            }
         }
 
     }
@@ -160,6 +160,4 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
         Object value = expressionManager.createExpression("${" + expression + "}").getValue(execution);
         return value == null ? null : value.toString();
     }
-
-
 }
