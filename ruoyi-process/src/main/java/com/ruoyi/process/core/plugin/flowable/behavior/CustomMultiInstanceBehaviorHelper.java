@@ -15,17 +15,16 @@ import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskReviewerScopeEnum;
 import com.ruoyi.process.core.plugin.flowable.util.FlowUtils;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.flowable.bpmn.model.Activity;
 import org.flowable.bpmn.model.UserTask;
+import org.flowable.common.engine.api.FlowableException;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.impl.bpmn.behavior.MultiInstanceActivityBehavior;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,9 +44,10 @@ public class CustomMultiInstanceBehaviorHelper {
         if (activity instanceof UserTask) {
             userTask = (UserTask) activity;
             taskExtensionDTO = FlowUtils.getUserTaskExtension(userTask);
-            if (Objects.nonNull(taskExtensionDTO)) {
-                multiInstanceActivityBehavior.setCompletionCondition("${multiInstanceCompleteTask.accessCondition(execution)}");
-            }
+            // TODO 暂时注释掉，不使用nutzfw提供的多实例节点处理方式
+//            if (Objects.nonNull(taskExtensionDTO)) {
+//                multiInstanceActivityBehavior.setCompletionCondition("${multiInstanceCompleteTask.accessCondition(execution)}");
+//            }
         }
 
     }
@@ -69,8 +69,8 @@ public class CustomMultiInstanceBehaviorHelper {
      */
     public void createMultiInstances(DelegateExecution multiInstanceRootExecution) {
         if (Objects.nonNull(taskExtensionDTO)) {
-            List<String> assigneesCollection = new ArrayList<>();
-            TaskReviewerScopeEnum taskReviewerScope = taskExtensionDTO.getTaskReviewerScope();
+//            List<String> assigneesCollection = new ArrayList<>();
+//            TaskReviewerScopeEnum taskReviewerScope = taskExtensionDTO.getTaskReviewerScope();
             // TODO 暂不考虑会签
 //            switch (taskReviewerScope) {
 //                case MULTIPLE_USERS:
@@ -85,11 +85,16 @@ public class CustomMultiInstanceBehaviorHelper {
 //                default:
 //                    break;
 //            }
-            if (CollectionUtils.isEmpty(assigneesCollection)) {
-                throw new RuntimeException("[" + userTask.getName() + "]未设置审批人员");
+//            if (CollectionUtils.isEmpty(assigneesCollection)) {
+//                throw new RuntimeException("[" + userTask.getName() + "]未设置审批人员");
+//            }
+
+            String assignees = Objects.toString(multiInstanceRootExecution.getVariable(FlowConstant.NEXT_TASK_ASSIGNEES), "");
+            if(StringUtils.isBlank(assignees)){
+                throw new FlowableException("请选择下一步审批人");
             }
             //指定多实例审核人
-            multiInstanceRootExecution.setVariable(FlowConstant.MULTIINSTANCE_ASSIGNEES_COLLECTION, assigneesCollection);
+            multiInstanceRootExecution.setVariable(FlowConstant.MULTIINSTANCE_ASSIGNEES_COLLECTION, Arrays.asList(assignees.split(",")));
         }
     }
 

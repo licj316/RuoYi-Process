@@ -52,7 +52,7 @@ public class FlowableConfig implements EngineConfigurationConfigurer<SpringProce
 		//自定义行为类工厂
 		engineConfiguration.setActivityBehaviorFactory(new CustomDefaultActivityBehaviorFactory());
 		engineConfiguration.setCreateUserTaskInterceptor(customCreateUserTaskInterceptor);
-		engineConfiguration.setBeans(initElBeans());
+//		engineConfiguration.setBeans(initElBeans());
 	}
 
 	/**

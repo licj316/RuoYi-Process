@@ -57,7 +57,7 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
             if (taskExtensionDTO.getMultiInstanceLoopCharacteristics() != MultiInstanceLoopCharacteristicsType.None) {
                 userTask.setAssignee("${" + FlowConstant.MULTIINSTANCE_ASSIGNEES_VAR + "}");
                 //添加完成多实例事件监听器
-                FlowUtils.addCompleteMultiInstanceTaskListener(userTask.getTaskListeners());
+//                FlowUtils.addCompleteMultiInstanceTaskListener(userTask.getTaskListeners());
             }
         }
 
@@ -79,11 +79,16 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
         System.out.println(nextTaskType);
         System.out.println(nextTaskDefKey);
         System.out.println(nextTaskAssignees);
-        if(StringUtils.isNotBlank(nextTaskAssignees)) {
-            assignee = nextTaskAssignees;
-        } else {
-            throw new RuntimeException("请选择下一步审批人！");
+
+
+        if(null == taskExtensionDTO.getMultiInstanceLoopCharacteristics() || MultiInstanceLoopCharacteristicsType.None == taskExtensionDTO.getMultiInstanceLoopCharacteristics()) {
+            if(StringUtils.isNotBlank(nextTaskAssignees)) {
+                assignee = nextTaskAssignees;
+            } else {
+                throw new RuntimeException("请选择下一步审批人！");
+            }
         }
+
 //        if (taskExtensionDTO != null) {
 //            //流程发起者
 //            String flowSubmitter = getExpressionValue(FlowConstant.SUBMITTER, expressionManager, execution);

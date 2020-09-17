@@ -28,8 +28,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 /**
- * @author huchuc@vip.qq.com
- * @date: 2019/8/27
+ * 在创建用户任务之前做操作和创建用户任务之后做操作
  */
 @Component
 public class CustomCreateUserTaskInterceptor implements CreateUserTaskInterceptor {
@@ -50,7 +49,6 @@ public class CustomCreateUserTaskInterceptor implements CreateUserTaskIntercepto
             inited = true;
         }
     }
-
 
     @Override
     public void beforeCreateUserTask(CreateUserTaskBeforeContext context) {
@@ -99,7 +97,7 @@ public class CustomCreateUserTaskInterceptor implements CreateUserTaskIntercepto
 //                this.afterEvalJs(formData, dto, ctx.getTaskEntity());
 //                externalFormExecutor.insertOrUpdateFormData(formData);
 //            }
-//            //创建用户任务前执行
+//            //创建用户任务后执行
 //            externalFormExecutor.afterCreateUserTask(ctx.getExecution(), ctx.getUserTask(), dto, ctx.getProcessInstanceBusinessKey(), ctx.getTaskEntity());
 //        }
     }
