@@ -92,7 +92,7 @@ public class ProcessDesignController {
      */
     @RequestMapping(value = "/model/{modelId}/xml/save", method = RequestMethod.POST, produces = "application/json")
     @ResponseStatus(value = HttpStatus.OK)
-    public void saveModelXml(@PathVariable String modelId, @RequestBody MultiValueMap<String, String> values) {
+    public void saveModelXml(@PathVariable String modelId, @RequestBody Map<String, String> values) {
         processDesignService.saveModelXml(modelId, values);
     }
 

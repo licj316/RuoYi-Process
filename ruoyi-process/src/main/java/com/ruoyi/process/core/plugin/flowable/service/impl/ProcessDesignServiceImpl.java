@@ -213,7 +213,7 @@ public class ProcessDesignServiceImpl implements ProcessDesignService,ModelDataJ
      */
     @Override
     public void saveModelXml(@PathVariable String modelId,
-                             @RequestBody MultiValueMap<String, String> values) {
+                             @RequestBody Map<String, String> values) {
         ByteArrayOutputStream outStream = null;
         try {
 
@@ -228,14 +228,14 @@ public class ProcessDesignServiceImpl implements ProcessDesignService,ModelDataJ
             // 版本
             model.setVersion(model.getVersion() + 1);
             repositoryService.saveModel(model);
-            String bpmnXml = values.getFirst("bpmn_xml");
+            String bpmnXml = values.get("bpmn_xml");
 //            String bpmnXml = BpmnConverterUtil
 //                    .converterXmlToJson(values.getFirst("bpmn_xml")).toString();
 //            XMLInputFactory xif = XmlUtil.createSafeXmlInputFactory();
 //            InputStream is = new ByteArrayInputStream(bpmnXml.getBytes());
 //            bpmnXMLConverter.convertToBpmnModel(xif.createXMLStreamReader(is));
             repositoryService.addModelEditorSource(model.getId(), bpmnXml.getBytes("utf-8"));
-            repositoryService.addModelEditorSourceExtra(model.getId(), values.getFirst("svg_xml").getBytes("utf-8"));
+            repositoryService.addModelEditorSourceExtra(model.getId(), values.get("svg_xml").getBytes("utf-8"));
         } catch (Exception e) {
             log.error("Error saving model", e);
             throw new FlowableException("Error saving model", e);

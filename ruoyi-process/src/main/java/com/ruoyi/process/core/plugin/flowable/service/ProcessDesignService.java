@@ -29,5 +29,5 @@ public interface ProcessDesignService {
     JSONObject getEditorXml(@PathVariable String modelId);
 
     void saveModelXml(@PathVariable String modelId,
-                      @RequestBody MultiValueMap<String, String> values);
+                      @RequestBody Map<String, String> values);
 }
