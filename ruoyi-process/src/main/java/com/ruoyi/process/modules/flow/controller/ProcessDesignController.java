@@ -5,6 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.process.core.plugin.flowable.service.ProcessDesignService;
+import com.ruoyi.system.domain.SysRole;
+import com.ruoyi.system.domain.SysUser;
+import com.ruoyi.system.service.ISysRoleService;
+import com.ruoyi.system.service.ISysUserService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.engine.HistoryService;
@@ -24,10 +28,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @Author yiyoung
@@ -47,6 +53,10 @@ public class ProcessDesignController {
     private ProcessDesignService processDesignService;
     @Autowired
     private TaskService taskService;
+    @Autowired
+    private ISysRoleService sysRoleService;
+    @Autowired
+    private ISysUserService sysUserService;
 
     /**
      * 创建模型
@@ -70,11 +80,11 @@ public class ProcessDesignController {
         String modelId = Objects.toString(params.get("modelId"), "");
         String category = Objects.toString(params.get("category"), "");
 
-        if(StringUtils.isBlank(modelId)) {
+        if (StringUtils.isBlank(modelId)) {
             AjaxResult.error("modelId不允许为空！");
         }
         Model model = repositoryService.createModelQuery().modelId(modelId).singleResult();
-        if(StringUtils.isNotBlank(category)) {
+        if (StringUtils.isNotBlank(category)) {
             model.setCategory(category);
         }
         repositoryService.saveModel(model);
@@ -110,8 +120,7 @@ public class ProcessDesignController {
         Map<String, String> map = new HashMap<>();
         try {
             String bpmnXML = IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8);
-            // TODO 查询用户列表
-//            activityList.stream().filter(historicActivityInstance -> "".equals(historicActivityInstance.getActivityType())).map(historicActivityInstance -> historicActivityInstance.getAssignee()).collect(Collectors.toList());
+            // 查询用户列表
             ObjectMapper objectMapper = new ObjectMapper();
 
             List<Comment> processComments = taskService.getProcessInstanceComments(procInsId);
@@ -157,27 +166,22 @@ public class ProcessDesignController {
     }
 
     @GetMapping(value = "/task/reviewer/list")
-    public List<Map<String, String>> getApproverInfo(@Param("reviewerType") String reviewerType, @Param("searchKey") String searchKey) throws Exception {
+    public List<Map<String, String>> getApproverInfo(@RequestParam("reviewerType") String reviewerType, @RequestParam(value = "searchKey", required = false) String searchKey) throws Exception {
         List<Map<String, String>> res;
-        int size = 0;
         if ("USER_ROLE_GROUPS".equals(reviewerType)) {
-            List<Map<String, String>> roleList = new ArrayList<>();
-            List<String> roleNameList = Arrays.asList("运营", "采购", "销售", "CEO", "CTO", "CFO");
-            size = roleNameList.size();
-            for (int i = 0; i < size; i++) {
-                roleList.add(ImmutableMap.of("name", roleNameList.get(i), "id", i + ""));
-            }
-            res = roleList.stream().filter(tmpMap -> tmpMap.get("name").contains(searchKey)).collect(Collectors.toList());
+            SysRole sysRole = new SysRole();
+            sysRole.setRoleName(searchKey);
+            sysRole.setRoleKey(searchKey);
+            List<SysRole> sysRoles = sysRoleService.selectRoleList(sysRole);
+            res = sysRoles.stream().map(sysRoleTmp -> ImmutableMap.of("name", sysRoleTmp.getRoleName() + "(" + sysRoleTmp.getRoleKey() + ")", "id", String.valueOf(sysRoleTmp.getRoleId()))).collect(Collectors.toList());
         } else if ("SINGLE_USER".equals(reviewerType) || "MULTIPLE_USERS".equals(reviewerType)) {
-            List<Map<String, String>> userList = new ArrayList<>();
-            List<String> userNameList = Arrays.asList("张三", "李四", "王五", "小明", "小张", "小王");
-            size = userNameList.size();
-            for (int i = 0; i < size; i++) {
-                userList.add(ImmutableMap.of("name", userNameList.get(i), "id", i + ""));
-            }
-            res = userList.stream().filter(tmpMap -> tmpMap.get("name").contains(searchKey)).collect(Collectors.toList());
+            SysUser sysUser = new SysUser();
+            sysUser.setUserName(searchKey);
+            sysUser.setLoginName(searchKey);
+            List<SysUser> sysUsers = sysUserService.selectUserList(sysUser);
+            res = sysUsers.stream().map(sysUserTmp -> ImmutableMap.of("name", sysUserTmp.getUserName() + "(" + sysUserTmp.getLoginName() + ")", "id", String.valueOf(sysUserTmp.getUserId()))).collect(Collectors.toList());
         } else {
-            throw new RuntimeException("不正确");
+            throw new RuntimeException("查询审批者类型不正确");
         }
         return res;
     }

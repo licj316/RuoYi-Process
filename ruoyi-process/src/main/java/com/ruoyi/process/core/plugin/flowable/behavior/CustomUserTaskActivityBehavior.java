@@ -53,7 +53,6 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
         if (taskExtensionDTO != null) {
             userTask.setAssignee(null);
             //会签节点设置变量
-            // TODO 暂不考虑会签
             if (taskExtensionDTO.getMultiInstanceLoopCharacteristics() != MultiInstanceLoopCharacteristicsType.None) {
                 userTask.setAssignee("${" + FlowConstant.MULTIINSTANCE_ASSIGNEES_VAR + "}");
                 //添加完成多实例事件监听器
@@ -82,11 +81,14 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
 
 
         if(null == taskExtensionDTO.getMultiInstanceLoopCharacteristics() || MultiInstanceLoopCharacteristicsType.None == taskExtensionDTO.getMultiInstanceLoopCharacteristics()) {
+            // 非多实例节点
             if(StringUtils.isNotBlank(nextTaskAssignees)) {
                 assignee = nextTaskAssignees;
             } else {
                 throw new RuntimeException("请选择下一步审批人！");
             }
+        } else {
+            // 多实例节点不做处理
         }
 
 //        if (taskExtensionDTO != null) {
@@ -145,7 +147,6 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
 //        }
         super.handleAssignments(taskService, assignee, owner, candidateUsers, candidateGroups, task, expressionManager, execution, processEngineConfiguration);
     }
-
 
     public FlowAssignment getFlowAssignment(String iocFlowAssignment) {
         FlowAssignment flowAssignment = null;
