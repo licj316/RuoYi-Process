@@ -162,6 +162,7 @@ public class ProcessDesignServiceImpl implements ProcessDesignService,ModelDataJ
         deployment1.name(modelData.getName());
 
         Deployment deployment = repositoryService.createDeployment()
+                .category(modelData.getCategory())
                 .name(modelData.getName())
                 .addString(processName, new String(bpmnXMLBytes, "UTF-8"))
                 .deploy();

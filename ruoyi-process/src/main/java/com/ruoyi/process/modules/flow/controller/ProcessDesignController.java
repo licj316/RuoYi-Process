@@ -41,7 +41,7 @@ import java.util.stream.Stream;
  */
 @RestController
 @RequestMapping("/workflow")
-public class ProcessDesignController {
+public class ProcessDesignController extends BaseProcessController{
 
     @Autowired
     private RepositoryService repositoryService;
@@ -93,8 +93,9 @@ public class ProcessDesignController {
 
     @ResponseBody
     @GetMapping(value = "/deleteModel")
-    public void flowDelete(@RequestParam(name = "modelId") String modelId) {
+    public AjaxResult flowDelete(@RequestParam(name = "modelId") String modelId) {
         processDesignService.deleteModel(modelId);
+        return success("保存成功！");
     }
 
     /**
@@ -102,8 +103,9 @@ public class ProcessDesignController {
      */
     @RequestMapping(value = "/model/{modelId}/xml/save", method = RequestMethod.POST, produces = "application/json")
     @ResponseStatus(value = HttpStatus.OK)
-    public void saveModelXml(@PathVariable String modelId, @RequestBody Map<String, String> values) {
+    public AjaxResult saveModelXml(@PathVariable String modelId, @RequestBody Map<String, String> values) {
         processDesignService.saveModelXml(modelId, values);
+        return success("保存成功！");
     }
 
     @RequestMapping(value = "/process/tracing/{procInsId}", method = RequestMethod.GET, produces = "application/json")
