@@ -72,6 +72,7 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
         Map<String, Object> transientVariablesLocal = execution.getTransientVariablesLocal();
         Map<String, VariableInstance> variableInstances = execution.getVariableInstances();
         Map<String, VariableInstance> variableInstancesLocal = execution.getVariableInstancesLocal();
+
         String nextTaskType = getExpressionValue(FlowConstant.NEXT_TASK_TYPE, expressionManager, execution);
         String nextTaskDefKey = getExpressionValue(FlowConstant.NEXT_TASK_DEF_KEY, expressionManager, execution);
         String nextTaskAssignees = getExpressionValue(FlowConstant.NEXT_TASK_ASSIGNEES, expressionManager, execution);
@@ -79,16 +80,19 @@ public class CustomUserTaskActivityBehavior extends UserTaskActivityBehavior {
         System.out.println(nextTaskDefKey);
         System.out.println(nextTaskAssignees);
 
+        UserTaskExtensionDTO userTaskExtension = FlowUtils.getUserTaskExtension(userTask);
 
-        if(null == taskExtensionDTO.getMultiInstanceLoopCharacteristics() || MultiInstanceLoopCharacteristicsType.None == taskExtensionDTO.getMultiInstanceLoopCharacteristics()) {
+        if(userTaskExtension.isMultiInstanceNode()) {
+            // 多实例节点不做处理
+            System.out.println("流程处理人：" + getExpressionValue(FlowConstant.MULTIINSTANCE_ASSIGNEES_VAR, expressionManager, execution));
+            assignee = getExpressionValue(FlowConstant.MULTIINSTANCE_ASSIGNEES_VAR, expressionManager, execution);
+        } else {
             // 非多实例节点
             if(StringUtils.isNotBlank(nextTaskAssignees)) {
                 assignee = nextTaskAssignees;
             } else {
                 throw new RuntimeException("请选择下一步审批人！");
             }
-        } else {
-            // 多实例节点不做处理
         }
 
 //        if (taskExtensionDTO != null) {

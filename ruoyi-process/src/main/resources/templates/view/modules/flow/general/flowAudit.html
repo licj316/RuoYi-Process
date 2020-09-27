@@ -30,28 +30,32 @@
         <!--            </div>-->
         <!--        </div>-->
         <!-- 按钮区域 -->
-        <div class="footer-btns">
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary" type="button"
+        <div class="header-btns" id="flowBtnsContainer" style="display:none">
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary" id="flowSaveButton" type="button" style="display: none"
                     onclick="handleSave()"><i class="fa fa-check"></i>&nbsp;保存
             </button>
-            <button th:if="${!#strings.equals(status, 'VIEW')}" class="btn btn-primary" type="button"
+            <button th:if="${!#strings.equals(status, 'VIEW')}" class="btn btn-primary" id="flowAgreeButton" type="button" style="display: none"
                     onclick="handleSubmit()"><i class="fa fa-check"></i>&nbsp;<span id="flowAgreeButtonName">提交</span>
             </button>
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-danger" type="button"
-                    onclick="handleReject()"><i class="fa fa-times"></i>&nbsp;<span
-                    id="flowRefuseButtonName">拒绝</span></button>
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning" type="button"
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-danger" id="flowRefuseButton" type="button" style="display: none"
+                    onclick="handleReject()"><i class="fa fa-times"></i>&nbsp;<span id="flowRefuseButtonName">拒绝</span></button>
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-warning" id="flowBackButton" type="button" style="display: none"
                     onclick="handleBackToStep()">
-                <i class="fa fa-undo"></i>&nbsp;
-                <span id="callBackTypeText">驳回</span><!-- 自由回退 -->
+                <i class="fa fa-undo"></i>&nbsp;<span id="callBackTypeText">驳回</span><!-- 自由回退 -->
             </button>
             <!-- v-if="extensionProperty.multiInstanceNode && extensionProperty.addMultiInstance" -->
-            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary" type="button"
-                    onclick="handleAddMultiInstance()">
-                <i class="fa fa-exchange"></i>&nbsp;加签
+<!--            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-primary" type="button"-->
+<!--                    onclick="handleAddMultiInstance()">-->
+<!--                <i class="fa fa-exchange"></i>&nbsp;加签-->
+<!--            </button>-->
+            <button class="btn btn-default" id="flowDelegateButton" type="button" style="display: none">
+                <i class="fa fa-close"></i> 委托
+            </button>
+            <button class="btn btn-default" id="flowTransferButton" type="button" style="display: none">
+                <i class="fa fa-close"></i> 转派
             </button>
             <button onclick="handleClose()" class="btn btn-default" type="button">
-                <i class="fa fa-close"></i>关闭页面
+                <i class="fa fa-close"></i> 关闭页面
             </button>
         </div>
         <ul class="nav nav-tabs" role="tablist" style="margin-top: 5px">
@@ -215,7 +219,8 @@
         agreeButtonName: "同意",
         refuseButtonName: "拒绝",
         replyOpinionName: "批复意见",
-        dynamicFreeChoiceNextReviewerMode: false
+        dynamicFreeChoiceNextReviewerMode: false,
+        taskButtons: []
     };
 
     var formDataSubmit = false;
@@ -226,7 +231,6 @@
 
     $(function () {
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-            // console.info(e);
             let tabName = $(e.target).attr("id");
             if ("flowAttachmentTab" === tabName) {
                 $("#flowAttachmentContainer > iframe").attr("src", "/flowAttachment/detail?procInsId=" + flow.procInsId + "&status=" + status);
@@ -274,19 +278,33 @@
             taskDefKey: flow.taskDefKey,
             procDefId: flow.procDefId
         }, {arrayFormat: 'brackets'})).then(res => {
+            console.info(res.data);
             extensionProperty = res.data;
-            var showReplyOpinion = true;
-            if (extensionProperty.replyOpinion == false || flowEditStatus == 'EDIT' || flowEditStatus == 'VIEW') {
-                //不允许填写意见 或者是 流程发起者步骤
-                // vm.boxMainHeight = vm.boxMainHeight + 75;
-                showReplyOpinion = false;
+            $("#flowAgreeButtonName").text(extensionProperty.agreeButtonName);
+            $("#flowRefuseButtonName").text(extensionProperty.refuseButtonName);
+
+            $("#flowBtnsContainer").show();
+            let taskButtons = extensionProperty.taskButtons;
+            for (let i = 0; i < taskButtons.length; i++) {
+                if("save" === taskButtons[i]) {
+                    $("#flowSaveButton").show();
+                }
+                if("agree" === taskButtons[i]) {
+                    $("#flowAgreeButton").show();
+                }
+                if("refuse" === taskButtons[i]) {
+                    $("#flowRefuseButton").show();
+                }
+                if("back" === taskButtons[i]) {
+                    $("#flowBackButton").show();
+                }
+                if("delegate" === taskButtons[i]) {
+                    $("#flowDelegateButton").show();
+                }
+                if("transfer" === taskButtons[i]) {
+                    $("#flowTransferButton").show();
+                }
             }
-            // if (showReplyOpinion) {
-            //     vm.boxMainHeight = vm.boxMainHeight - 32;
-            // }
-            // $("#histoicFlowList").css({height: vm.boxMainHeight + 'px'});
-            // $("#diagramTab").css({height: vm.boxMainHeight + 'px'});
-            // $("#formBoxMain").css({height: vm.boxMainHeight + 'px'});
         });
 
         if (handleInitAfter != undefined) {
@@ -351,10 +369,11 @@
                     nodeHtmlArr.push('</div>');
                     nodeHtmlArr.push('</div>');
                 } else if ("UserTask" === nextStepInfo.nodeType) {
+                    console.info(nextStepInfo);
                     nodeHtmlArr.push('<div class="col-md-12" style="border: 1px solid #e0e0e0;padding: 0px 0px;">');
                     nodeHtmlArr.push('<div class="col-md-12">');
                     nodeHtmlArr.push('    <div class="radio" style="padding-left: 0px;">');
-                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="Normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '(<span style="color:red;">单人处理</span>)</label>');
+                    nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="Normal" name="nextStepNode"> <i></i> ' + nextStepInfo.name + '(<span style="color:red;">' + (nextStepInfo.isMultiInstance ? "多人处理" : "单人处理") + '</span>)</label>');
                     nodeHtmlArr.push('    </div>');
                     nodeHtmlArr.push('</div>');
                     nodeHtmlArr.push('<div class="col-md-2" style="line-height: 42px;">');
@@ -370,7 +389,11 @@
                     for (let i = 0; i < assignees.length; i++) {
                         let assignee = assignees[i];
                         nodeHtmlArr.push('    <div class="radio" style="padding-left: 0px;">');
-                        nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="' + assignee.user_id + '" name="nextStepAssignee"> <i></i> ' + assignee.user_name + '(' + assignee.user_id + ')</label>');
+                        if(nextStepInfo.isMultiInstance) {
+                            nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="checkbox" value="' + assignee.user_id + '" name="nextStepAssignee"> <i></i> ' + assignee.user_name + '(' + assignee.user_id + ')</label>');
+                        } else {
+                            nodeHtmlArr.push('        <label style="line-height: 22px;"><input type="radio" value="' + assignee.user_id + '" name="nextStepAssignee"> <i></i> ' + assignee.user_name + '(' + assignee.user_id + ')</label>');
+                        }
                         nodeHtmlArr.push('    </div>');
                     }
                     nodeHtmlArr.push('</div>');
@@ -391,8 +414,9 @@
                 $.modal.alert("获取下一步节点信息失败!");
                 return;
             }
-
+            console.info(nodeHtmlArr);
             $("#nextNodeContainer").html(nodeHtmlArr.join(""));
+            console.info($("input[name='nextStepNode']"));
             $("input[name='nextStepNode']")[0].checked = true;
             if ($("input[name='backSubmitStepAssignee']")[0]) {
                 $("input[name='backSubmitStepAssignee']")[0].checked = true;
@@ -425,8 +449,12 @@
                             // 提交到退回节点
                             handleDoSubmitTOBackStep();
                         } else {
-                            let nextStepAssignee = $("input[name='nextStepAssignee']:checked").val();
-                            flow.nextTaskAssignees = nextStepAssignee;
+                            let checkedAssignees = $("input[name='nextStepAssignee']:checked");
+                            let checkedAssigneeArr = [];
+                            for (let i = 0; i < checkedAssignees.length; i++) {
+                                checkedAssigneeArr.push(checkedAssignees[i].value);
+                            }
+                            flow.nextTaskAssignees = checkedAssigneeArr.join(",");
                             handleDoSaveAudit();
                         }
                     } else {

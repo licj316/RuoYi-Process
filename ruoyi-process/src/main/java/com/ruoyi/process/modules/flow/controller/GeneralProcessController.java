@@ -17,6 +17,7 @@ import com.ruoyi.framework.util.ShiroUtils;
 import com.ruoyi.process.core.plugin.flowable.constant.FlowConstant;
 import com.ruoyi.process.core.plugin.flowable.dto.FlowSubmitInfoDTO;
 import com.ruoyi.process.core.plugin.flowable.dto.UserTaskExtensionDTO;
+import com.ruoyi.process.core.plugin.flowable.enums.MultiInstanceLoopCharacteristicsType;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskFormStatusEnum;
 import com.ruoyi.process.core.plugin.flowable.enums.TaskStatusEnum;
 import com.ruoyi.process.core.plugin.flowable.service.FlowProcessDefinitionService;
@@ -206,6 +207,7 @@ public class GeneralProcessController extends BaseProcessController {
                 UserTaskExtensionDTO userTaskExtension = FlowUtils.getUserTaskExtension(userTask);
                 FlowSubmitInfoDTO flowSubmitInfo = flowCustomQueryService.getFlowSubmitInfo(flowTaskVO.getTaskId());
                 List<Map<String, Object>> assigneeList = generalFlowBiz.listUserTaskNodeAllReviewerUser(userTaskExtension, flowSubmitInfo);
+                resMap.put("isMultiInstance", userTaskExtension.isMultiInstanceNode());
                 resMap.put("assignees", assigneeList);
             } else {
                 resMap.put("nodeType", nextNodePair.getLeft());
