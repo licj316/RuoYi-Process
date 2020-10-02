@@ -48,10 +48,10 @@
 <!--                    onclick="handleAddMultiInstance()">-->
 <!--                <i class="fa fa-exchange"></i>&nbsp;加签-->
 <!--            </button>-->
-            <button class="btn btn-default" id="flowDelegateButton" type="button" style="display: none">
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-default" id="flowDelegateButton" type="button" style="display: none">
                 <i class="fa fa-close"></i> 委托
             </button>
-            <button class="btn btn-default" id="flowTransferButton" type="button" style="display: none">
+            <button th:if="${#strings.equals(status, 'AUDIT')}" class="btn btn-default" id="flowTransferButton" type="button" style="display: none">
                 <i class="fa fa-close"></i> 转派
             </button>
             <button onclick="handleClose()" class="btn btn-default" type="button">
@@ -292,10 +292,10 @@
                 if("agree" === taskButtons[i]) {
                     $("#flowAgreeButton").show();
                 }
-                if("refuse" === taskButtons[i]) {
-                    $("#flowRefuseButton").show();
+                if("reject" === taskButtons[i]) {
+                    $("#flowRejectButton").show();
                 }
-                if("back" === taskButtons[i]) {
+                if("returnBack" === taskButtons[i]) {
                     $("#flowBackButton").show();
                 }
                 if("delegate" === taskButtons[i]) {

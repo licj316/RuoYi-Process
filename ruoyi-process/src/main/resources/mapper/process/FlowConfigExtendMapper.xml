@@ -37,7 +37,7 @@
                 KEY_SEVEN_ = #{keySeven},
                 UPDATE_BY = #{updateBy},
                 UPDATE_TIME = #{updateTime}
-        WHERE PROC_DEF_KEY_ = #{procDefId}
+        WHERE PROC_DEF_KEY_ = #{procDefKey}
     </update>
 
     <select id="findByParams" parameterType="hashMap" resultMap="FlowConfigExtendResult">
